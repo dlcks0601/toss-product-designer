@@ -6,6 +6,7 @@ import HomeCalendar from '../components/HomeCalendar';
 import InviteCard from '../components/InviteCard';
 import NotificationBell from '../components/NotificationBell';
 import Reveal from '../components/Reveal';
+import SetupForm from '../components/SetupForm';
 import TaskCard from '../components/TaskCard';
 import ToastStack from '../components/ToastStack';
 import WelcomeCard from '../components/WelcomeCard';
@@ -54,6 +55,8 @@ export default function Page() {
     <>
       {state.step === 'home' ? (
         <HomeScreen state={state} dispatch={dispatch} unreadCount={unreadCount} />
+      ) : state.step === 'setup' ? (
+        <SetupForm state={state} dispatch={dispatch} />
       ) : (
         <PlaceholderScreen step={state.step} dispatch={dispatch} />
       )}
@@ -110,7 +113,13 @@ function HomeScreen({
       </div>
 
       <Reveal delay={280} className="mx-auto max-w-[1200px] px-4 lg:px-6">
-        <HomeCalendar events={ME.events} invite={INCOMING_INVITE} onOpenInvite={openInvite} onNewEvent={openSetup} />
+        {/* 내 기본 일정 + 셋업 혼자 경로로 저장한 개인 일정(myEvents)을 함께 그린다. */}
+        <HomeCalendar
+          events={[...ME.events, ...state.myEvents]}
+          invite={INCOMING_INVITE}
+          onOpenInvite={openInvite}
+          onNewEvent={openSetup}
+        />
       </Reveal>
 
       {/* 모바일 고정 CTA — 데스크톱은 캘린더 헤더의 인라인 버튼이 담당한다. */}

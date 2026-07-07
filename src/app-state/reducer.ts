@@ -11,7 +11,7 @@
  *    allowPartialRequiredId를 초기화해 find 화면이 새 조건으로 다시 계산하게 한다.
  *  - CONFIRM은 selectedSlotId가 있어야만 유효하다(없으면 상태 불변).
  */
-import type { DeadlineKind } from '../lib/types';
+import type { CalendarEvent, DeadlineKind } from '../lib/types';
 import { parseState, serializeState } from '../lib/urlState';
 import type { UrlAttendee } from '../lib/urlState';
 import { DEFAULT_CAST, ME_ID } from '../data/world';
@@ -33,6 +33,8 @@ export interface AppState {
   mitigations: { delayTen: boolean; fiftyMin: boolean };
   inviteResponded: 'accepted' | 'difficult' | null;
   confirmedAt: boolean;
+  /** 혼자 경로로 저장한 내 개인 일정 — 홈 캘린더가 ME.events에 얹어 그린다. URL 비직렬화(세션 한정). */
+  myEvents: CalendarEvent[];
 }
 
 export type Action =
@@ -42,6 +44,7 @@ export type Action =
   | { type: 'SET_REQUIRED'; id: string; required: boolean }
   | { type: 'SET_DURATION'; duration: 30 | 60 | 90 }
   | { type: 'SET_DEADLINE'; deadline: DeadlineKind }
+  | { type: 'ADD_MY_EVENT'; event: CalendarEvent }
   | { type: 'SELECT_SLOT'; slotId: string | null }
   | { type: 'ALLOW_PARTIAL'; id: string | null }
   | { type: 'SET_ROOM'; roomId: string | 'remote' | null }
@@ -71,6 +74,7 @@ export function initialState(): AppState {
     mitigations: { delayTen: false, fiftyMin: false },
     inviteResponded: null,
     confirmedAt: false,
+    myEvents: [],
   };
 }
 
@@ -120,6 +124,16 @@ export function reducer(s: AppState, a: Action): AppState {
 
     case 'SET_DEADLINE':
       return applyAndInvalidateSelection(s, { deadline: a.deadline });
+
+    case 'ADD_MY_EVENT':
+      // 혼자 경로의 저장 — "일정은 혼자면 결정". kind는 personal로 강제(내 캘린더 불변식),
+      // 저장 즉시 홈으로 복귀하고 다음 작성을 위해 제목을 비운다.
+      return {
+        ...s,
+        myEvents: [...s.myEvents, { ...a.event, kind: 'personal' }],
+        title: '',
+        step: 'home',
+      };
 
     case 'SELECT_SLOT':
       return { ...s, selectedSlotId: a.slotId };
@@ -181,8 +195,9 @@ export function reducer(s: AppState, a: Action): AppState {
       return { ...s, confirmedAt: true, step: 'done' };
 
     case 'RESET': {
-      // 완전 초기화하되, 웰컴 카드는 "첫 방문 1회" 계약이라 다시 보여주지 않는다.
-      return { ...initialState(), welcomeDismissed: s.welcomeDismissed };
+      // 완전 초기화하되, 웰컴 카드는 "첫 방문 1회" 계약이라 다시 보여주지 않고,
+      // 내 캘린더에 이미 저장된 개인 일정(myEvents)도 지우지 않는다 — 조율 여정만 초기화한다.
+      return { ...initialState(), welcomeDismissed: s.welcomeDismissed, myEvents: s.myEvents };
     }
 
     default:

@@ -132,6 +132,53 @@ describe('조건 변경 → 선택 낡음(stale) 초기화', () => {
   });
 });
 
+describe('ADD_MY_EVENT — 혼자 경로의 개인 일정 저장', () => {
+  const event = {
+    id: 'my-2026-07-08-600',
+    day: '2026-07-08',
+    start: 600,
+    end: 660,
+    title: '치과 예약',
+    kind: 'personal' as const,
+  };
+
+  it('myEvents에 추가하고 홈으로 복귀하며 제목을 비운다', () => {
+    const inSetup: AppState = { ...initialState(), step: 'setup', title: '치과 예약' };
+    const next = reducer(inSetup, { type: 'ADD_MY_EVENT', event });
+    expect(next.myEvents).toEqual([event]);
+    expect(next.step).toBe('home');
+    expect(next.title).toBe('');
+  });
+
+  it('kind는 personal로 강제된다 — 다른 kind가 들어와도', () => {
+    const next = reducer(initialState(), {
+      type: 'ADD_MY_EVENT',
+      event: { ...event, kind: 'meeting' },
+    });
+    expect(next.myEvents[0].kind).toBe('personal');
+  });
+
+  it('여러 번 저장하면 순서대로 누적된다', () => {
+    const second = { ...event, id: 'my-2026-07-09-720', day: '2026-07-09', start: 720, end: 780 };
+    let s = reducer(initialState(), { type: 'ADD_MY_EVENT', event });
+    s = reducer(s, { type: 'ADD_MY_EVENT', event: second });
+    expect(s.myEvents.map((e) => e.id)).toEqual([event.id, second.id]);
+  });
+
+  it('RESET은 myEvents를 보존한다 — 내 캘린더 데이터는 여정 초기화의 대상이 아니다', () => {
+    const saved = reducer(initialState(), { type: 'ADD_MY_EVENT', event });
+    const next = reducer({ ...saved, step: 'done' }, { type: 'RESET' });
+    expect(next.myEvents).toEqual([event]);
+    expect(next.step).toBe('home');
+  });
+
+  it('HYDRATE는 myEvents를 건드리지 않는다(URL 비직렬화)', () => {
+    const saved = reducer(initialState(), { type: 'ADD_MY_EVENT', event });
+    const next = reducer(saved, { type: 'HYDRATE', patch: fromUrl('p=junho.r&s=setup') });
+    expect(next.myEvents).toEqual([event]);
+  });
+});
+
 describe('PREFILL_CAST — 웰컴/할 일 카드 공용 6인 프리필', () => {
   it('기본 캐스트 6인으로 채우고(필수 4 + 선택 2) 셋업 스텝으로 이동한다', () => {
     const s = reducer(initialState(), { type: 'PREFILL_CAST' });

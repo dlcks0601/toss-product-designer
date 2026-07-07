@@ -48,8 +48,9 @@ export function eventsOn(events: readonly CalendarEvent[], day: string): Calenda
 }
 
 // ── 이벤트 종류별 틴트 — 차분한 파스텔, 색만으로 소리치지 않는다 ──────────
+// (ProfilePeek 미니 캘린더가 같은 팔레트를 공유한다 — 단일 소스)
 
-interface KindStyle {
+export interface KindStyle {
   bg: string;
   border: string;
   title: string;
@@ -58,7 +59,7 @@ interface KindStyle {
   stripes?: string;
 }
 
-const KIND_STYLE: Record<EventKind, KindStyle> = {
+export const KIND_STYLE: Record<EventKind, KindStyle> = {
   meeting: { bg: '#E8F3FF', border: '#C9E2FF', title: '#1B64DA', sub: '#7CA5E8' },
   focus: { bg: '#D9F0E4', border: '#BEE3CF', title: '#13774A', sub: '#66AE88' },
   lunch: { bg: '#F2F4F6', border: 'rgba(229,232,235,0.6)', title: '#8B95A1', sub: '#B0B8C1' },
@@ -73,7 +74,7 @@ const KIND_STYLE: Record<EventKind, KindStyle> = {
   },
 };
 
-function kindBoxStyle(kind: EventKind): CSSProperties {
+export function kindBoxStyle(kind: EventKind): CSSProperties {
   const st = KIND_STYLE[kind];
   return {
     backgroundColor: st.bg,

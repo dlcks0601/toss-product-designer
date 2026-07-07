@@ -207,7 +207,7 @@ function initialOf(name: string): string {
 }
 
 // ── 본체 ────────────────────────────────────────────────────────────
-export type AvatarSize = 24 | 32 | 40;
+export type AvatarSize = 24 | 28 | 32 | 40;
 
 export interface AvatarProps {
   /** ORG 인물 — 주면 faceId·name을 여기서 읽는다 */
@@ -221,6 +221,7 @@ export interface AvatarProps {
 
 const SIZE_CLASS: Record<AvatarSize, string> = {
   24: 'h-6 w-6 text-[10px]',
+  28: 'h-7 w-7 text-[11px]',
   32: 'h-8 w-8 text-[12px]',
   40: 'h-10 w-10 text-[14px]',
 };
