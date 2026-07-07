@@ -1,0 +1,40 @@
+@import 'tailwindcss';
+@theme {
+  --color-primary: #3182f6;
+  --color-primary-pressed: #1b64da;
+  --color-primary-tint: #e8f3ff;
+  --color-bg: #ffffff;
+  --color-section: #f2f4f6;
+  --color-border: #e5e8eb;
+  --color-text-strong: #191f28;
+  --color-text-body: #4e5968;
+  --color-text-weak: #8b95a1;
+  --color-text-faint: #b0b8c1;
+  --color-error: #f04452;
+  --color-warn-fg: #b45309;
+  --color-warn-bg: #fff9e7;
+  --radius-card: 16px;
+}
+:root {
+  --bezier-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --bezier-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --bezier-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --bezier-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --bezier-ambient: cubic-bezier(0.6, 0, 0, 0.6);
+}
+
+/* 토스 디스플레이 산스 (챌린지 페이지 배포본, 라틴·숫자 전용 변수 폰트) */
+@font-face {
+  font-family: 'Toss Display Sans Variable';
+  src: url('/fonts/TossDisplaySansVariable.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans-serif; }
+.font-display { font-family: 'Toss Display Sans Variable', 'Toss Display Sans', -apple-system, sans-serif; }
+/* 프레스 스쿼시 — 전 버튼·칩 공용 */
+.pressable { transition: transform 320ms var(--bezier-standard), background-color 320ms var(--bezier-standard); }
+.pressable:active { transform: scale(0.96); transition-duration: 120ms; }
+@media (prefers-reduced-motion: reduce) { .pressable, .pressable:active { transform: none; } }
