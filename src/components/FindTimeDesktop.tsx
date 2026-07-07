@@ -350,7 +350,7 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
               )}
             </div>
             <div className="shrink-0 pt-3">
-              {state.confirmedAt ? (
+              {state.selectedSlotId !== null && state.selectedSlotId === state.confirmedSlotId ? (
                 /* 확정 후 되돌아온 경우 — 이미 잡힌 회의를 다시 잡게 하지 않는다(상태 일관). */
                 <button
                   type="button"

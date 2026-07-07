@@ -349,7 +349,7 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
         <div className="mx-auto max-w-[560px]">
-          {state.confirmedAt ? (
+          {state.selectedSlotId !== null && state.selectedSlotId === state.confirmedSlotId ? (
             /* 확정 후 되돌아온 경우 — 이미 잡힌 회의를 다시 잡게 하지 않는다(상태 일관). */
             <button
               type="button"

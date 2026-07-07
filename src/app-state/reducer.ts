@@ -10,6 +10,10 @@
  *  - 조건(기한·길이·필수 여부·참석자 구성)이 바뀌면 이전 선택은 낡은 것이다 — selectedSlotId·
  *    allowPartialRequiredId를 초기화해 find 화면이 새 조건으로 다시 계산하게 한다.
  *  - CONFIRM은 selectedSlotId가 있어야만 유효하다(없으면 상태 불변).
+ *  - "확정됨" CTA는 confirmedAt(세션 통산 플래그)이 아니라 confirmedSlotId로 슬롯에 스코프된다 —
+ *    selectedSlotId === confirmedSlotId일 때만 확정 상태다. 조건 변경·PREFILL 등 낡은 선택을
+ *    초기화하는 액션은 confirmedSlotId도 함께 비운다(슬롯 id가 day+시각뿐이라 결정적이라,
+ *    비우지 않으면 다음 여정에서 같은 id를 다시 골랐을 때 확정 전인데도 오탐할 수 있다).
  */
 import type { CalendarEvent, DeadlineKind } from '../lib/types';
 import { parseState, serializeState } from '../lib/urlState';
@@ -32,7 +36,14 @@ export interface AppState {
   welcomeDismissed: boolean;
   mitigations: { delayTen: boolean; fiftyMin: boolean };
   inviteResponded: 'accepted' | 'difficult' | null;
+  /** 이번 세션 중 한 번이라도 확정한 적이 있는가 — CTA 분기는 이 값이 아니라 confirmedSlotId를 본다. */
   confirmedAt: boolean;
+  /**
+   * 방금 확정된 슬롯 id — CONFIRM이 그 시점의 selectedSlotId를 스냅샷한다.
+   * 세션 로컬(URL 비직렬화)이며, 조건 변경·PREFILL 등으로 selectedSlotId가 초기화되면
+   * "확정됨" CTA는 selectedSlotId === confirmedSlotId가 깨지는 순간 자동으로 해제된다.
+   */
+  confirmedSlotId: string | null;
   /**
    * 홈 캘린더가 ME.events에 얹어 그리는 내 세션 일정 — 혼자 경로 저장(personal)과
    * 확정된 회의(CONFIRM, meeting)가 여기 쌓인다. URL 비직렬화(세션 한정).
@@ -77,6 +88,7 @@ export function initialState(): AppState {
     mitigations: { delayTen: false, fiftyMin: false },
     inviteResponded: null,
     confirmedAt: false,
+    confirmedSlotId: null,
     myEvents: [],
   };
 }
@@ -86,9 +98,14 @@ export function isMeeting(state: AppState): boolean {
   return state.attendeeIds.length >= 2;
 }
 
-/** 조건 변경 patch를 적용하며 낡은 선택을 초기화한다. */
+/**
+ * 조건 변경 patch를 적용하며 낡은 선택을 초기화한다.
+ * confirmedSlotId도 함께 비운다 — 슬롯 id는 day+시각뿐이라 myEvents와 무관하게 결정적이다.
+ * 그대로 두면 새 여정에서 우연히 같은 id의 슬롯을 다시 골랐을 때 아직 확정하지 않았는데도
+ * selectedSlotId === confirmedSlotId가 되어 "확정됨" CTA가 잘못 뜬다(오탐).
+ */
 function applyAndInvalidateSelection(s: AppState, patch: Partial<AppState>): AppState {
-  return { ...s, ...patch, selectedSlotId: null, allowPartialRequiredId: null };
+  return { ...s, ...patch, selectedSlotId: null, allowPartialRequiredId: null, confirmedSlotId: null };
 }
 
 export function reducer(s: AppState, a: Action): AppState {
@@ -210,7 +227,7 @@ export function reducer(s: AppState, a: Action): AppState {
             },
           ]
         : s.myEvents;
-      return { ...s, myEvents, confirmedAt: true, step: 'done' };
+      return { ...s, myEvents, confirmedAt: true, confirmedSlotId: s.selectedSlotId, step: 'done' };
     }
 
     case 'RESET': {

@@ -19,6 +19,7 @@ describe('initialState', () => {
     expect(s.mitigations).toEqual({ delayTen: false, fiftyMin: false });
     expect(s.inviteResponded).toBeNull();
     expect(s.confirmedAt).toBe(false);
+    expect(s.confirmedSlotId).toBeNull();
     expect(isMeeting(s)).toBe(false);
   });
 });
@@ -60,12 +61,14 @@ describe('CONFIRM — selectedSlotId 필수', () => {
     const next = reducer(s, { type: 'CONFIRM' });
     expect(next).toBe(s);
     expect(next.confirmedAt).toBe(false);
+    expect(next.confirmedSlotId).toBeNull();
     expect(next.step).toBe('home');
   });
-  it('selectedSlotId가 있으면 confirmedAt=true, step=done', () => {
+  it('selectedSlotId가 있으면 confirmedAt=true, confirmedSlotId=selectedSlotId, step=done', () => {
     const withSlot: AppState = { ...initialState(), selectedSlotId: 'slot-1' };
     const next = reducer(withSlot, { type: 'CONFIRM' });
     expect(next.confirmedAt).toBe(true);
+    expect(next.confirmedSlotId).toBe('slot-1');
     expect(next.step).toBe('done');
   });
 
@@ -112,6 +115,63 @@ describe('CONFIRM — selectedSlotId 필수', () => {
       event: { day: '2026-07-15', start: 600, end: 660 },
     });
     expect(next.myEvents.map((e) => e.kind)).toEqual(['personal', 'meeting']);
+  });
+});
+
+describe('confirmedSlotId — "확정됨" CTA는 confirmedAt이 아니라 슬롯 단위로 스코프된다', () => {
+  it('두 번째 CONFIRM은 confirmedSlotId를 새 슬롯 id로 갱신한다(두 번째 회의도 확정 가능)', () => {
+    const firstConfirmed = reducer(
+      { ...initialState(), selectedSlotId: 'slot-1' },
+      { type: 'CONFIRM' },
+    );
+    expect(firstConfirmed.confirmedSlotId).toBe('slot-1');
+
+    // 두 번째 여정 — 새 슬롯을 선택하고 다시 CONFIRM.
+    const reselected = reducer(firstConfirmed, { type: 'SELECT_SLOT', slotId: 'slot-2' });
+    const secondConfirmed = reducer(reselected, { type: 'CONFIRM' });
+    expect(secondConfirmed.confirmedSlotId).toBe('slot-2');
+    expect(secondConfirmed.confirmedAt).toBe(true);
+  });
+
+  it('조건 변경(SET_DURATION 등)은 selectedSlotId뿐 아니라 confirmedSlotId도 비운다 — 오탐 방지', () => {
+    // 슬롯 id는 day+시각뿐이라 결정적이다. 확정 슬롯을 비우지 않으면, 다음 여정에서 같은 id를
+    // 우연히 다시 골랐을 때 아직 확정 전인데도 selectedSlotId === confirmedSlotId가 되어버린다.
+    const confirmed = reducer({ ...initialState(), selectedSlotId: 'slot-1' }, { type: 'CONFIRM' });
+    expect(confirmed.confirmedSlotId).toBe('slot-1');
+
+    const next = reducer(confirmed, { type: 'SET_DURATION', duration: 30 });
+    expect(next.selectedSlotId).toBeNull();
+    expect(next.confirmedSlotId).toBeNull();
+
+    // 같은 id를 다시 선택해도 confirmedSlotId가 이미 비었으니 오탐하지 않는다.
+    const reselectedSame = reducer(next, { type: 'SELECT_SLOT', slotId: 'slot-1' });
+    expect(reselectedSame.selectedSlotId).toBe('slot-1');
+    expect(reselectedSame.confirmedSlotId).toBeNull();
+  });
+
+  it('PREFILL_CAST는 confirmedSlotId를 비운다', () => {
+    const confirmed = reducer({ ...initialState(), selectedSlotId: 'slot-1' }, { type: 'CONFIRM' });
+    const next = reducer(confirmed, { type: 'PREFILL_CAST' });
+    expect(next.selectedSlotId).toBeNull();
+    expect(next.confirmedSlotId).toBeNull();
+  });
+
+  it('RESET은 confirmedSlotId를 초기화한다', () => {
+    const confirmed = reducer({ ...initialState(), selectedSlotId: 'slot-1' }, { type: 'CONFIRM' });
+    const next = reducer(confirmed, { type: 'RESET' });
+    expect(next.confirmedSlotId).toBeNull();
+  });
+
+  it('fromUrl은 confirmedSlotId를 포함하지 않는다 — 확정 상태는 세션 로컬이라 URL로 직렬화되지 않는다', () => {
+    const patch = fromUrl(`p=${ME_ID}.r,junho.o&d=30&dl=tw&s=find&slot=slot-9&ap=junho`);
+    expect(patch).not.toHaveProperty('confirmedSlotId');
+  });
+
+  it('HYDRATE 이후에도 confirmedSlotId는 그대로다(딥링크가 확정 상태를 되살리지 않는다)', () => {
+    // 실제 부팅 시퀀스에서 HYDRATE는 initialState() 직후 1회만 실행되므로 confirmedSlotId는 항상 null이다.
+    const patch = fromUrl(`p=${ME_ID}.r,junho.o&d=30&dl=tw&s=find&slot=slot-9`);
+    const s = reducer(initialState(), { type: 'HYDRATE', patch });
+    expect(s.confirmedSlotId).toBeNull();
   });
 });
 
@@ -336,6 +396,7 @@ describe('RESET', () => {
       mitigations: { delayTen: true, fiftyMin: true },
       inviteResponded: 'accepted',
       confirmedAt: true,
+      confirmedSlotId: 'slot-1',
     };
     const next = reducer(messy, { type: 'RESET' });
     expect(next).toEqual({ ...initialState(), welcomeDismissed: true });
