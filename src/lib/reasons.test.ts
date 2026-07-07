@@ -100,4 +100,16 @@ describe('summarizeSlot', () => {
 });
 
 // Task 6 — 부분 참석 문장.
-it.todo('optional-partial → "하늘님은 앞 30분만 함께할 수 있어요 — 11시에 다른 회의" (Task 6)');
+describe('formatReasons — optional-partial(Task 6)', () => {
+  it('앞부분 참석은 이름·앞·분·충돌 제목을 넣어 준다', () => {
+    const e: ScoreEffect = { code: 'optional-partial', delta: 5, who: 'o1', data: { part: 'front', minutes: 30, title: '11시에 다른 회의' } };
+    const r = formatReasons([e], people)[0];
+    expect(r.text).toBe('정하늘님은 앞 30분만 함께할 수 있어요 — 11시에 다른 회의');
+    expect(r.tone).toBe('tradeoff');
+    expect(r.who).toBe('o1');
+  });
+  it('뒷부분 참석은 뒤로 렌더한다', () => {
+    const e: ScoreEffect = { code: 'optional-partial', delta: 5, who: 'o2', data: { part: 'back', minutes: 20, title: '오전 블록' } };
+    expect(formatReasons([e], people)[0].text).toBe('유나님은 뒤 20분만 함께할 수 있어요 — 오전 블록');
+  });
+});

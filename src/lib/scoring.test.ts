@@ -50,6 +50,46 @@ describe('scoreSlot — 필수/선택', () => {
   });
 });
 
+describe('scoreSlot — 부분 참석 통합(Task 6)', () => {
+  it('S1 재현: 선택 참석자가 10:30부터 회의면 optional-partial(+5)·partials에 PartialInfo', () => {
+    const req = person({ id: 'req' });
+    const hn = person({ id: 'o1', name: '정하늘', attendanceType: 'optional', events: [ev('e', 630, 720, 'meeting', '11시 회의')] });
+    const { effects, partials } = scoreSlot({
+      day: '2026-07-06', start: 600, end: 660, attendees: [req, hn], insights: noInsights, rooms: noRooms,
+    });
+    const p = effects.find((e) => e.code === 'optional-partial');
+    expect(p).toBeDefined();
+    expect(p!.delta).toBe(SCORING.optionalPartial); // +5
+    expect(p!.who).toBe('o1');
+    expect(partials).toEqual([{ attendeeId: 'o1', part: 'front', minutes: 30, conflictTitle: '11시 회의' }]);
+  });
+
+  it('부분 참석자는 optional-ok 정규화(fullOkCount)에서 제외 — +5만 따로 선다', () => {
+    const req = person({ id: 'req' });
+    const full = person({ id: 'full', attendanceType: 'optional' });
+    const part = person({ id: 'part', attendanceType: 'optional', events: [ev('e', 630, 720, 'meeting', '회의')] });
+    const { effects, partials } = scoreSlot({
+      day: '2026-07-06', start: 600, end: 660, attendees: [req, full, part], insights: noInsights, rooms: noRooms,
+    });
+    // 완전 가능 1명 / 선택 2명 → round(10 * 1/2) = 5, 부분 참석자는 분자에서 빠진다
+    expect(effects.find((e) => e.code === 'optional-ok')!.delta).toBe(5);
+    expect(effects.find((e) => e.code === 'optional-partial')!.delta).toBe(SCORING.optionalPartial);
+    expect(effects.some((e) => e.code === 'optional-unavailable')).toBe(false);
+    expect(partials).toHaveLength(1);
+  });
+
+  it('완전 불가(슬롯 전체 겹침)는 여전히 optional-unavailable', () => {
+    const req = person({ id: 'req' });
+    const busy = person({ id: 'busy', attendanceType: 'optional', events: [ev('e', 600, 660, 'meeting', '회의')] });
+    const { effects, partials } = scoreSlot({
+      day: '2026-07-06', start: 600, end: 660, attendees: [req, busy], insights: noInsights, rooms: noRooms,
+    });
+    expect(effects.find((e) => e.code === 'optional-unavailable')!.who).toBe('busy');
+    expect(effects.some((e) => e.code === 'optional-partial')).toBe(false);
+    expect(partials).toHaveLength(0);
+  });
+});
+
 describe('scoreSlot — back-to-back(결함③ 양방향)', () => {
   it('직전·직후 붙은 일정은 양방향 모두 effects에 남는다 — 사람당 하나', () => {
     // A: 09:30–10:00 회의(직전), B: 11:00–11:30 회의(직후). 슬롯 10:00–11:00.

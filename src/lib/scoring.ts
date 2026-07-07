@@ -3,6 +3,7 @@ import { overlaps } from './time';
 import type { Attendee, PartialInfo, PersonInsights, Room, ScoreEffect } from './types';
 import { availableRooms } from './rooms';
 import { afterLunchEffect, beforeLunchEffect, lunchSqueezeEffect } from './lunch';
+import { HARD_BLOCK_KINDS, partialAvailability } from './partial';
 
 /**
  * 순수 점수 규칙 상수. 한국어 문장은 여기 없다(reasons.ts 담당).
@@ -25,9 +26,6 @@ export const SCORING = {
 const DEFAULT_FRAME = { start: 540, end: 1080 } as const; // 09:00–18:00
 const BACK_TO_BACK_BUFFER = 15;
 const LATE_START_TAIL = 30;
-
-/** 필수 참석자에게 하드 블로킹되는 이벤트 종류. focus·lunch는 절대 블로킹하지 않는다. */
-const HARD_BLOCK_KINDS = new Set<string>(['meeting', 'offsite', 'personal']);
 
 /** 필수 참석자 근무시간의 교집합으로 후보 프레임을 만든다. 필수가 없으면 09:00–18:00. */
 export function requiredFrame(attendees: Attendee[]): { start: Minutes; end: Minutes } {
@@ -69,8 +67,12 @@ interface SlotContext {
 }
 
 /**
- * 선택 참석자 평가(현재: 이진). Task 6에서 부분 참석으로 교체하는 확장점 —
- * 여기 한 곳만 바꾸면 optional-partial·partials가 붙는다.
+ * 선택 참석자 평가 — 이진(가능/불가) 대신 부분 참석까지 판정한다(Task 6).
+ *   full    → 완전 가능. 정규화된 하나의 optional-ok에 합산.
+ *   partial → 앞/뒤 일부만. optional-partial(+5) 개별 effect + partials에 PartialInfo.
+ *   none    → 불가. optional-unavailable(기존과 동일).
+ * 근무시간 밖은 부분 참석을 다루지 않고 곧장 불가로 본다.
+ * 정규화 분자(fullOkCount)에는 완전 가능자만 넣는다 — 부분 참석의 +5는 따로 선다.
  */
 function evaluateOptional(
   optional: Attendee[],
@@ -78,25 +80,48 @@ function evaluateOptional(
   start: Minutes,
   end: Minutes,
 ): { availableIds: Set<string>; effects: ScoreEffect[]; partials: PartialInfo[] } {
-  const okIds: string[] = [];
-  const effects: ScoreEffect[] = [];
+  const fullOkIds: string[] = [];
+  const partialEffects: ScoreEffect[] = [];
+  const unavailableIds: string[] = [];
+  const partials: PartialInfo[] = [];
+
   for (const a of optional) {
-    const available = !hasBlockingConflict(a, day, start, end) && !isOutsideWorkHours(a, start, end);
-    if (available) okIds.push(a.id);
+    if (isOutsideWorkHours(a, start, end)) {
+      unavailableIds.push(a.id);
+      continue;
+    }
+    const result = partialAvailability(a, day, { start, end });
+    if (result.kind === 'full') {
+      fullOkIds.push(a.id);
+    } else if (result.kind === 'partial') {
+      partials.push(result.info);
+      partialEffects.push({
+        code: 'optional-partial',
+        delta: SCORING.optionalPartial,
+        who: a.id,
+        data: { part: result.info.part, minutes: result.info.minutes, title: result.info.conflictTitle },
+      });
+    } else {
+      unavailableIds.push(a.id);
+    }
   }
-  if (okIds.length > 0) {
+
+  const effects: ScoreEffect[] = [];
+  if (fullOkIds.length > 0) {
     // 결함① 정규화: 인원수로 평균 내어 한 effect·최대 +10. 대규모 선택 참석이 warning을 덮지 못한다.
     effects.push({
       code: 'optional-ok',
-      delta: Math.round((SCORING.optionalOk * okIds.length) / optional.length),
-      data: { ok: okIds.length, total: optional.length },
+      delta: Math.round((SCORING.optionalOk * fullOkIds.length) / optional.length),
+      data: { ok: fullOkIds.length, total: optional.length },
     });
   }
-  const okSet = new Set(okIds);
-  for (const a of optional) {
-    if (!okSet.has(a.id)) effects.push({ code: 'optional-unavailable', delta: 0, who: a.id });
+  effects.push(...partialEffects);
+  for (const id of unavailableIds) {
+    effects.push({ code: 'optional-unavailable', delta: 0, who: id });
   }
-  return { availableIds: okSet, effects, partials: [] };
+
+  // 참석 인원(participating)에는 완전 가능자만 — 부분 참석자는 +5·PartialInfo로만 반영한다.
+  return { availableIds: new Set(fullOkIds), effects, partials };
 }
 
 /** back-to-back 인접 스캔 대상 종류. offsite는 offsite-day가, lunch/focus는 각자 규칙이 담당한다. */

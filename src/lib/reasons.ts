@@ -43,6 +43,12 @@ function reasonText(effect: ScoreEffect, nameOf: (id?: string) => string, requir
       const total = Number(effect.data?.total ?? 0);
       return `선택 참석자 ${total}명 중 ${ok}명이 함께할 수 있어요`;
     }
+    case 'optional-partial': {
+      const part = effect.data?.part === 'back' ? '뒤' : '앞';
+      const minutes = Number(effect.data?.minutes ?? 0);
+      const title = String(effect.data?.title ?? '');
+      return `${nameOf(who)}님은 ${part} ${minutes}분만 함께할 수 있어요 — ${title}`;
+    }
     case 'optional-unavailable':
       return `${nameOf(who)}님은 이 시간이 어려워요`;
     case 'offsite-day':
@@ -64,7 +70,7 @@ function reasonText(effect: ScoreEffect, nameOf: (id?: string) => string, requir
     case 'lunch-squeeze':
       return `${nameOf(who)}님 점심 여유가 ${Number(effect.data?.gap ?? 0)}분뿐이에요`;
     default:
-      return null; // optional-partial → Task 6
+      return null; // 매핑 없는 코드는 침묵
   }
 }
 
