@@ -14,7 +14,7 @@
 import type { DeadlineKind } from '../lib/types';
 import { parseState, serializeState } from '../lib/urlState';
 import type { UrlAttendee } from '../lib/urlState';
-import { ME_ID } from '../data/world';
+import { DEFAULT_CAST, ME_ID } from '../data/world';
 
 export type Step = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite';
 
@@ -45,6 +45,8 @@ export type Action =
   | { type: 'SELECT_SLOT'; slotId: string | null }
   | { type: 'ALLOW_PARTIAL'; id: string | null }
   | { type: 'SET_ROOM'; roomId: string | 'remote' | null }
+  | { type: 'PREFILL_CAST' }
+  | { type: 'HYDRATE'; patch: Partial<AppState> }
   | { type: 'PLAY_SCAN' }
   | { type: 'DISMISS_WELCOME' }
   | { type: 'TOGGLE_MITIGATION'; key: keyof AppState['mitigations'] }
@@ -85,7 +87,8 @@ function applyAndInvalidateSelection(s: AppState, patch: Partial<AppState>): App
 export function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
     case 'SET_STEP':
-      return { ...s, step: a.step };
+      // 홈을 떠나는 순간 어느 여정이든 시작된 것 — 웰컴 카드(첫 방문 1회)는 자동으로 접는다.
+      return { ...s, step: a.step, welcomeDismissed: s.welcomeDismissed || a.step !== 'home' };
 
     case 'SET_TITLE':
       return { ...s, title: a.title };
@@ -126,6 +129,40 @@ export function reducer(s: AppState, a: Action): AppState {
 
     case 'SET_ROOM':
       return { ...s, roomId: a.roomId };
+
+    case 'PREFILL_CAST': {
+      // 웰컴/할 일 카드 공용 프리필 — 기본 6인(필수 4 + 선택 2)으로 셋업을 시작한다.
+      // 참석자 구성을 통째로 바꾸므로 이전 선택은 무효, 여정이 시작되므로 웰컴은 접는다.
+      const required: Record<string, boolean> = {};
+      for (const id of DEFAULT_CAST.requiredIds) required[id] = true;
+      for (const id of DEFAULT_CAST.optionalIds) required[id] = false;
+      return {
+        ...applyAndInvalidateSelection(s, {
+          attendeeIds: [...DEFAULT_CAST.requiredIds, ...DEFAULT_CAST.optionalIds],
+          required,
+        }),
+        step: 'setup',
+        welcomeDismissed: true,
+      };
+    }
+
+    case 'HYDRATE': {
+      // 마운트 시 1회 — fromUrl(location.search)의 부분 패치를 안전하게 병합한다.
+      const merged: AppState = { ...s, ...a.patch };
+      // 참석자가 비어 오는 딥링크(쿼리 없음/무효 토큰)는 기존 구성을 유지한다.
+      if (!a.patch.attendeeIds || a.patch.attendeeIds.length === 0) {
+        merged.attendeeIds = s.attendeeIds;
+        merged.required = s.required;
+      }
+      // 주최자 불변식 복구 — ME_ID는 항상 포함이며 항상 필수다.
+      if (!merged.attendeeIds.includes(ME_ID)) {
+        merged.attendeeIds = [ME_ID, ...merged.attendeeIds];
+      }
+      merged.required = { ...merged.required, [ME_ID]: true };
+      // 홈 밖으로 착지하는 딥링크는 이미 여정 중 — 웰컴 카드는 접은 상태로 시작한다.
+      if (merged.step !== 'home') merged.welcomeDismissed = true;
+      return merged;
+    }
 
     case 'PLAY_SCAN':
       return { ...s, scanPlayed: true };

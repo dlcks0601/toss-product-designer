@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { reducer, initialState, isMeeting, toUrl, fromUrl } from './reducer';
 import type { AppState } from './reducer';
-import { ME_ID } from '../data/world';
+import { DEFAULT_CAST, ME_ID } from '../data/world';
 
 describe('initialState', () => {
   it('홈 스텝 · 주최자 1인 · 회의 모드 아님 · 기본 길이 60 · 기한 다음 주까지', () => {
@@ -132,9 +132,73 @@ describe('조건 변경 → 선택 낡음(stale) 초기화', () => {
   });
 });
 
+describe('PREFILL_CAST — 웰컴/할 일 카드 공용 6인 프리필', () => {
+  it('기본 캐스트 6인으로 채우고(필수 4 + 선택 2) 셋업 스텝으로 이동한다', () => {
+    const s = reducer(initialState(), { type: 'PREFILL_CAST' });
+    expect(s.attendeeIds).toEqual([...DEFAULT_CAST.requiredIds, ...DEFAULT_CAST.optionalIds]);
+    expect(s.attendeeIds[0]).toBe(ME_ID); // 주최자 맨 앞
+    for (const id of DEFAULT_CAST.requiredIds) expect(s.required[id]).toBe(true);
+    for (const id of DEFAULT_CAST.optionalIds) expect(s.required[id]).toBe(false);
+    expect(s.step).toBe('setup');
+    expect(isMeeting(s)).toBe(true);
+  });
+
+  it('여정 시작이므로 웰컴 카드를 접고, 이전 선택을 무효화한다', () => {
+    const messy: AppState = { ...initialState(), selectedSlotId: 'slot-1', allowPartialRequiredId: 'junho' };
+    const s = reducer(messy, { type: 'PREFILL_CAST' });
+    expect(s.welcomeDismissed).toBe(true);
+    expect(s.selectedSlotId).toBeNull();
+    expect(s.allowPartialRequiredId).toBeNull();
+  });
+});
+
+describe('HYDRATE — 마운트 1회 딥링크 병합', () => {
+  it('fromUrl 패치를 병합한다', () => {
+    const patch = fromUrl(`p=${ME_ID}.r,junho.o&d=30&dl=tw&s=find&slot=slot-9&ap=junho`);
+    const s = reducer(initialState(), { type: 'HYDRATE', patch });
+    expect(s.attendeeIds).toEqual([ME_ID, 'junho']);
+    expect(s.required).toEqual({ [ME_ID]: true, junho: false });
+    expect(s.duration).toBe(30);
+    expect(s.deadline).toBe('this-week');
+    expect(s.step).toBe('find');
+    expect(s.selectedSlotId).toBe('slot-9');
+    expect(s.allowPartialRequiredId).toBe('junho');
+  });
+
+  it('참석자가 비어 오면(빈 쿼리) 기존 구성을 유지한다', () => {
+    const s = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl('') });
+    expect(s.attendeeIds).toEqual([ME_ID]);
+    expect(s.required).toEqual({ [ME_ID]: true });
+  });
+
+  it('주최자 불변식을 복구한다 — ME_ID 누락이면 맨 앞에 넣고 항상 필수로 만든다', () => {
+    const noMe = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl('p=junho.r&s=home') });
+    expect(noMe.attendeeIds).toEqual([ME_ID, 'junho']);
+    expect(noMe.required[ME_ID]).toBe(true);
+
+    const meOptional = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl(`p=${ME_ID}.o,junho.r`) });
+    expect(meOptional.required[ME_ID]).toBe(true); // .o로 와도 필수로 강제
+  });
+
+  it('홈 밖 스텝으로 착지하면 웰컴 카드를 접고, 홈이면 그대로 둔다', () => {
+    const away = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl('s=setup') });
+    expect(away.welcomeDismissed).toBe(true);
+    const home = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl('s=home') });
+    expect(home.welcomeDismissed).toBe(false);
+  });
+});
+
 describe('그 외 단순 액션', () => {
   it('SET_STEP', () => {
     expect(reducer(initialState(), { type: 'SET_STEP', step: 'setup' }).step).toBe('setup');
+  });
+  it('SET_STEP — 홈을 떠나면 웰컴 카드가 자동으로 접히고, 홈 복귀로는 되살아나지 않는다', () => {
+    const away = reducer(initialState(), { type: 'SET_STEP', step: 'invite' });
+    expect(away.welcomeDismissed).toBe(true);
+    const back = reducer(away, { type: 'SET_STEP', step: 'home' });
+    expect(back.welcomeDismissed).toBe(true);
+    // 홈 → 홈은 웰컴을 건드리지 않는다
+    expect(reducer(initialState(), { type: 'SET_STEP', step: 'home' }).welcomeDismissed).toBe(false);
   });
   it('SET_TITLE', () => {
     expect(reducer(initialState(), { type: 'SET_TITLE', title: '주간 싱크' }).title).toBe('주간 싱크');
@@ -186,7 +250,8 @@ describe('RESET', () => {
   });
 
   it('welcomeDismissed가 false였으면 RESET 후에도 false다', () => {
-    const s = reducer(initialState(), { type: 'SET_STEP', step: 'done' });
+    // SET_STEP은 홈을 떠날 때 웰컴을 접으므로, 접히지 않은 상태를 직접 구성한다.
+    const s: AppState = { ...initialState(), step: 'done', welcomeDismissed: false };
     expect(reducer(s, { type: 'RESET' }).welcomeDismissed).toBe(false);
   });
 });

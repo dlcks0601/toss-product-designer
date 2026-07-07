@@ -1,207 +1,152 @@
 'use client';
 
-import { useRef, useState, type ReactNode } from 'react';
-import { RotateCcw } from 'lucide-react';
-import Aurora, { type AuroraVariant } from '../components/Aurora';
-import Avatar from '../components/Avatar';
-import Badge from '../components/Badge';
-import Chip from '../components/Chip';
+import { useEffect, useReducer, type Dispatch } from 'react';
+import Aurora from '../components/Aurora';
+import HomeCalendar from '../components/HomeCalendar';
+import InviteCard from '../components/InviteCard';
 import NotificationBell from '../components/NotificationBell';
 import Reveal from '../components/Reveal';
+import TaskCard from '../components/TaskCard';
 import ToastStack from '../components/ToastStack';
+import WelcomeCard from '../components/WelcomeCard';
 import Wordmark from '../components/Wordmark';
 import { useNotifications } from '../app-state/notifications';
-import { CORE_CAST, ORG } from '../data/world';
-import type { NotificationKind } from '../lib/types';
+import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
+import type { Action, AppState, Step } from '../app-state/reducer';
+import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG } from '../data/world';
+import { fmtTime, weekdayIndex } from '../lib/time';
 
 /**
- * [임시] T11 컴포넌트 갤러리 — UI 파운데이션 육안 검증용. T12(홈)가 이 파일을 대체한다.
+ * 앱 본체 — 단일 페이지 스텝 머신. reducer가 상태를, 주소창(toUrl/fromUrl)이 딥링크를 소유한다.
+ * 'home'만 실제 화면이고 나머지 스텝은 다음 태스크(T13~T19)가 채울 자리 표시자다.
  */
 
-function Section({ label, children }: { label: string; children: ReactNode }) {
+const ME = ORG.find((p) => p.id === ME_ID)!;
+const INVITE_FROM = ORG.find((p) => p.id === INCOMING_INVITE.fromId)!;
+/** 성을 뗀 호칭 — '최민수' → '민수'(응답 토스트 '준호님' 톤과 맞춘다). 2글자 이름은 그대로. */
+const INVITE_FROM_GIVEN = INVITE_FROM.name.length >= 3 ? INVITE_FROM.name.slice(1) : INVITE_FROM.name;
+const CORE_PEOPLE = CORE_CAST.map((id) => ORG.find((p) => p.id === id)!);
+
+const WEEKDAY_SHORT = ['월', '화', '수', '목', '금', '토', '일'] as const;
+
+/** INCOMING_INVITE → '목 7월 9일 오후 2:00' */
+function inviteDateLabel(): string {
+  const [, month, day] = INCOMING_INVITE.day.split('-').map(Number);
+  return `${WEEKDAY_SHORT[weekdayIndex(INCOMING_INVITE.day)]} ${month}월 ${day}일 ${fmtTime(INCOMING_INVITE.start)}`;
+}
+
+export default function Page() {
+  const [state, dispatch] = useReducer(reducer, undefined, initialState);
+  const { toasts, unreadCount, dismiss } = useNotifications();
+
+  // 마운트 시 1회 — 주소창의 딥링크 상태를 흡수한다. (아래 동기화 effect보다 먼저
+  // 선언되어 있어 초기 상태가 주소창을 덮어쓰기 전에 원본 쿼리를 읽는다.)
+  useEffect(() => {
+    dispatch({ type: 'HYDRATE', patch: fromUrl(window.location.search) });
+  }, []);
+
+  // 상태 변경 → 주소창 반영. 히스토리 스택은 쌓지 않는다(replaceState).
+  useEffect(() => {
+    history.replaceState(null, '', `?${toUrl(state)}`);
+  }, [state]);
+
   return (
-    <section className="space-y-4">
-      <h2 className="text-[13px] font-semibold tracking-[-0.01em] text-text-weak">{label}</h2>
-      {children}
-    </section>
+    <>
+      {state.step === 'home' ? (
+        <HomeScreen state={state} dispatch={dispatch} unreadCount={unreadCount} />
+      ) : (
+        <PlaceholderScreen step={state.step} dispatch={dispatch} />
+      )}
+      <ToastStack toasts={toasts} onDismiss={dismiss} />
+    </>
   );
 }
 
-const AURORA_VARIANTS: { variant: AuroraVariant; note: string }[] = [
-  { variant: 'home', note: '홈 — 은은한 공기감' },
-  { variant: 'scan', note: '스캔 — 깊은 맥락' },
-  { variant: 'done', note: '완료 — 가장 따뜻하게' },
-];
+// ── 홈 — 분기점: 여정 A(새 일정/할 일 카드) · 여정 B(받은 초대) ──────────
 
-const DEMO_TOASTS: { kind: NotificationKind; personId?: string; text: string }[] = [
-  { kind: 'response', personId: 'junho', text: '준호님이 참석해요' },
-  { kind: 'response', personId: 'seoyeon', text: '서연님이 참석해요' },
-  { kind: 'invite', text: '민수님이 디자인 리뷰에 초대했어요' },
-  { kind: 'confirmed', text: '수요일 오전 10시로 확정됐어요' },
-];
-
-const CORE_PEOPLE = CORE_CAST.map((id) => ORG.find((p) => p.id === id)!);
-
-export default function GalleryPage() {
-  const { toasts, unreadCount, push, dismiss } = useNotifications();
-  const toastSeq = useRef(0);
-  const [revealKey, setRevealKey] = useState(0);
-  const [deadline, setDeadline] = useState('this-week');
-  const [duration, setDuration] = useState('60');
-
-  const pushDemo = (index: number) => {
-    const spec = DEMO_TOASTS[index % DEMO_TOASTS.length];
-    toastSeq.current += 1;
-    push({ id: `demo-${toastSeq.current}`, at: 0, ...spec });
-  };
+function HomeScreen({
+  state,
+  dispatch,
+  unreadCount,
+}: {
+  state: AppState;
+  dispatch: Dispatch<Action>;
+  unreadCount: number;
+}) {
+  const startMeeting = () => dispatch({ type: 'PREFILL_CAST' }); // 웰컴·할 일 카드 공용
+  const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
+  const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
 
   return (
-    <main className="mx-auto max-w-[720px] space-y-14 px-5 py-14">
-      <header className="flex items-center justify-between">
-        <Wordmark />
-        <span className="text-[12px] text-text-faint">T11 · UI 파운데이션 갤러리 (임시)</span>
-      </header>
+    <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
+      {/* 상단 오로라 — 헤더·카드 영역까지만. 본문은 순백으로 가라앉힌다. */}
+      <div className="relative overflow-hidden">
+        <Aurora variant="home" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white"
+        />
+        <div className="relative mx-auto max-w-[1200px] px-4 lg:px-6">
+          <Reveal as="header" className="flex h-16 items-center justify-between lg:h-[72px]">
+            <Wordmark />
+            <NotificationBell unreadCount={unreadCount} />
+          </Reveal>
 
-      <Section label="오로라 — 합성 전용, 순간에만">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {AURORA_VARIANTS.map(({ variant, note }) => (
-            <figure key={variant} className="space-y-2">
-              <div className="relative h-44 overflow-hidden rounded-card ring-1 ring-border/60">
-                <Aurora variant={variant} />
-                <span className="absolute bottom-3 left-3.5 font-display text-[15px] font-semibold text-text-strong">
-                  {variant}
-                </span>
-              </div>
-              <figcaption className="text-[12px] text-text-weak">{note}</figcaption>
-            </figure>
-          ))}
-        </div>
-      </Section>
+          {!state.welcomeDismissed && (
+            <Reveal delay={70} className="pt-2">
+              <WelcomeCard onStart={startMeeting} onDismiss={() => dispatch({ type: 'DISMISS_WELCOME' })} />
+            </Reveal>
+          )}
 
-      <Section label="리빌 — blur-rise 등장, 60~80ms 스태거">
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={() => setRevealKey((k) => k + 1)}
-            className="pressable inline-flex h-9 items-center gap-1.5 rounded-full bg-section px-4 text-[14px] font-medium text-text-body"
-          >
-            <RotateCcw size={14} aria-hidden />
-            다시 재생
-          </button>
-          <div key={revealKey} className="grid gap-3 sm:grid-cols-3">
-            {[
-              { title: '수요일 오전 10시', sub: '여섯 명 모두 괜찮아요' },
-              { title: '목요일 오후 2시', sub: '하늘님이 앞 30분 함께해요' },
-              { title: '금요일 오전 11시', sub: '점심과 딱 붙어 있어요' },
-            ].map((card, i) => (
-              <Reveal key={card.title} delay={i * 70}>
-                <div className="space-y-1 rounded-card bg-white p-4 shadow-[0_2px_12px_rgba(25,31,40,0.06)] ring-1 ring-border/60">
-                  <p className="text-[15px] font-semibold text-text-strong">{card.title}</p>
-                  <p className="text-[13px] text-text-body">{card.sub}</p>
-                </div>
-              </Reveal>
-            ))}
+          <div className="grid gap-2.5 pb-7 pt-3.5 lg:grid-cols-2 lg:gap-3">
+            <Reveal delay={140}>
+              <TaskCard people={CORE_PEOPLE} onPress={startMeeting} />
+            </Reveal>
+            <Reveal delay={210}>
+              <InviteCard from={INVITE_FROM} fromLabel={INVITE_FROM_GIVEN} dateLabel={inviteDateLabel()} onPress={openInvite} />
+            </Reveal>
           </div>
         </div>
-      </Section>
+      </div>
 
-      <Section label="아바타 — 핵심 6인 + 크기 + 이니셜 폴백">
-        <div className="space-y-4 rounded-card bg-white p-5 ring-1 ring-border/60">
-          <div className="flex items-end gap-3">
-            {CORE_PEOPLE.map((person) => (
-              <figure key={person.id} className="flex flex-col items-center gap-1.5">
-                <Avatar person={person} size={40} />
-                <figcaption className="text-[11px] text-text-weak">{person.name}</figcaption>
-              </figure>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-3 border-t border-border/60 pt-4">
-            <Avatar person={CORE_PEOPLE[0]} size={40} />
-            <Avatar person={CORE_PEOPLE[0]} size={32} />
-            <Avatar person={CORE_PEOPLE[0]} size={24} />
-            <span className="mx-2 h-6 w-px bg-border" aria-hidden />
-            <Avatar name="김손님" size={40} />
-            <Avatar name="박외부" size={32} />
-            <Avatar person={CORE_PEOPLE[3]} size={40} onClick={() => undefined} />
-            <span className="text-[12px] text-text-weak">이니셜 폴백 · 마지막은 onClick 프레스</span>
-          </div>
-        </div>
-      </Section>
+      <Reveal delay={280} className="mx-auto max-w-[1200px] px-4 lg:px-6">
+        <HomeCalendar events={ME.events} invite={INCOMING_INVITE} onOpenInvite={openInvite} onNewEvent={openSetup} />
+      </Reveal>
 
-      <Section label="칩 — 기한 · 길이">
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: 'this-week', label: '이번 주' },
-              { value: 'next-week', label: '다음 주' },
-              { value: 'flexible', label: '여유 있어요' },
-            ].map((c) => (
-              <Chip key={c.value} selected={deadline === c.value} onClick={() => setDeadline(c.value)}>
-                {c.label}
-              </Chip>
-            ))}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { value: '30', label: '30분' },
-              { value: '60', label: '1시간' },
-              { value: '90', label: '1시간 30분' },
-            ].map((c) => (
-              <Chip key={c.value} selected={duration === c.value} onClick={() => setDuration(c.value)}>
-                {c.label}
-              </Chip>
-            ))}
-          </div>
-        </div>
-      </Section>
+      {/* 모바일 고정 CTA — 데스크톱은 캘린더 헤더의 인라인 버튼이 담당한다. */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pt-6 lg:hidden"
+        style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
+      >
+        <button
+          type="button"
+          onClick={openSetup}
+          className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
+        >
+          새 일정 만들기
+        </button>
+      </div>
+    </div>
+  );
+}
 
-      <Section label="배지 — 상태는 항상 텍스트 병기">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="rec">추천</Badge>
-          <Badge tone="ok">일부 아쉬움</Badge>
-          <Badge tone="warn">주의</Badge>
-        </div>
-      </Section>
+// ── 자리 표시자 — home 외 스텝은 다음 태스크에서 채운다 ─────────────────
 
-      <Section label="토스트 — 최대 3장 스택, 4초 자동 소멸, 클릭 시 닫힘">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => pushDemo(toastSeq.current)}
-            className="pressable inline-flex h-9 items-center rounded-full bg-primary px-4 text-[14px] font-semibold text-white"
-          >
-            토스트 하나
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              pushDemo(0);
-              setTimeout(() => pushDemo(1), 450);
-              setTimeout(() => pushDemo(3), 900);
-            }}
-            className="pressable inline-flex h-9 items-center rounded-full bg-section px-4 text-[14px] font-medium text-text-body"
-          >
-            연달아 3개
-          </button>
-        </div>
-      </Section>
-
-      <Section label="알림 벨 — 안 읽음 도트 팝">
-        <div className="flex items-center gap-6 rounded-card bg-white p-5 ring-1 ring-border/60">
-          <div className="flex items-center gap-2">
-            <NotificationBell unreadCount={0} />
-            <span className="text-[12px] text-text-weak">읽음</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <NotificationBell unreadCount={unreadCount || 3} />
-            <span className="text-[12px] text-text-weak">
-              안 읽음{unreadCount > 0 ? ` ${unreadCount}개 (토스트 연동)` : ''}
-            </span>
-          </div>
-        </div>
-      </Section>
-
-      <ToastStack toasts={toasts} onDismiss={dismiss} />
+function PlaceholderScreen({ step, dispatch }: { step: Step; dispatch: Dispatch<Action> }) {
+  return (
+    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col items-center justify-center gap-5 px-4">
+      <Reveal className="w-full rounded-card bg-section px-6 py-12 text-center text-[15px] font-medium text-text-body">
+        단계: {step} — 다음 태스크에서 채워요
+      </Reveal>
+      <Reveal delay={70}>
+        <button
+          type="button"
+          onClick={() => dispatch({ type: 'SET_STEP', step: 'home' })}
+          className="pressable inline-flex h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-text-body ring-1 ring-border"
+        >
+          돌아가기
+        </button>
+      </Reveal>
     </main>
   );
 }
