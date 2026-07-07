@@ -116,6 +116,18 @@ describe('rankSlots opts — 허락제 부분 참석(allow-partial-required)', (
     expect(partialSlot.score).toBe(0); // delta 0 — 부분 effect 자체는 점수 불변
   });
 
+  it('허락제 통과 슬롯은 all-required-ok를 떼어낸다(카피 모순 방지) — 같은 런의 정상 슬롯엔 남는다', () => {
+    // 준호(필수)는 10:00–10:30만 막혀있다: 09:00 슬롯(540–600)은 온전, 10:00 슬롯(600–660)은 부분 참석.
+    const target = person({ id: 'j', name: '준호', events: [ev('e', '2026-07-06', 600, 630, 'meeting', '중간 블록')] });
+    const opened = rankSlots({ attendees: [target], rules, rooms: [], insights: noInsights }, { allowPartialFor: 'j' });
+    const partialSlot = opened.find((s) => s.start === 600)!;
+    expect(partialSlot.reasons.some((r) => r.code === 'optional-partial')).toBe(true);
+    expect(partialSlot.reasons.some((r) => r.code === 'all-required-ok')).toBe(false);
+    const normalSlot = opened.find((s) => s.start === 540)!;
+    expect(normalSlot).toBeDefined();
+    expect(normalSlot.reasons.some((r) => r.code === 'all-required-ok')).toBe(true);
+  });
+
   it("대상의 'none' 충돌은 여전히 막고, 다른 필수의 충돌도 막는다", () => {
     // 09:00–12:00 종일 앞막힘(none), 그리고 다른 필수가 오후 전체를 막음 → 부분 허용해도 안 열린다.
     const target = person({ id: 'j', events: [ev('e1', '2026-07-06', 540, 720, 'meeting', '오전 블록')] });

@@ -58,6 +58,9 @@ export function rankSlots(args: {
       const { effects, partials, roomIds } = scoreSlot({ day, start, end, attendees, insights, rooms });
       // 허락제 통과 슬롯: optional-partial(delta 0) effect + PartialInfo를 덧붙인다 — 카피가 필수에게도 그대로 읽힌다.
       if (partialForTarget) {
+        // 이 슬롯은 필수 중 한 명이 '부분 참석'이므로 "필수 N명 모두 편하게 참석" 카피와 모순된다 — 제거.
+        const okIdx = effects.findIndex((e) => e.code === 'all-required-ok');
+        if (okIdx >= 0) effects.splice(okIdx, 1);
         effects.push({
           code: 'optional-partial',
           delta: 0,
