@@ -64,6 +64,29 @@ describe('scoreSlot — back-to-back(결함③ 양방향)', () => {
     expect(btb.find((e) => e.who === 'B')!.data).toMatchObject({ side: 'after', title: '뒤 회의' });
     expect(btb.every((e) => e.delta === SCORING.backToBack)).toBe(true);
   });
+
+  it('직후 외근은 offsite-day만 남기고 back-to-back은 만들지 않는다 — 이중 감점 방지', () => {
+    // 슬롯 10:00–11:00, 외근 11:00–11:30(직후 인접, 15분 창 안).
+    const a = person({ id: 'A', events: [ev('e', 660, 690, 'offsite', '외근')] });
+    const { effects } = scoreSlot({
+      day: '2026-07-06', start: 600, end: 660, attendees: [a], insights: noInsights, rooms: noRooms,
+    });
+    expect(effects.some((e) => e.code === 'back-to-back')).toBe(false);
+    const o = effects.find((e) => e.code === 'offsite-day');
+    expect(o).toBeDefined();
+    expect(o!.delta).toBe(SCORING.offsite);
+  });
+
+  it('직후 회의는 back-to-back을 만든다(대조군) — meeting은 스캔 대상', () => {
+    const a = person({ id: 'A', events: [ev('e', 660, 690, 'meeting', '뒤 회의')] });
+    const { effects } = scoreSlot({
+      day: '2026-07-06', start: 600, end: 660, attendees: [a], insights: noInsights, rooms: noRooms,
+    });
+    const btb = effects.find((e) => e.code === 'back-to-back');
+    expect(btb).toBeDefined();
+    expect(btb!.delta).toBe(SCORING.backToBack);
+    expect(btb!.data).toMatchObject({ side: 'after', title: '뒤 회의' });
+  });
 });
 
 describe('scoreSlot — focus/offsite/late-start/room', () => {

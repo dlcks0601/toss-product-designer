@@ -98,13 +98,17 @@ function evaluateOptional(
   return { availableIds: okSet, effects, partials: [] };
 }
 
-/** 결함③: 직전·직후 15분 내 붙은 일정을 양방향·사람당 하나로 기록. */
+/** back-to-back 인접 스캔 대상 종류. offsite는 offsite-day가, lunch/focus는 각자 규칙이 담당한다. */
+const BACK_TO_BACK_KINDS = new Set<string>(['meeting', 'personal']);
+
+/** 결함③: 직전·직후 15분 내 붙은 일정을 양방향·사람당 하나로 기록. meeting·personal만 대상. */
 function backToBackEffects(ctx: SlotContext): ScoreEffect[] {
   const { day, start, end } = ctx;
   const effects: ScoreEffect[] = [];
   for (const a of ctx.participating) {
     for (const e of a.events) {
       if (e.day !== day) continue;
+      if (!BACK_TO_BACK_KINDS.has(e.kind)) continue;
       // 직전: 슬롯 시작 15분 전 ~ 시작 사이에 끝나는 일정
       if (e.end <= start && e.end > start - BACK_TO_BACK_BUFFER) {
         effects.push({ code: 'back-to-back', delta: SCORING.backToBack, who: a.id, data: { side: 'before', title: e.title } });
