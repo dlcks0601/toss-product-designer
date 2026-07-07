@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bell, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import { HiBell } from 'react-icons/hi';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { NOTIFICATION_KIND_STYLE } from './ToastStack';
 import { useIsDesktop } from '../app-state/useIsDesktop';
@@ -134,7 +135,7 @@ export default function NotificationBell({ list = [], unreadCount, onOpen, onSel
         aria-label={unreadCount > 0 ? `알림 — 안 읽음 ${unreadCount}개` : '알림'}
         className="pressable relative flex h-10 w-10 items-center justify-center rounded-full text-text-strong hover:bg-section"
       >
-        <Bell size={21} strokeWidth={1.8} aria-hidden />
+        <HiBell size={22} aria-hidden />
         <AnimatePresence>
           {unreadCount > 0 && (
             <motion.span
@@ -144,7 +145,7 @@ export default function NotificationBell({ list = [], unreadCount, onOpen, onSel
               animate={reduced ? { opacity: 1 } : { scale: 1 }}
               exit={reduced ? { opacity: 0 } : { scale: 0 }}
               transition={reduced ? { duration: 0.1 } : { type: 'spring', stiffness: 500, damping: 18 }}
-              className="absolute right-[7px] top-[7px] h-2 w-2 rounded-full bg-error ring-2 ring-white"
+              className="absolute right-[10px] top-[10px] h-2 w-2 rounded-full bg-error"
             />
           )}
         </AnimatePresence>
