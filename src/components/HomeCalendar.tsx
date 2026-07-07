@@ -311,7 +311,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           })}
         </div>
         {/* 본문 — 시각 영역을 상하 여백(inset-y-4)으로 감싸 라벨/이벤트가 가장자리에 붙지 않게 한다. */}
-        <div className="relative h-[680px]">
+        <div className="relative h-[640px]">
           <div className="absolute inset-x-0 inset-y-4 flex">
           {/* 시각 라벨 — 9시~6시 균등 배치. 처음은 위 정렬, 끝은 아래 정렬, 중간은 중앙 정렬. */}
           <div className="relative w-[60px] shrink-0" aria-hidden>
