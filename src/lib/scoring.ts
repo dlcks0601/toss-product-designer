@@ -243,9 +243,10 @@ export function scoreSlot(args: {
   effects.push(...lunchEffects(ctx));
 
   // 회의실: 미설정([])이면 관심사가 아니므로 평가를 건너뛴다. 실제 방이 있는데 다 찼으면 no-room.
+  // 부분 참석자도 참석하는 동안 좌석을 차지하므로 headcount에 포함한다(soft rule의 participating 범위와는 무관).
   let roomIds: string[] = [];
   if (rooms.length > 0) {
-    const headcount = required.length + availableOptional.length;
+    const headcount = required.length + availableOptional.length + optionalResult.partials.length;
     roomIds = availableRooms(rooms, day, start, end, headcount).map((r) => r.id);
     if (roomIds.length === 0) effects.push({ code: 'no-room', delta: SCORING.noRoom });
   }

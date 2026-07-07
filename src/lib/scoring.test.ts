@@ -175,6 +175,17 @@ describe('scoreSlot — focus/offsite/late-start/room', () => {
     expect(roomIds).toEqual([]);
     expect(effects.some((e) => e.code === 'no-room')).toBe(false);
   });
+
+  it('부분 참석자도 좌석을 차지한다 — 필수 1 + 선택-부분 1 → headcount 2, 정원 1 회의실은 제외', () => {
+    const req = person({ id: 'req' });
+    const partial = person({ id: 'opt', attendanceType: 'optional', events: [ev('e', 630, 720, 'meeting', '11시 회의')] });
+    const rooms: Room[] = [
+      { id: 'r1', name: '정원1', capacity: 1, floorNote: '3층', events: [] },
+      { id: 'r2', name: '정원2', capacity: 2, floorNote: '3층', events: [] },
+    ];
+    const { roomIds } = scoreSlot({ day: '2026-07-06', start: 600, end: 660, attendees: [req, partial], insights: noInsights, rooms });
+    expect(roomIds).toEqual(['r2']);
+  });
 });
 
 describe('requiredFrame', () => {
