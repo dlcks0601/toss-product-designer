@@ -65,7 +65,8 @@ const ichan: Person = {
     ev('ichan-w0-l1', W0_WED, 750, 790, '점심', 'lunch'),
     ev('ichan-w0-3', W0_WED, 840, 960, '로드맵 정리', 'meeting'),
     ev('ichan-w0-l2', W0_THU, 750, 790, '점심', 'lunch'),
-    ev('ichan-w0-4', W0_THU, 840, 960, '이해관계자 싱크', 'meeting'),
+    // 900-1020(15:00-17:00): INCOMING_INVITE(목 14:00-15:00)와 겹치지 않도록 뒤로 민다.
+    ev('ichan-w0-4', W0_THU, 900, 1020, '이해관계자 싱크', 'meeting'),
     ev('ichan-w0-l3', W0_FRI, 750, 790, '점심', 'lunch'),
     ev('ichan-w0-5', W0_FRI, 960, 1080, '주간 마감 회의', 'meeting'),
 
@@ -192,7 +193,8 @@ const minsu: Person = {
     ev('minsu-w0-l1', W0_WED, 720, 780, '점심', 'lunch'),
     ev('minsu-w0-1', W0_WED, 840, 960, '디자인 크리틱', 'meeting'),
     ev('minsu-w0-l2', W0_THU, 720, 780, '점심', 'lunch'),
-    ev('minsu-w0-2', W0_THU, 840, 1020, '디자인 시스템 정리', 'meeting'),
+    // 900-1080(15:00-18:00): INCOMING_INVITE(목 14:00-15:00)와 겹치지 않도록 뒤로 민다.
+    ev('minsu-w0-2', W0_THU, 900, 1080, '디자인 시스템 정리', 'meeting'),
     ev('minsu-w0-l3', W0_FRI, 720, 780, '점심', 'lunch'),
     ev('minsu-w0-3', W0_FRI, 780, 900, '리뷰', 'meeting'),
 
@@ -486,7 +488,7 @@ export const INCOMING_INVITE: {
   end: 900,
   reasonsForMe: [
     { code: 'all-required-ok', tone: 'positive', text: '회원님의 금요일 마감 회의를 피했어요' },
-    { code: 'before-lunch-bonus', tone: 'positive', text: '점심 이후라 오후 흐름에 자연스럽게 이어져요' },
+    { code: 'optional-ok', tone: 'positive', text: '점심 이후라 오후 흐름에 자연스럽게 이어져요' },
     { code: 'offsite-day', tone: 'warning', text: '박준호님은 이날 외근이라 화상으로 합류해요' },
   ],
 };

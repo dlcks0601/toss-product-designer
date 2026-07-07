@@ -159,6 +159,18 @@ describe('S5 / S6 — 수신 초대 · 응답 각본', () => {
     }
   });
 
+  it('INCOMING_INVITE 슬롯은 이찬·민수 양쪽 캘린더 모두와 실제로 겹치지 않는다', () => {
+    const overlaps = (a: { start: number; end: number }, b: { start: number; end: number }) =>
+      a.start < b.end && b.start < a.end;
+    for (const personId of [ME_ID, INCOMING_INVITE.fromId]) {
+      const person = ORG.find((p) => p.id === personId)!;
+      const clashes = person.events.filter(
+        (e) => e.day === INCOMING_INVITE.day && overlaps(e, INCOMING_INVITE),
+      );
+      expect(clashes, `${person.name}(${personId})의 겹치는 일정: ${clashes.map((e) => e.title).join(', ')}`).toHaveLength(0);
+    }
+  });
+
   it('RESPONSE_SCRIPT 는 준호·서연·하늘 순의 3줄이다', () => {
     expect(RESPONSE_SCRIPT).toEqual([
       { afterMs: 3000, personId: 'junho', kind: 'accepted', text: '준호님이 참석해요' },
