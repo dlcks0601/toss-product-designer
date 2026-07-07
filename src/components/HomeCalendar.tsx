@@ -181,7 +181,7 @@ function MobileDayList({
 function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] | null }) {
   const st = KIND_STYLE[ev.kind];
   return (
-    <div className="flex items-center gap-3 rounded-xl border px-4 py-3" style={kindBoxStyle(ev.kind)}>
+    <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: st.bg, backgroundImage: st.stripes }}>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-semibold" style={{ color: st.title }}>
           {ev.title}
@@ -287,7 +287,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           {days.map((day, i) => {
             const today = day === TODAY;
             return (
-              <div key={day} className="flex flex-1 items-center justify-center gap-1.5 border-l border-border/50 py-2.5">
+              <div key={day} className="flex flex-1 items-center justify-center gap-1.5 py-2.5">
                 <span className={`text-[12px] ${today ? 'font-semibold text-primary' : 'text-text-weak'}`}>
                   {WEEKDAY_LABELS[i]}
                 </span>
@@ -306,17 +306,17 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
             {hours.slice(0, -1).map((h, i) => (
               <span
                 key={h}
-                className="absolute right-2 -translate-y-1/2 text-[11px] text-text-faint"
+                className={`absolute right-2 text-[11px] text-text-faint ${i === 0 ? '' : '-translate-y-1/2'}`}
                 style={{ top: `${(i / (hours.length - 1)) * 100}%` }}
               >
-                {i === 0 ? '' : hourLabel(h)}
+                {hourLabel(h)}
               </span>
             ))}
           </div>
           {days.map((day) => {
             const ghost = ghostOn(day);
             return (
-              <div key={day} className="relative flex-1 border-l border-border/50">
+              <div key={day} className="relative flex-1">
                 {eventsOn(events, day).map((ev) => {
                   const top = yPct(ev.start);
                   const height = yPct(ev.end) - top;
@@ -329,8 +329,8 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   return (
                     <div
                       key={ev.id}
-                      className="absolute inset-x-1 overflow-hidden rounded-[8px] border px-2 py-[3px]"
-                      style={{ top: `${top}%`, height: `calc(${height}% - 2px)`, ...kindBoxStyle(ev.kind) }}
+                      className="absolute inset-x-1 overflow-hidden rounded-xl px-2 py-[3px]"
+                      style={{ top: `${top}%`, height: `calc(${height}% - 2px)`, backgroundColor: KIND_STYLE[ev.kind].bg, backgroundImage: KIND_STYLE[ev.kind].stripes }}
                     >
                       <p className="truncate text-[13px] font-semibold leading-[1.3]" style={{ color: st.title }}>
                         {ev.title}
