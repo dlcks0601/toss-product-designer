@@ -45,8 +45,8 @@ const W2_THU = '2026-07-23';
 const W2_FRI = '2026-07-24';
 
 /** 이벤트 팩토리 — 결정적 id. */
-function ev(id: string, day: string, start: number, end: number, title: string, kind: EventKind, room?: string): CalendarEvent {
-  return { id, day, start, end, title, kind, room };
+function ev(id: string, day: string, start: number, end: number, title: string, kind: EventKind, room?: string, external?: boolean): CalendarEvent {
+  return { id, day, start, end, title, kind, room, external };
 }
 
 // ── 핵심 6인 ───────────────────────────────────────────────
@@ -61,12 +61,12 @@ const ichan: Person = {
   events: [
     // ── 현재 주(캘린더용 + S4 this-week) : 오전은 비워 junho 병목이 드러나게 ──
     ev('ichan-w0-1', W0_MON, 690, 780, '주간 스프린트 계획', 'meeting', '미팅룸 3'),
-    ev('ichan-w0-2', W0_TUE, 660, 780, '제품 리뷰', 'meeting', 'UT룸'),
+    ev('ichan-w0-2', W0_TUE, 660, 780, '제품 리뷰', 'meeting', 'UT룸', true),
     ev('ichan-w0-l1', W0_WED, 720, 810, '점심', 'lunch'),
     ev('ichan-w0-3', W0_WED, 840, 960, '로드맵 정리', 'meeting', '미팅룸 2'),
     ev('ichan-w0-l2', W0_THU, 720, 810, '점심', 'lunch'),
     // 900-1020(15:00-17:00): INCOMING_INVITE(목 14:00-15:00)와 겹치지 않도록 뒤로 민다.
-    ev('ichan-w0-4', W0_THU, 900, 1020, '이해관계자 싱크', 'meeting', '미팅룸 5'),
+    ev('ichan-w0-4', W0_THU, 900, 1020, '이해관계자 싱크', 'meeting', '미팅룸 5', true),
     ev('ichan-w0-l3', W0_FRI, 720, 810, '점심', 'lunch'),
     ev('ichan-w0-5', W0_FRI, 960, 1080, '주간 마감 회의', 'meeting', '미팅룸 1'),
 
@@ -74,12 +74,12 @@ const ichan: Person = {
     ev('ichan-w1-l1', W1_MON, 720, 810, '점심', 'lunch'),
     ev('ichan-w1-1', W1_MON, 810, 930, '팀 미팅', 'meeting', '미팅룸 2'),
     ev('ichan-w1-l2', W1_TUE, 720, 810, '점심', 'lunch'),
-    ev('ichan-w1-2', W1_TUE, 600, 720, '제품 리뷰', 'meeting', 'UT룸'),
-    ev('ichan-w1-3', W1_TUE, 960, 1080, '스폰서 리뷰', 'meeting', '미팅룸 5'),
+    ev('ichan-w1-2', W1_TUE, 600, 720, '제품 리뷰', 'meeting', 'UT룸', true),
+    ev('ichan-w1-3', W1_TUE, 960, 1080, '스폰서 리뷰', 'meeting', '미팅룸 5', true),
     ev('ichan-w1-l3', W1_WED, 720, 810, '점심', 'lunch'),
     ev('ichan-w1-3b', W1_WED, 900, 1080, '분기 리뷰', 'meeting', '미팅룸 1'),
     ev('ichan-w1-l4', W1_THU, 720, 810, '점심', 'lunch'),
-    ev('ichan-w1-4', W1_THU, 900, 1020, '채용 인터뷰', 'meeting', '미팅룸 3'),
+    ev('ichan-w1-4', W1_THU, 900, 1020, '채용 인터뷰', 'meeting', '미팅룸 3', true),
     ev('ichan-w1-l5', W1_FRI, 720, 810, '점심', 'lunch'),
     ev('ichan-w1-5', W1_FRI, 810, 930, '위클리 랩업', 'meeting', '미팅룸 4'),
 

@@ -43,10 +43,10 @@ describe('weekDays — 주 인덱스 → 월~금 5일', () => {
   });
 });
 
-describe('yPct — 분 → 9~19시 프레임 세로 위치(%)', () => {
+describe('yPct — 분 → 9~18시 프레임 세로 위치(%)', () => {
   it('프레임 시작·중간·끝', () => {
     expect(yPct(DAY_START)).toBe(0);
-    expect(yPct(840)).toBe(50); // 14:00 = 프레임 정중앙
+    expect(yPct(810)).toBe(50); // 13:30 = 프레임 정중앙(9~18시)
     expect(yPct(DAY_END)).toBe(100);
   });
   it('프레임 밖은 경계로 클램프된다', () => {

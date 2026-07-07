@@ -28,7 +28,7 @@ export const FIRST_MONDAY = '2026-07-06';
 export const WEEK_COUNT = 3;
 /** 그리드 세로 프레임 — 9시~19시. */
 export const DAY_START = 540;
-export const DAY_END = 1140;
+export const DAY_END = 1080;
 
 /** 주 인덱스를 0..WEEK_COUNT-1로 클램프한다. */
 export function clampWeek(index: number): number {
@@ -65,7 +65,7 @@ export interface KindStyle {
 }
 
 export const KIND_STYLE: Record<EventKind, KindStyle> = {
-  meeting: { bg: '#DEEBFC', border: '#C9E2FF', title: '#3182F6', sub: '#6E9CEC' },
+  meeting: { bg: '#DFF9FE', border: '#BEEFFB', title: '#0099FF', sub: '#5CB8F5' },
   focus: { bg: '#DFF4E7', border: '#BEE3CF', title: '#12A150', sub: '#5FC08D' },
   lunch: { bg: '#F2F4F6', border: 'rgba(229,232,235,0.6)', title: '#8B95A1', sub: '#B0B8C1' },
   personal: { bg: '#F1ECFE', border: '#DED3F8', title: '#7C4DFF', sub: '#A98BF0' },
@@ -88,9 +88,21 @@ export function kindBoxStyle(kind: EventKind): CSSProperties {
   };
 }
 
+/** 외부/타팀과 함께하는 미팅 — 내부 미팅(파랑)과 구분되는 옐로우그린. */
+export const EXTERNAL_STYLE: KindStyle = { bg: '#F0FED9', border: '#DCF0AC', title: '#7CBE00', sub: '#A4D440' };
+
+/** 이벤트별 표시 스타일 — 회의 중 external은 옐로우그린, 그 외는 종류별 팔레트. */
+export function styleFor(ev: CalendarEvent): KindStyle {
+  return ev.kind === 'meeting' && ev.external ? EXTERNAL_STYLE : KIND_STYLE[ev.kind];
+}
+
+// 응답대기(받은 초대) 고스트 — 배경 없이 점선만. 색은 azure 미팅 톤에 맞춘다.
+const GHOST_BORDER = '#DFF9FE';
+const GHOST_TITLE = '#0099FF';
+const GHOST_SUB = '#5CB8F5';
 const GHOST_STYLE: CSSProperties = {
   backgroundColor: 'transparent',
-  borderColor: '#7FB2F5',
+  borderColor: GHOST_BORDER,
 };
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금'] as const;
@@ -165,11 +177,11 @@ function MobileDayList({
         <button
           type="button"
           onClick={onOpenInvite}
-          className="pressable w-full rounded-2xl border-[1.5px] border-dashed px-4 py-3.5 text-left"
+          className="pressable w-full rounded-2xl border-2 border-dashed px-4 py-3.5 text-left"
           style={GHOST_STYLE}
         >
-          <p className="truncate text-[14px] font-semibold text-primary">📩 {ghost.title}</p>
-          <p className="mt-0.5 text-[12px] text-primary/60">{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
+          <p className="truncate text-[14px] font-semibold" style={{ color: GHOST_TITLE }}>{ghost.title}</p>
+          <p className="mt-0.5 text-[12px]" style={{ color: GHOST_SUB }}>{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
         </button>
       )}
       {ghostIndex !== -1 &&
@@ -179,7 +191,7 @@ function MobileDayList({
 }
 
 function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] | null }) {
-  const st = KIND_STYLE[ev.kind];
+  const st = styleFor(ev);
   return (
     <div className="flex items-center gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: st.bg, backgroundImage: st.stripes }}>
       <div className="min-w-0 flex-1">
@@ -299,19 +311,24 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
             );
           })}
         </div>
-        {/* 본문 */}
-        <div className="relative flex h-[560px]">
-          {/* 시각 라벨 + 시간선 */}
+        {/* 본문 — 시각 영역을 상하 여백(inset-y-4)으로 감싸 라벨/이벤트가 가장자리에 붙지 않게 한다. */}
+        <div className="relative h-[680px]">
+          <div className="absolute inset-x-0 inset-y-4 flex">
+          {/* 시각 라벨 — 9시~6시 균등 배치. 처음은 위 정렬, 끝은 아래 정렬, 중간은 중앙 정렬. */}
           <div className="relative w-[60px] shrink-0" aria-hidden>
-            {hours.slice(0, -1).map((h, i) => (
-              <span
-                key={h}
-                className={`absolute right-2 text-[11px] text-text-faint ${i === 0 ? '' : '-translate-y-1/2'}`}
-                style={{ top: `${(i / (hours.length - 1)) * 100}%` }}
-              >
-                {hourLabel(h)}
-              </span>
-            ))}
+            {hours.map((h, i) => {
+              const first = i === 0;
+              const last = i === hours.length - 1;
+              return (
+                <span
+                  key={h}
+                  className={`absolute right-2 text-[11px] text-text-faint ${first ? '' : last ? '-translate-y-full' : '-translate-y-1/2'}`}
+                  style={{ top: `${(i / (hours.length - 1)) * 100}%` }}
+                >
+                  {hourLabel(h)}
+                </span>
+              );
+            })}
           </div>
           {days.map((day) => {
             const ghost = ghostOn(day);
@@ -321,7 +338,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   const top = yPct(ev.start);
                   const height = yPct(ev.end) - top;
                   const compact = ev.end - ev.start < 50;
-                  const st = KIND_STYLE[ev.kind];
+                  const st = styleFor(ev);
                   const badges =
                     responseBadges && responseBadges.eventId === ev.id && responseBadges.people.length > 0
                       ? responseBadges.people
@@ -330,13 +347,13 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                     <div
                       key={ev.id}
                       className="absolute inset-x-1.5 overflow-hidden rounded-xl px-3 py-2"
-                      style={{ top: `calc(${top}% + 3px)`, height: `calc(${height}% - 6px)`, backgroundColor: KIND_STYLE[ev.kind].bg, backgroundImage: KIND_STYLE[ev.kind].stripes }}
+                      style={{ top: `calc(${top}% + 3px)`, height: `calc(${height}% - 6px)`, backgroundColor: st.bg, backgroundImage: st.stripes }}
                     >
-                      <p className="truncate text-[13px] font-semibold leading-[1.3]" style={{ color: st.title }}>
+                      <p className="truncate text-[13px] font-bold leading-[1.3]" style={{ color: st.title }}>
                         {ev.title}
                       </p>
                       {!compact && (
-                        <p className="truncate text-[11px] leading-[1.3]" style={{ color: st.sub }}>
+                        <p className="truncate text-[11px] font-medium leading-[1.3]" style={{ color: st.sub }}>
                           {fmtRange(ev.start, ev.end)}
                           {ev.room ? `, ${ev.room}` : ''}
                         </p>
@@ -353,15 +370,15 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   <button
                     type="button"
                     onClick={onOpenInvite}
-                    className="pressable absolute inset-x-1.5 overflow-hidden rounded-xl border-[1.5px] border-dashed px-3 py-2 text-left"
+                    className="pressable absolute inset-x-1.5 overflow-hidden rounded-xl border-2 border-dashed px-3 py-2 text-left"
                     style={{
                       top: `calc(${yPct(ghost.start)}% + 3px)`,
                       height: `calc(${yPct(ghost.end) - yPct(ghost.start)}% - 6px)`,
                       ...GHOST_STYLE,
                     }}
                   >
-                    <p className="truncate text-[13px] font-semibold leading-[1.3] text-primary">📩 {ghost.title}</p>
-                    <p className="truncate text-[11px] leading-[1.3] text-primary/60">
+                    <p className="truncate text-[13px] font-bold leading-[1.3]" style={{ color: GHOST_TITLE }}>{ghost.title}</p>
+                    <p className="truncate text-[11px] font-medium leading-[1.3]" style={{ color: GHOST_SUB }}>
                       {fmtRange(ghost.start, ghost.end)} · 응답 대기
                     </p>
                   </button>
@@ -369,6 +386,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
               </div>
             );
           })}
+          </div>
         </div>
       </div>
 
