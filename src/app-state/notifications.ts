@@ -111,6 +111,8 @@ export function useNotifications(): UseNotificationsResult {
  * RESPONSE_SCRIPT를 setTimeout 큐로 재생해 각 항목을 afterMs에 push한다.
  * 확정(CONFIRM) 후 홈으로 돌아왔을 때 page.tsx가 호출하는 용도다(배선은 이 파일의 몫이 아니다).
  * 반환된 cancel()로 아직 발화하지 않은 예약을 모두 취소할 수 있다.
+ * at은 발화 시각(epoch ms) — 알림 센터의 상대시간('방금')이 이 값을 읽는다.
+ * (Date.now()는 UI 레이어라 허용 — 순수성 규칙은 src/lib 전용.)
  */
 export function playResponseScript(push: (n: AppNotification) => void): () => void {
   let counter = 0;
@@ -122,7 +124,7 @@ export function playResponseScript(push: (n: AppNotification) => void): () => vo
         kind: 'response',
         personId: item.personId,
         text: item.text,
-        at: item.afterMs,
+        at: Date.now(),
       });
     }, item.afterMs)
   );

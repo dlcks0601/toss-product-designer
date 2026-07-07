@@ -478,14 +478,17 @@ export const ROOMS: Room[] = [
 // ── S5: 수신 초대 ──────────────────────────────────────────
 // 최민수 → 나. 받는 사람(나) 관점의 해요체. 내 줄(회원님)이 첫 줄.
 // 코드값은 SlotReason 재사용, 세계 사실과 모순 없게 손으로 쓴다.
+// attendeeCount는 각본 수치(민수가 잡은 회의의 전체 인원) — 초대 카드 헤드라인이 그대로 쓴다.
 export const INCOMING_INVITE: {
-  fromId: string; title: string; day: string; start: number; end: number; reasonsForMe: SlotReason[];
+  fromId: string; title: string; day: string; start: number; end: number;
+  attendeeCount: number; reasonsForMe: SlotReason[];
 } = {
   fromId: 'minsu',
   title: '디자인 시스템 리뷰',
   day: W0_THU, // 목 7/9 14:00~15:00
   start: 840,
   end: 900,
+  attendeeCount: 5,
   reasonsForMe: [
     { code: 'all-required-ok', tone: 'positive', text: '회원님의 금요일 마감 회의를 피했어요' },
     { code: 'optional-ok', tone: 'positive', text: '점심 이후라 오후 흐름에 자연스럽게 이어져요' },

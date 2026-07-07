@@ -61,11 +61,15 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
 }
 
 /* ── 리빌 — blur-rise 등장. 페이드 800ms / 상승·선명 900ms, expo-out.
-   스태거는 inline animation-delay(부모가 60~80ms 간격으로 지정). ────────── */
+   스태거는 inline animation-delay(부모가 60~80ms 간격으로 지정).
+   fill은 backwards(딜레이 동안 from 상태 유지)만 — forwards로 끝값(translateY(0)·blur(0))을
+   영구히 남기면 transform·filter가 containing block이 되어, 자손의 position:fixed
+   오버레이(알림 센터 바텀시트 등)가 뷰포트가 아니라 리빌 박스에 갇힌다.
+   끝 키프레임이 항등값이라 backwards와 both는 렌더 결과가 같다. ────────── */
 .reveal {
   animation:
-    reveal-fade 800ms var(--bezier-expo) both,
-    reveal-rise 900ms var(--bezier-expo) both;
+    reveal-fade 800ms var(--bezier-expo) backwards,
+    reveal-rise 900ms var(--bezier-expo) backwards;
 }
 @keyframes reveal-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes reveal-rise {

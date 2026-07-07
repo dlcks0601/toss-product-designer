@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { reducer, initialState, isMeeting, toUrl, fromUrl } from './reducer';
 import type { AppState } from './reducer';
-import { DEFAULT_CAST, ME_ID } from '../data/world';
+import { DEFAULT_CAST, INCOMING_INVITE, ME_ID } from '../data/world';
 
 describe('initialState', () => {
   it('홈 스텝 · 주최자 1인 · 회의 모드 아님 · 기본 길이 60 · 기한 다음 주까지', () => {
@@ -375,6 +375,56 @@ describe('그 외 단순 액션', () => {
     expect(reducer(initialState(), { type: 'RESPOND_INVITE', response: 'accepted' }).inviteResponded).toBe(
       'accepted'
     );
+  });
+});
+
+describe('RESPOND_INVITE — 여정 B 응답(수락→캘린더 반영 / 거절→플래그만)', () => {
+  it('참석할게요 — INCOMING_INVITE가 내 캘린더(myEvents)에 meeting으로 자리 잡는다', () => {
+    const next = reducer(initialState(), { type: 'RESPOND_INVITE', response: 'accepted' });
+    expect(next.inviteResponded).toBe('accepted');
+    expect(next.myEvents).toHaveLength(1);
+    expect(next.myEvents[0]).toMatchObject({
+      day: INCOMING_INVITE.day,
+      start: INCOMING_INVITE.start,
+      end: INCOMING_INVITE.end,
+      title: INCOMING_INVITE.title,
+      kind: 'meeting',
+    });
+  });
+
+  it('어려워요 — 플래그만 세우고 캘린더는 건드리지 않는다(고스트·카드는 렌더 게이트로 소멸)', () => {
+    const next = reducer(initialState(), { type: 'RESPOND_INVITE', response: 'difficult' });
+    expect(next.inviteResponded).toBe('difficult');
+    expect(next.myEvents).toHaveLength(0);
+  });
+
+  it('응답은 1회 — 이미 응답했다면 no-op(중복 myEvents 추가 방지)', () => {
+    const accepted = reducer(initialState(), { type: 'RESPOND_INVITE', response: 'accepted' });
+    const again = reducer(accepted, { type: 'RESPOND_INVITE', response: 'accepted' });
+    expect(again).toBe(accepted); // 참조 동일 — 완전 no-op
+    expect(again.myEvents).toHaveLength(1);
+    // 다른 응답으로 바꾸려는 시도도 no-op이다.
+    const flipped = reducer(accepted, { type: 'RESPOND_INVITE', response: 'difficult' });
+    expect(flipped).toBe(accepted);
+  });
+
+  it('수락 회의는 기존 myEvents(확정 회의·개인 일정) 뒤에 쌓인다', () => {
+    const withMeeting: AppState = {
+      ...initialState(),
+      myEvents: [{ id: 'confirmed-2026-07-15T600', day: '2026-07-15', start: 600, end: 660, title: '팀 회의', kind: 'meeting' }],
+    };
+    const next = reducer(withMeeting, { type: 'RESPOND_INVITE', response: 'accepted' });
+    expect(next.myEvents.map((e) => e.id)).toEqual([
+      'confirmed-2026-07-15T600',
+      `invite-${INCOMING_INVITE.day}T${INCOMING_INVITE.start}`,
+    ]);
+  });
+
+  it('RESET 후에도 수락으로 자리 잡은 회의는 남는다(myEvents 보존 계약)', () => {
+    const accepted = reducer(initialState(), { type: 'RESPOND_INVITE', response: 'accepted' });
+    const next = reducer(accepted, { type: 'RESET' });
+    expect(next.myEvents).toHaveLength(1);
+    expect(next.inviteResponded).toBeNull(); // 여정 상태는 초기화(기존 RESET 계약 유지)
   });
 });
 

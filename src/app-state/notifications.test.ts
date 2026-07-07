@@ -104,6 +104,16 @@ describe('playResponseScript — RESPONSE_SCRIPT 재생', () => {
     expect(ids).toEqual(['resp-1', 'resp-2', 'resp-3']);
   });
 
+  it('at은 발화 시각(epoch ms)이다 — 알림 센터 상대시간의 근거', () => {
+    const push = vi.fn();
+    const base = Date.now(); // fake timers — advanceTimersByTime이 Date도 함께 움직인다
+    playResponseScript(push);
+    vi.advanceTimersByTime(3000);
+    expect(push.mock.calls[0][0].at).toBe(base + 3000);
+    vi.advanceTimersByTime(3000);
+    expect(push.mock.calls[1][0].at).toBe(base + 6000);
+  });
+
   it('cancel()을 호출하면 아직 발화하지 않은 예약이 모두 취소된다', () => {
     const push = vi.fn();
     const cancel = playResponseScript(push);

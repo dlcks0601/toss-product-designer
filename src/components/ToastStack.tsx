@@ -31,7 +31,8 @@ export function stackPose(depth: number, desktop: boolean): { y: number; scale: 
   };
 }
 
-const KIND_STYLE: Record<NotificationKind, { Icon: typeof Check; wrap: string }> = {
+/** kind → 아이콘·틴트 — 알림 센터(NotificationBell 패널)와 공유하는 단일 소스. */
+export const NOTIFICATION_KIND_STYLE: Record<NotificationKind, { Icon: typeof Check; wrap: string }> = {
   response: { Icon: Check, wrap: 'bg-primary-tint text-primary' },
   invite: { Icon: Mail, wrap: 'bg-section text-text-body' },
   confirmed: { Icon: PartyPopper, wrap: 'bg-[#FFF0DC] text-[#B96A0B]' },
@@ -74,7 +75,7 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
         {visible.map((toast, i) => {
           const depth = count - 1 - i;
           const pose = stackPose(depth, desktop);
-          const { Icon, wrap } = KIND_STYLE[toast.kind];
+          const { Icon, wrap } = NOTIFICATION_KIND_STYLE[toast.kind];
           return (
             <motion.div
               key={toast.id}

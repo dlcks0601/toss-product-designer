@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useReducer, useState, type Dispatch } from 'react';
+import { useEffect, useMemo, useReducer, useRef, useState, type Dispatch } from 'react';
 import { useReducedMotion } from 'motion/react';
 import Aurora from '../components/Aurora';
 import ConfirmStep from '../components/ConfirmStep';
@@ -9,6 +9,7 @@ import FindTimeDesktop from '../components/FindTimeDesktop';
 import FindTimeMobile from '../components/FindTimeMobile';
 import HomeCalendar from '../components/HomeCalendar';
 import InviteCard from '../components/InviteCard';
+import InviteView from '../components/InviteView';
 import NotificationBell from '../components/NotificationBell';
 import Reveal from '../components/Reveal';
 import ScanMoment from '../components/ScanMoment';
@@ -17,17 +18,28 @@ import TaskCard from '../components/TaskCard';
 import ToastStack from '../components/ToastStack';
 import WelcomeCard from '../components/WelcomeCard';
 import Wordmark from '../components/Wordmark';
-import { useNotifications } from '../app-state/notifications';
+import { playResponseScript, useNotifications } from '../app-state/notifications';
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
 import { useCandidates } from '../app-state/useCandidates';
 import { useIsDesktop } from '../app-state/useIsDesktop';
-import type { Action, AppState, Step } from '../app-state/reducer';
-import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG } from '../data/world';
+import type { Action, AppState } from '../app-state/reducer';
+import type { ResponseBadges } from '../components/HomeCalendar';
+import type { AppNotification } from '../lib/types';
+import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG, RESPONSE_SCRIPT } from '../data/world';
 import { fmtTime, weekdayIndex } from '../lib/time';
 
 /**
  * 앱 본체 — 단일 페이지 스텝 머신. reducer가 상태를, 주소창(toUrl/fromUrl)이 딥링크를 소유한다.
- * home·setup·find·confirm·done은 실제 화면, 'invite'만 T19가 채울 자리 표시자다.
+ * home·setup·find·confirm·done에 더해 invite(여정 B/미리보기)까지 전 스텝이 실제 화면이다.
+ *
+ * T19 배선(제품 루프의 마감):
+ *  - 초대 뷰 mode: reducer에 origin이 없으므로 직전 스텝을 ref로 추적 — done에서
+ *    들어오면 'preview'(내가 보낸 초대의 수신자 관점), 그 외는 'incoming'(민수의 초대).
+ *  - 응답 각본: 확정(confirmedSlotId) 후 홈에 도착하는 첫 순간 1회만 재생(세션 로컬
+ *    플래그 — reducer가 아니라 로컬 state). 재생이 시작되면 스텝을 옮겨도 끊지 않고
+ *    (토스트는 전역 오버레이) cancel은 페이지 언마운트 cleanup에만 묶는다.
+ *  - 응답 배지: 도착한 response 알림(personId)을 각본 순서로 모아, 방금 확정한
+ *    회의 블록(myEvents의 confirmed-*)에 아바타 스택으로 얹는다.
  */
 
 const ME = ORG.find((p) => p.id === ME_ID)!;
@@ -46,7 +58,7 @@ function inviteDateLabel(): string {
 
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
-  const { toasts, unreadCount, dismiss } = useNotifications();
+  const { list, toasts, unreadCount, push, dismiss, markAllRead } = useNotifications();
 
   // 마운트 시 1회 — 주소창의 딥링크 상태를 흡수한다. (아래 동기화 effect보다 먼저
   // 선언되어 있어 초기 상태가 주소창을 덮어쓰기 전에 원본 쿼리를 읽는다.)
@@ -59,10 +71,71 @@ export default function Page() {
     history.replaceState(null, '', `?${toUrl(state)}`);
   }, [state]);
 
+  // ── 초대 뷰 mode — 직전 스텝 추적(done → 'preview', 그 외 → 'incoming') ──
+  const [inviteMode, setInviteMode] = useState<'incoming' | 'preview'>('incoming');
+  const prevStepRef = useRef(state.step);
+  useEffect(() => {
+    const prev = prevStepRef.current;
+    if (state.step === 'invite' && prev !== 'invite') {
+      setInviteMode(prev === 'done' ? 'preview' : 'incoming');
+    }
+    prevStepRef.current = state.step;
+  }, [state.step]);
+
+  // ── 응답 각본 재생 — 확정 후 홈 도착 시 1회(세션 로컬 플래그) ──
+  const [scriptStarted, setScriptStarted] = useState(false);
+  useEffect(() => {
+    if (!scriptStarted && state.step === 'home' && state.confirmedSlotId !== null) {
+      setScriptStarted(true);
+    }
+  }, [scriptStarted, state.step, state.confirmedSlotId]);
+  useEffect(() => {
+    if (!scriptStarted) return;
+    // 시작되면 스텝 이동에도 계속 흐른다 — cancel은 언마운트 cleanup에만 묶인다.
+    return playResponseScript(push);
+  }, [scriptStarted, push]);
+
+  // ── 응답 배지 — 도착한 response 알림을 각본 순서로 모아 확정 회의 블록에 ──
+  const responseBadges = useMemo<ResponseBadges | null>(() => {
+    const confirmedEvent = [...state.myEvents].reverse().find((e) => e.id.startsWith('confirmed-'));
+    if (!confirmedEvent) return null;
+    const arrived = new Set(
+      [...toasts, ...list].filter((n) => n.kind === 'response' && n.personId).map((n) => n.personId!),
+    );
+    const people = RESPONSE_SCRIPT.filter((item) => arrived.has(item.personId)).map(
+      (item) => ORG.find((p) => p.id === item.personId)!,
+    );
+    return people.length > 0 ? { eventId: confirmedEvent.id, people } : null;
+  }, [state.myEvents, toasts, list]);
+
+  // ── 여정 B 응답 — RESPOND_INVITE + 알림 센터 적립(1회 가드) ──
+  const respondInvite = (response: 'accepted' | 'difficult') => {
+    if (state.inviteResponded !== null) return; // reducer도 no-op이지만 알림 중복 방지
+    dispatch({ type: 'RESPOND_INVITE', response });
+    const note: AppNotification = {
+      id: `invite-resp-${response}`,
+      kind: 'invite',
+      personId: INCOMING_INVITE.fromId,
+      text:
+        response === 'accepted'
+          ? `${INVITE_FROM_GIVEN}님에게 참석 응답을 보냈어요`
+          : `${INVITE_FROM_GIVEN}님에게 어려운 사정을 전했어요`,
+      at: Date.now(),
+    };
+    push(note);
+  };
+
   return (
     <>
       {state.step === 'home' ? (
-        <HomeScreen state={state} dispatch={dispatch} unreadCount={unreadCount} />
+        <HomeScreen
+          state={state}
+          dispatch={dispatch}
+          unreadCount={unreadCount}
+          notifications={list}
+          onOpenNotifications={markAllRead}
+          responseBadges={responseBadges}
+        />
       ) : state.step === 'setup' ? (
         <SetupForm state={state} dispatch={dispatch} />
       ) : state.step === 'find' ? (
@@ -72,7 +145,7 @@ export default function Page() {
       ) : state.step === 'done' ? (
         <DoneStep state={state} dispatch={dispatch} />
       ) : (
-        <PlaceholderScreen step={state.step} dispatch={dispatch} />
+        <InviteView mode={inviteMode} state={state} dispatch={dispatch} onRespond={respondInvite} />
       )}
       <ToastStack toasts={toasts} onDismiss={dismiss} />
     </>
@@ -85,14 +158,22 @@ function HomeScreen({
   state,
   dispatch,
   unreadCount,
+  notifications,
+  onOpenNotifications,
+  responseBadges,
 }: {
   state: AppState;
   dispatch: Dispatch<Action>;
   unreadCount: number;
+  notifications: AppNotification[];
+  onOpenNotifications: () => void;
+  responseBadges: ResponseBadges | null;
 }) {
   const startMeeting = () => dispatch({ type: 'PREFILL_CAST' }); // 웰컴·할 일 카드 공용
   const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
   const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
+  // 응답을 마친 초대는 카드·고스트 모두 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).
+  const invitePending = state.inviteResponded === null;
 
   return (
     <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
@@ -106,7 +187,7 @@ function HomeScreen({
         <div className="relative mx-auto max-w-[1200px] px-4 lg:px-6">
           <Reveal as="header" className="flex h-16 items-center justify-between lg:h-[72px]">
             <Wordmark />
-            <NotificationBell unreadCount={unreadCount} />
+            <NotificationBell unreadCount={unreadCount} list={notifications} onOpen={onOpenNotifications} />
           </Reveal>
 
           {!state.welcomeDismissed && (
@@ -119,9 +200,11 @@ function HomeScreen({
             <Reveal delay={140}>
               <TaskCard people={CORE_PEOPLE} onPress={startMeeting} />
             </Reveal>
-            <Reveal delay={210}>
-              <InviteCard from={INVITE_FROM} fromLabel={INVITE_FROM_GIVEN} dateLabel={inviteDateLabel()} onPress={openInvite} />
-            </Reveal>
+            {invitePending && (
+              <Reveal delay={210}>
+                <InviteCard from={INVITE_FROM} fromLabel={INVITE_FROM_GIVEN} dateLabel={inviteDateLabel()} onPress={openInvite} />
+              </Reveal>
+            )}
           </div>
         </div>
       </div>
@@ -130,9 +213,10 @@ function HomeScreen({
         {/* 내 기본 일정 + 셋업 혼자 경로로 저장한 개인 일정(myEvents)을 함께 그린다. */}
         <HomeCalendar
           events={[...ME.events, ...state.myEvents]}
-          invite={INCOMING_INVITE}
+          invite={invitePending ? INCOMING_INVITE : null}
           onOpenInvite={openInvite}
           onNewEvent={openSetup}
+          responseBadges={responseBadges}
         />
       </Reveal>
 
@@ -202,23 +286,3 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
   );
 }
 
-// ── 자리 표시자 — home 외 스텝은 다음 태스크에서 채운다 ─────────────────
-
-function PlaceholderScreen({ step, dispatch }: { step: Step; dispatch: Dispatch<Action> }) {
-  return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col items-center justify-center gap-5 px-4">
-      <Reveal className="w-full rounded-card bg-section px-6 py-12 text-center text-[15px] font-medium text-text-body">
-        단계: {step} — 다음 태스크에서 채워요
-      </Reveal>
-      <Reveal delay={70}>
-        <button
-          type="button"
-          onClick={() => dispatch({ type: 'SET_STEP', step: 'home' })}
-          className="pressable inline-flex h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-text-body ring-1 ring-border"
-        >
-          돌아가기
-        </button>
-      </Reveal>
-    </main>
-  );
-}

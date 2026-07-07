@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import type { CalendarEvent, EventKind } from '../lib/types';
+import Avatar from './Avatar';
+import type { CalendarEvent, EventKind, Person } from '../lib/types';
 import { addDaysISO, fmtRange } from '../lib/time';
 
 /**
@@ -11,6 +13,9 @@ import { addDaysISO, fmtRange } from '../lib/time';
  * 데스크톱(lg+): 월~금 5열 × 9~19시 주간 그리드. 모바일: 요일 칩 + 하루 목록.
  * 주 이동은 7/6 주 ~ 7/20 주(3주, 데이터가 있는 범위)에서 클램프. 드래그 없음 — 보기 전용.
  * 오늘(7/7 화)은 요일 라벨 밑 파란 점으로만 은은하게 표시한다.
+ *
+ * responseBadges: 확정 회의 블록에 얹는 응답 아바타 미니 스택 — 응답 토스트가
+ * 도착할 때마다(page.tsx가 people을 늘려 내려준다) 한 명씩 팝으로 채워진다.
  */
 
 // ── 주(週) 헬퍼 — 순수 함수(HomeCalendar.test.ts가 계약) ──────────────
@@ -90,6 +95,37 @@ const GHOST_STYLE: CSSProperties = {
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금'] as const;
 
+// ── 응답 배지 — 확정 회의 블록의 아바타 미니 스택 ─────────────────────
+
+export interface ResponseBadges {
+  /** 배지를 얹을 이벤트 id(방금 확정한 회의) */
+  eventId: string;
+  /** 응답한 사람들 — 도착 순서대로 채워진다 */
+  people: Person[];
+}
+
+const BADGE_POP = { type: 'spring' as const, stiffness: 500, damping: 18 };
+
+/** 아바타 미니 스택 — 새 응답이 오면 한 명씩 제자리 팝으로 나타난다. */
+function BadgeStack({ people }: { people: Person[] }) {
+  const reduced = !!useReducedMotion();
+  return (
+    <span className="flex -space-x-1.5">
+      {people.map((p) => (
+        <motion.span
+          key={p.id}
+          initial={reduced ? { opacity: 0 } : { scale: 0 }}
+          animate={reduced ? { opacity: 1 } : { scale: 1 }}
+          transition={reduced ? { duration: 0.1 } : BADGE_POP}
+          className="rounded-full ring-2 ring-white"
+        >
+          <Avatar person={p} size={24} />
+        </motion.span>
+      ))}
+    </span>
+  );
+}
+
 function dayNumber(iso: string): number {
   return Number(iso.slice(8, 10));
 }
@@ -106,20 +142,24 @@ function MobileDayList({
   events,
   ghost,
   onOpenInvite,
+  responseBadges,
 }: {
   events: CalendarEvent[];
   ghost: HomeCalendarInvite | null;
   onOpenInvite?: () => void;
+  responseBadges?: ResponseBadges | null;
 }) {
   if (events.length === 0 && !ghost) {
     return <p className="py-10 text-center text-[13px] text-text-faint">이 날은 일정이 없어요</p>;
   }
+  const badgesFor = (ev: CalendarEvent) =>
+    responseBadges && responseBadges.eventId === ev.id ? responseBadges.people : null;
   // 고스트를 시작 시각 자리에 끼워 넣는다(안정 정렬 유지).
   const ghostIndex = ghost ? events.filter((e) => e.start <= ghost.start).length : -1;
   return (
     <div className="mt-2 space-y-2">
       {events.slice(0, ghostIndex === -1 ? events.length : ghostIndex).map((ev) => (
-        <MobileEventRow key={ev.id} ev={ev} />
+        <MobileEventRow key={ev.id} ev={ev} badges={badgesFor(ev)} />
       ))}
       {ghost && (
         <button
@@ -132,21 +172,25 @@ function MobileDayList({
           <p className="mt-0.5 text-[12px] text-primary/60">{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
         </button>
       )}
-      {ghostIndex !== -1 && events.slice(ghostIndex).map((ev) => <MobileEventRow key={ev.id} ev={ev} />)}
+      {ghostIndex !== -1 &&
+        events.slice(ghostIndex).map((ev) => <MobileEventRow key={ev.id} ev={ev} badges={badgesFor(ev)} />)}
     </div>
   );
 }
 
-function MobileEventRow({ ev }: { ev: CalendarEvent }) {
+function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] | null }) {
   const st = KIND_STYLE[ev.kind];
   return (
-    <div className="rounded-xl border px-4 py-3" style={kindBoxStyle(ev.kind)}>
-      <p className="truncate text-[14px] font-semibold" style={{ color: st.title }}>
-        {ev.title}
-      </p>
-      <p className="mt-0.5 text-[12px]" style={{ color: st.sub }}>
-        {fmtRange(ev.start, ev.end)}
-      </p>
+    <div className="flex items-center gap-3 rounded-xl border px-4 py-3" style={kindBoxStyle(ev.kind)}>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[14px] font-semibold" style={{ color: st.title }}>
+          {ev.title}
+        </p>
+        <p className="mt-0.5 text-[12px]" style={{ color: st.sub }}>
+          {fmtRange(ev.start, ev.end)}
+        </p>
+      </div>
+      {badges && badges.length > 0 && <BadgeStack people={badges} />}
     </div>
   );
 }
@@ -168,9 +212,11 @@ export interface HomeCalendarProps {
   onOpenInvite?: () => void;
   /** 데스크톱 캘린더 헤더의 `새 일정 만들기`(모바일 CTA는 페이지가 소유). */
   onNewEvent?: () => void;
+  /** 확정 회의 블록의 응답 아바타 스택 — 응답 토스트 도착에 맞춰 채워진다. */
+  responseBadges?: ResponseBadges | null;
 }
 
-export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent }: HomeCalendarProps) {
+export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent, responseBadges }: HomeCalendarProps) {
   const [week, setWeek] = useState(0);
   const [selectedDay, setSelectedDay] = useState(TODAY);
   const days = weekDays(week);
@@ -284,6 +330,10 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent 
                   const height = yPct(ev.end) - top;
                   const compact = ev.end - ev.start < 50;
                   const st = KIND_STYLE[ev.kind];
+                  const badges =
+                    responseBadges && responseBadges.eventId === ev.id && responseBadges.people.length > 0
+                      ? responseBadges.people
+                      : null;
                   return (
                     <div
                       key={ev.id}
@@ -297,6 +347,11 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent 
                         <p className="truncate text-[11px] leading-[1.3]" style={{ color: st.sub }}>
                           {fmtRange(ev.start, ev.end)}
                         </p>
+                      )}
+                      {badges && (
+                        <span className="absolute bottom-[3px] right-1.5">
+                          <BadgeStack people={badges} />
+                        </span>
                       )}
                     </div>
                   );
@@ -361,6 +416,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent 
           events={eventsOn(events, selectedDay)}
           ghost={ghostOn(selectedDay)}
           onOpenInvite={onOpenInvite}
+          responseBadges={responseBadges}
         />
       </div>
     </section>

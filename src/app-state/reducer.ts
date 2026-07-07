@@ -18,7 +18,7 @@
 import type { CalendarEvent, DeadlineKind } from '../lib/types';
 import { parseState, serializeState } from '../lib/urlState';
 import type { UrlAttendee } from '../lib/urlState';
-import { DEFAULT_CAST, ME_ID } from '../data/world';
+import { DEFAULT_CAST, INCOMING_INVITE, ME_ID } from '../data/world';
 
 export type Step = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite';
 
@@ -207,8 +207,30 @@ export function reducer(s: AppState, a: Action): AppState {
     case 'TOGGLE_MITIGATION':
       return { ...s, mitigations: { ...s.mitigations, [a.key]: !s.mitigations[a.key] } };
 
-    case 'RESPOND_INVITE':
-      return { ...s, inviteResponded: a.response };
+    case 'RESPOND_INVITE': {
+      // 여정 B의 응답은 1회 계약 — 이미 응답했다면 no-op(중복 myEvents 추가 방지).
+      if (s.inviteResponded !== null) return s;
+      if (a.response === 'accepted') {
+        // 참석할게요 = 초대가 내 캘린더의 사실이 된다 — INCOMING_INVITE를 meeting으로 앉힌다.
+        return {
+          ...s,
+          inviteResponded: 'accepted',
+          myEvents: [
+            ...s.myEvents,
+            {
+              id: `invite-${INCOMING_INVITE.day}T${INCOMING_INVITE.start}`,
+              day: INCOMING_INVITE.day,
+              start: INCOMING_INVITE.start,
+              end: INCOMING_INVITE.end,
+              title: INCOMING_INVITE.title,
+              kind: 'meeting' as const,
+            },
+          ],
+        };
+      }
+      // 어려워요 = 플래그만 — 홈의 고스트 초대·카드가 함께 사라진다(렌더 게이트).
+      return { ...s, inviteResponded: 'difficult' };
+    }
 
     case 'CONFIRM': {
       if (s.selectedSlotId === null) return s; // 슬롯 미선택이면 무효
