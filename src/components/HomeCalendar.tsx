@@ -143,9 +143,8 @@ function dayNumber(iso: string): number {
 }
 
 function hourLabel(h: number): string {
-  if (h < 12) return `오전 ${h}시`;
-  if (h === 12) return `오후 12시`;
-  return `오후 ${h - 12}시`;
+  // 오전/오후 없이 시각만 — 9시~12시, 1시~6시(오후는 12시간 표기).
+  return `${h <= 12 ? h : h - 12}시`;
 }
 
 // ── 모바일 하루 목록 — 일반 이벤트와 고스트 초대를 시각 순으로 섞는다 ──
