@@ -38,3 +38,42 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
 .pressable { transition: transform 320ms var(--bezier-standard), background-color 320ms var(--bezier-standard); }
 .pressable:active { transform: scale(0.96); transition-duration: 120ms; }
 @media (prefers-reduced-motion: reduce) { .pressable, .pressable:active { transform: none; } }
+
+/* ── 오로라 — 합성 전용. radial-gradient 레이어를 transform만으로 흘려보낸다.
+   blur 필터 금지(그라데이션 falloff가 부드러움을 만든다), 리페인트 0.
+   주기는 서로소(12s/17s/23s/19s) — 패턴이 사실상 반복되지 않는다. ─────── */
+.aurora-layer { position: absolute; inset: 0; will-change: transform; }
+.aurora-l1 { animation: aurora-drift-1 12s var(--bezier-ambient) -4s infinite alternate; }
+.aurora-l2 { animation: aurora-drift-2 17s var(--bezier-ambient) -9s infinite alternate; }
+.aurora-l3 { animation: aurora-drift-3 23s var(--bezier-ambient) -15s infinite alternate; }
+.aurora-l4 { animation: aurora-drift-1 19s var(--bezier-ambient) -6s infinite alternate; }
+@keyframes aurora-drift-1 {
+  from { transform: translate3d(-7%, -5%, 0) scale(1) rotate(-2deg); }
+  to { transform: translate3d(7%, 4%, 0) scale(1.18) rotate(5deg); }
+}
+@keyframes aurora-drift-2 {
+  from { transform: translate3d(6%, 3%, 0) scale(1.12) rotate(3deg); }
+  to { transform: translate3d(-6%, -5%, 0) scale(0.94) rotate(-4deg); }
+}
+@keyframes aurora-drift-3 {
+  from { transform: translate3d(-5%, 6%, 0) scale(1.04); }
+  to { transform: translate3d(6%, -4%, 0) scale(1.2); }
+}
+
+/* ── 리빌 — blur-rise 등장. 페이드 800ms / 상승·선명 900ms, expo-out.
+   스태거는 inline animation-delay(부모가 60~80ms 간격으로 지정). ────────── */
+.reveal {
+  animation:
+    reveal-fade 800ms var(--bezier-expo) both,
+    reveal-rise 900ms var(--bezier-expo) both;
+}
+@keyframes reveal-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes reveal-rise {
+  from { filter: blur(12px); transform: translateY(24px); }
+  to { filter: blur(0); transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-l1, .aurora-l2, .aurora-l3, .aurora-l4 { animation: none; }
+  .reveal { animation: none; }
+}
