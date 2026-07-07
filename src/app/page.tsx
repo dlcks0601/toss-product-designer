@@ -189,8 +189,8 @@ function HomeScreen({
           <Aurora variant="home" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
         </div>
-        <div className="relative mx-auto max-w-[1200px] px-4 pb-4 lg:px-6 lg:pb-6">
-          <Reveal as="header" className="flex h-16 items-center justify-between lg:h-[72px]">
+        <div className="relative mx-auto max-w-[1200px] px-4 py-3.5 lg:px-6 lg:py-4">
+          <Reveal as="header" className="flex items-center justify-between">
             <Wordmark />
             <NotificationBell
               unreadCount={unreadCount}
