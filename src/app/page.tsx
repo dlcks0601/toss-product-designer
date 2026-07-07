@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useReducer, type Dispatch } from 'react';
+import { useEffect, useMemo, useReducer, useState, type Dispatch } from 'react';
+import { useReducedMotion } from 'motion/react';
 import Aurora from '../components/Aurora';
 import HomeCalendar from '../components/HomeCalendar';
 import InviteCard from '../components/InviteCard';
 import NotificationBell from '../components/NotificationBell';
 import Reveal from '../components/Reveal';
+import ScanMoment from '../components/ScanMoment';
 import SetupForm from '../components/SetupForm';
 import TaskCard from '../components/TaskCard';
 import ToastStack from '../components/ToastStack';
@@ -15,7 +17,10 @@ import { useNotifications } from '../app-state/notifications';
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
 import type { Action, AppState, Step } from '../app-state/reducer';
 import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG } from '../data/world';
+import { deriveAllInsights } from '../lib/insights';
 import { fmtTime, weekdayIndex } from '../lib/time';
+import { windowFor } from '../lib/window';
+import type { Person } from '../lib/types';
 
 /**
  * 앱 본체 — 단일 페이지 스텝 머신. reducer가 상태를, 주소창(toUrl/fromUrl)이 딥링크를 소유한다.
@@ -57,6 +62,8 @@ export default function Page() {
         <HomeScreen state={state} dispatch={dispatch} unreadCount={unreadCount} />
       ) : state.step === 'setup' ? (
         <SetupForm state={state} dispatch={dispatch} />
+      ) : state.step === 'find' ? (
+        <FindScreen state={state} dispatch={dispatch} />
       ) : (
         <PlaceholderScreen step={state.step} dispatch={dispatch} />
       )}
@@ -136,6 +143,73 @@ function HomeScreen({
         </button>
       </div>
     </div>
+  );
+}
+
+// ── find — 스캔 모먼트(1회) → 추천 콘텐츠(T15가 채운다) ─────────────────
+
+/**
+ * '시간 찾아보기' 착지 화면. `!scanPlayed`면 스캔 모먼트를 먼저 재생하고(뒤 콘텐츠는
+ * 렌더하지 않는다 — 빈 배경 위 카드 하나), onDone에서 PLAY_SCAN → 콘텐츠 리빌.
+ * scanPlayed=true면 즉시 콘텐츠 — 조건 변경·재진입 어느 경로로도 스캔은 재등장하지 않는다.
+ * reduced-motion: 연출 전체 생략 — 즉시 PLAY_SCAN + aria-live polite 1회 공지.
+ */
+function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<Action> }) {
+  const reduced = !!useReducedMotion();
+  // ORG.find 널가드 — HYDRATE 딥링크가 unknown id를 실어올 수 있다(조용히 건너뛴다).
+  const attendees = useMemo(
+    () =>
+      state.attendeeIds
+        .map((id) => ORG.find((p) => p.id === id))
+        .filter((p): p is Person => p !== undefined),
+    [state.attendeeIds],
+  );
+  // 스캔 문장(scanLine)은 실제 기한 창의 패턴 추출 실출력이다 — 하드코딩 금지 계약.
+  const windowDays = useMemo(() => windowFor(state.deadline), [state.deadline]);
+  const insights = useMemo(() => deriveAllInsights(attendees, windowDays), [attendees, windowDays]);
+  const [announced, setAnnounced] = useState(false);
+
+  useEffect(() => {
+    if (!state.scanPlayed && reduced) {
+      dispatch({ type: 'PLAY_SCAN' });
+      setAnnounced(true);
+    }
+  }, [state.scanPlayed, reduced, dispatch]);
+
+  const scanning = !state.scanPlayed && !reduced;
+
+  return (
+    <main className="min-h-dvh bg-bg">
+      <div className="mx-auto w-full max-w-[560px] px-4 pt-6 lg:pt-12">
+        {scanning ? (
+          <ScanMoment
+            attendees={attendees}
+            insights={insights}
+            duration={state.duration}
+            onDone={() => dispatch({ type: 'PLAY_SCAN' })}
+          />
+        ) : (
+          <>
+            <Reveal className="w-full rounded-card bg-section px-6 py-12 text-center text-[15px] font-medium text-text-body">
+              단계: find — 다음 태스크에서 채워요
+            </Reveal>
+            <Reveal delay={70} className="mt-5 text-center">
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'SET_STEP', step: 'setup' })}
+                className="pressable inline-flex h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-text-body ring-1 ring-border"
+              >
+                돌아가기
+              </button>
+            </Reveal>
+          </>
+        )}
+      </div>
+      {/* reduced-motion 공지 — live 영역은 상시 존재해야 삽입 텍스트가 공지된다 */}
+      <div aria-live="polite" className="sr-only">
+        {announced ? `${attendees.length}명의 일정을 확인했어요` : ''}
+      </div>
+    </main>
   );
 }
 
