@@ -75,8 +75,9 @@ describe('S2 — 화 7/14 14:00 슬롯에 세훈 after-lunch', () => {
 
   it('세훈 after-lunch 이유가 있고, rhythmEnd(점심 종료) 데이터가 인사이트에 존재한다', () => {
     expect(slot!.reasons.some((r) => r.code === 'after-lunch' && r.who === 'sehun')).toBe(true);
-    // after-lunch 판정의 근거인 세훈 점심 리듬(13:00~13:40) 종료 = 820 이 인사이트에 실재한다.
-    expect(INSIGHTS['sehun'].lunchRhythm).toEqual({ start: 780, end: 820 });
+    // after-lunch 판정의 근거인 세훈 점심 리듬(13:00~14:00) 종료 = 840 이 인사이트에 실재한다.
+    // 화 14:00 슬롯 시작(840)이 after-lunch 창 [840, 870) 에 정확히 걸린다.
+    expect(INSIGHTS['sehun'].lunchRhythm).toEqual({ start: 780, end: 840 });
   });
 });
 
