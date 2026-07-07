@@ -148,5 +148,52 @@ describe('requiredFrame', () => {
   });
 });
 
-// Task 5 — 점심 직전 보너스는 duration 기준 상대 계산으로 채운다.
-it.todo('점심 직전 보너스는 duration 기준 상대 계산 — 30분 회의도 진짜 직전 슬롯이 받는다 (Task 5)');
+// Task 5 — 점심 리듬·점심 보호가 scoreSlot에 통합됐는지(단위 규칙은 lunch.test.ts).
+const insightsFor = (id: string, lunchRhythm: PersonInsights['lunchRhythm']): Record<string, PersonInsights> => ({
+  [id]: { offsiteWeekdays: [], recurring: [], lunchRhythm, headline: null, scanLine: '' },
+});
+
+describe('scoreSlot — 점심 리듬·점심 보호(Task 5)', () => {
+  it('점심 직전 보너스는 duration 기준 상대 계산 — 30분 회의도 진짜 직전 슬롯이 받는다', () => {
+    const insights = insightsFor('a1', { start: 780, end: 820 }); // 리듬 13:00~13:40
+    // 12:30~13:00(750~780) 30분 회의 → slotEnd 780 = 리듬 시작 → 보너스.
+    const on = scoreSlot({ ...free, start: 750, end: 780, insights });
+    const bonus = on.effects.find((e) => e.code === 'before-lunch-bonus');
+    expect(bonus).toBeDefined();
+    expect(bonus!.delta).toBe(SCORING.beforeLunch);
+    expect(bonus!.who).toBe('a1');
+    // 12:00~12:30(720~750): slotEnd 750 = 리듬 시작−30 → 경계 밖, 보너스 없음(진짜 직전만).
+    const off = scoreSlot({ ...free, start: 720, end: 750, insights });
+    expect(off.effects.some((e) => e.code === 'before-lunch-bonus')).toBe(false);
+  });
+
+  it('리듬 있으면 점심 직후 시작은 after-lunch(-12) — 카피용 rhythmStart·완화용 rhythmEnd', () => {
+    const insights = insightsFor('a1', { start: 780, end: 820 });
+    const { effects } = scoreSlot({ ...free, start: 840, end: 900, insights }); // 14:00 시작
+    const after = effects.find((e) => e.code === 'after-lunch');
+    expect(after).toBeDefined();
+    expect(after!.delta).toBe(SCORING.afterLunch);
+    expect(after!.data).toMatchObject({ rhythmStart: 780, rhythmEnd: 820 });
+  });
+
+  it('이중 감점 방지: after-lunch가 걸리면 같은 사람·슬롯의 lunch-squeeze는 생략한다', () => {
+    // 오전 회의 11:00~13:30(660~810) + 슬롯 14:00~15:00(840~900) → 점심 여유 30분(squeeze 조건) 이지만
+    // 슬롯 시작이 점심 직후(리듬 13:00~13:40) 라 after-lunch가 먼저 걸린다 → squeeze 생략.
+    const p = person({ events: [ev('m', 660, 810, 'meeting', '오전 블록')] });
+    const insights = insightsFor('a1', { start: 780, end: 820 });
+    const { effects } = scoreSlot({ day: '2026-07-06', start: 840, end: 900, attendees: [p], insights, rooms: noRooms });
+    expect(effects.some((e) => e.code === 'after-lunch')).toBe(true);
+    expect(effects.some((e) => e.code === 'lunch-squeeze')).toBe(false); // 이미 먹었으니까
+  });
+
+  it('리듬이 없어도 점심은 보호한다 — 여유 30분이면 lunch-squeeze(-8)', () => {
+    // insights 비어 있음(리듬 null). 오후 12:30~15:00(750~900) 회의 + 슬롯 11:00~12:00 → 여유 30분.
+    const p = person({ events: [ev('m', 750, 900, 'meeting', '오후 블록')] });
+    const { effects } = scoreSlot({ day: '2026-07-06', start: 660, end: 720, attendees: [p], insights: noInsights, rooms: noRooms });
+    const sq = effects.find((e) => e.code === 'lunch-squeeze');
+    expect(sq).toBeDefined();
+    expect(sq!.delta).toBe(SCORING.lunchSqueeze);
+    expect(sq!.data).toMatchObject({ gap: 30 });
+    expect(effects.some((e) => e.code === 'after-lunch')).toBe(false); // 리듬 없으면 예측 안 함
+  });
+});

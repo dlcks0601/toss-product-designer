@@ -1,4 +1,5 @@
 import type { Attendee, ReasonCode, ReasonTone, ScoreEffect, SlotReason } from './types';
+import { fmtTime } from './time';
 
 /** 완성형 한글 음절의 받침 유무. 한글 음절이 아니면 받침 없음으로 취급. */
 function hasBatchim(char: string): boolean {
@@ -56,8 +57,14 @@ function reasonText(effect: ScoreEffect, nameOf: (id?: string) => string, requir
       return '하루가 끝나갈 무렵이에요';
     case 'no-room':
       return '비어 있는 회의실이 없어요 — 화상은 가능해요';
+    case 'after-lunch':
+      return `${nameOf(who)}님은 보통 ${fmtTime(Number(effect.data?.rhythmStart ?? 0))}쯤 점심을 먹어요 — 직후 시작은 나른할 수 있어요`;
+    case 'before-lunch-bonus':
+      return '점심 직전이라 산뜻하게 끝나요';
+    case 'lunch-squeeze':
+      return `${nameOf(who)}님 점심 여유가 ${Number(effect.data?.gap ?? 0)}분뿐이에요`;
     default:
-      return null; // optional-partial·before-lunch-bonus·after-lunch·lunch-squeeze → Task 5·6
+      return null; // optional-partial → Task 6
   }
 }
 

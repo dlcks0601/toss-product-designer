@@ -2,6 +2,7 @@ import type { Minutes } from './time';
 import { overlaps } from './time';
 import type { Attendee, PartialInfo, PersonInsights, Room, ScoreEffect } from './types';
 import { availableRooms } from './rooms';
+import { afterLunchEffect, beforeLunchEffect, lunchSqueezeEffect } from './lunch';
 
 /**
  * 순수 점수 규칙 상수. 한국어 문장은 여기 없다(reasons.ts 담당).
@@ -155,9 +156,28 @@ function lateStartEffects(ctx: SlotContext): ScoreEffect[] {
   return ctx.start >= threshold ? [{ code: 'late-start', delta: SCORING.lateStart }] : [];
 }
 
-/** Task 5 확장점: 점심 직전 보너스·점심 직후·점심 압박 규칙이 여기로 들어온다. 지금은 effect 없음. */
-function lunchEffects(_ctx: SlotContext): ScoreEffect[] {
-  return []; // Task 5
+/**
+ * 점심 리듬·점심 보호. 리듬은 예측이 아니라 insights에서 읽는다(없으면 null=침묵).
+ * 이중 감점 방지: after-lunch가 걸린 사람은 같은 슬롯의 lunch-squeeze를 건너뛴다(이미 먹었으므로).
+ */
+function lunchEffects(ctx: SlotContext): ScoreEffect[] {
+  const effects: ScoreEffect[] = [];
+  for (const person of ctx.participating) {
+    const rhythm = ctx.insights[person.id]?.lunchRhythm ?? null;
+
+    const after = afterLunchEffect(person, rhythm, ctx.start);
+    if (after) {
+      effects.push(after);
+      continue; // 점심 직후면 squeeze는 무의미 — 건너뛴다
+    }
+
+    const before = beforeLunchEffect(person, rhythm, ctx.end);
+    if (before) effects.push(before);
+
+    const squeeze = lunchSqueezeEffect(person, ctx.day, { start: ctx.start, end: ctx.end });
+    if (squeeze) effects.push(squeeze);
+  }
+  return effects;
 }
 
 export function scoreSlot(args: {

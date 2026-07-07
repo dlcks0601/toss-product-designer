@@ -58,6 +58,21 @@ describe('formatReasons — 코드→해요체', () => {
     expect(formatReasons([{ code: 'late-start', delta: -4 }], people)[0].text).toBe('하루가 끝나갈 무렵이에요');
     expect(formatReasons([{ code: 'no-room', delta: -7 }], people)[0].text).toBe('비어 있는 회의실이 없어요 — 화상은 가능해요');
   });
+  it('after-lunch은 리듬 시작 시각(rhythmStart)을 넣어 준다', () => {
+    const r = formatReasons([{ code: 'after-lunch', delta: -12, who: 'a1', data: { rhythmStart: 780, rhythmEnd: 820 } }], people)[0];
+    expect(r.text).toBe('김지은님은 보통 오후 1:00쯤 점심을 먹어요 — 직후 시작은 나른할 수 있어요');
+    expect(r.tone).toBe('warning');
+  });
+  it('before-lunch-bonus는 이름 없는 고정 문구', () => {
+    const r = formatReasons([{ code: 'before-lunch-bonus', delta: 4 }], people)[0];
+    expect(r.text).toBe('점심 직전이라 산뜻하게 끝나요');
+    expect(r.tone).toBe('positive');
+  });
+  it('lunch-squeeze는 이름과 남은 여유(gap)를 넣어 준다', () => {
+    const r = formatReasons([{ code: 'lunch-squeeze', delta: -8, who: 'a2', data: { gap: 30 } }], people)[0];
+    expect(r.text).toBe('박서준님 점심 여유가 30분뿐이에요');
+    expect(r.tone).toBe('warning');
+  });
 });
 
 describe('slotSeverity', () => {
