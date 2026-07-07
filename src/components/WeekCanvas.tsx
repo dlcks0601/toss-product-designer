@@ -183,6 +183,7 @@ const Band = memo(function Band({
       onClick={() => onSelect(slot.id)}
       onMouseEnter={() => onHover(slot.id)}
       onMouseLeave={() => onHover(null)}
+      tabIndex={-1}
       aria-pressed={selected}
       aria-label={`${fmtDayKorean(slot.day)} ${fmtTime(slot.start)} 후보${selected ? ' — 선택됨' : ''}`}
       className={`pointer-events-auto absolute text-left ${selected ? 'z-20' : hovered ? 'z-10' : 'z-[5]'}`}

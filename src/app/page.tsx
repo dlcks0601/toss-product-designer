@@ -18,6 +18,7 @@ import Wordmark from '../components/Wordmark';
 import { useNotifications } from '../app-state/notifications';
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
 import { useCandidates } from '../app-state/useCandidates';
+import { useIsDesktop } from '../app-state/useIsDesktop';
 import type { Action, AppState, Step } from '../app-state/reducer';
 import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG } from '../data/world';
 import { fmtTime, weekdayIndex } from '../lib/time';
@@ -159,6 +160,7 @@ function HomeScreen({
 function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<Action> }) {
   const reduced = !!useReducedMotion();
   const candidates = useCandidates(state);
+  const isDesktop = useIsDesktop();
   const [announced, setAnnounced] = useState(false);
 
   useEffect(() => {
@@ -181,15 +183,10 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
             onDone={() => dispatch({ type: 'PLAY_SCAN' })}
           />
         </div>
+      ) : isDesktop ? (
+        <FindTimeDesktop state={state} dispatch={dispatch} candidates={candidates} />
       ) : (
-        <>
-          <div className="lg:hidden">
-            <FindTimeMobile state={state} dispatch={dispatch} candidates={candidates} />
-          </div>
-          <div className="hidden lg:block">
-            <FindTimeDesktop state={state} dispatch={dispatch} candidates={candidates} />
-          </div>
-        </>
+        <FindTimeMobile state={state} dispatch={dispatch} candidates={candidates} />
       )}
       {/* reduced-motion 공지 — live 영역은 상시 존재해야 삽입 텍스트가 공지된다 */}
       <div aria-live="polite" className="sr-only">

@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Check, Search, X } from 'lucide-react';
 import Avatar from './Avatar';
 import ProfilePeek from './ProfilePeek';
+import { useIsDesktop } from '../app-state/useIsDesktop';
 import { ME_ID, ORG } from '../data/world';
 import type { Person } from '../lib/types';
 
@@ -35,20 +36,6 @@ export function confirmLabel(selectedNames: string[]): { label: string; disabled
   const first = givenName(selectedNames[0]);
   if (selectedNames.length === 1) return { label: `${first}님과 함께해요`, disabled: false };
   return { label: `${first}님 외 ${selectedNames.length - 1}명과 함께해요`, disabled: false };
-}
-
-/** lg(1024px) 기준 — 피커는 상호작용 후에만 마운트되므로 첫 페인트 불일치가 없다. */
-function useIsDesktop(): boolean {
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches,
-  );
-  useEffect(() => {
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const update = () => setIsDesktop(mq.matches);
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
-  return isDesktop;
 }
 
 export interface AttendeePickerProps {
