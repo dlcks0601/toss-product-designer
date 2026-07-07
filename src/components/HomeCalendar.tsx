@@ -65,17 +65,17 @@ export interface KindStyle {
 }
 
 export const KIND_STYLE: Record<EventKind, KindStyle> = {
-  meeting: { bg: '#E8F3FF', border: '#C9E2FF', title: '#1B64DA', sub: '#7CA5E8' },
-  focus: { bg: '#D9F0E4', border: '#BEE3CF', title: '#13774A', sub: '#66AE88' },
+  meeting: { bg: '#DEEBFC', border: '#C9E2FF', title: '#3182F6', sub: '#6E9CEC' },
+  focus: { bg: '#DFF4E7', border: '#BEE3CF', title: '#12A150', sub: '#5FC08D' },
   lunch: { bg: '#F2F4F6', border: 'rgba(229,232,235,0.6)', title: '#8B95A1', sub: '#B0B8C1' },
-  personal: { bg: '#F1EDFD', border: '#DED3F8', title: '#6440C8', sub: '#A28BE0' },
+  personal: { bg: '#F1ECFE', border: '#DED3F8', title: '#7C4DFF', sub: '#A98BF0' },
   offsite: {
-    bg: '#FBF1F1',
+    bg: '#FEF0F1',
     border: '#F3DBDB',
-    title: '#C2454F',
-    sub: '#DB959B',
+    title: '#F04452',
+    sub: '#EE99A0',
     stripes:
-      'repeating-linear-gradient(135deg, rgba(240,68,82,0.05) 0 4px, transparent 4px 9px)',
+      'repeating-linear-gradient(135deg, rgba(240,68,82,0.06) 0 4px, transparent 4px 9px)',
   },
 };
 
@@ -89,8 +89,8 @@ export function kindBoxStyle(kind: EventKind): CSSProperties {
 }
 
 const GHOST_STYLE: CSSProperties = {
-  backgroundColor: 'rgba(232,243,255,0.55)',
-  borderColor: '#8FC0F9',
+  backgroundColor: 'transparent',
+  borderColor: '#7FB2F5',
 };
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금'] as const;
@@ -157,7 +157,7 @@ function MobileDayList({
   // 고스트를 시작 시각 자리에 끼워 넣는다(안정 정렬 유지).
   const ghostIndex = ghost ? events.filter((e) => e.start <= ghost.start).length : -1;
   return (
-    <div className="mt-2 space-y-2">
+    <div className="mt-2 space-y-2.5">
       {events.slice(0, ghostIndex === -1 ? events.length : ghostIndex).map((ev) => (
         <MobileEventRow key={ev.id} ev={ev} badges={badgesFor(ev)} />
       ))}
@@ -165,7 +165,7 @@ function MobileDayList({
         <button
           type="button"
           onClick={onOpenInvite}
-          className="pressable w-full rounded-xl border border-dashed px-4 py-3 text-left"
+          className="pressable w-full rounded-2xl border-[1.5px] border-dashed px-4 py-3.5 text-left"
           style={GHOST_STYLE}
         >
           <p className="truncate text-[14px] font-semibold text-primary">📩 {ghost.title}</p>
@@ -181,7 +181,7 @@ function MobileDayList({
 function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] | null }) {
   const st = KIND_STYLE[ev.kind];
   return (
-    <div className="flex items-center gap-3 rounded-2xl px-4 py-3" style={{ backgroundColor: st.bg, backgroundImage: st.stripes }}>
+    <div className="flex items-center gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: st.bg, backgroundImage: st.stripes }}>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-semibold" style={{ color: st.title }}>
           {ev.title}
@@ -329,8 +329,8 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   return (
                     <div
                       key={ev.id}
-                      className="absolute inset-x-1 overflow-hidden rounded-xl px-2 py-[3px]"
-                      style={{ top: `${top}%`, height: `calc(${height}% - 2px)`, backgroundColor: KIND_STYLE[ev.kind].bg, backgroundImage: KIND_STYLE[ev.kind].stripes }}
+                      className="absolute inset-x-1.5 overflow-hidden rounded-xl px-3 py-2"
+                      style={{ top: `calc(${top}% + 3px)`, height: `calc(${height}% - 6px)`, backgroundColor: KIND_STYLE[ev.kind].bg, backgroundImage: KIND_STYLE[ev.kind].stripes }}
                     >
                       <p className="truncate text-[13px] font-semibold leading-[1.3]" style={{ color: st.title }}>
                         {ev.title}
@@ -353,10 +353,10 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   <button
                     type="button"
                     onClick={onOpenInvite}
-                    className="pressable absolute inset-x-1 overflow-hidden rounded-[8px] border border-dashed px-2 py-[3px] text-left"
+                    className="pressable absolute inset-x-1.5 overflow-hidden rounded-xl border-[1.5px] border-dashed px-3 py-2 text-left"
                     style={{
-                      top: `${yPct(ghost.start)}%`,
-                      height: `calc(${yPct(ghost.end) - yPct(ghost.start)}% - 2px)`,
+                      top: `calc(${yPct(ghost.start)}% + 3px)`,
+                      height: `calc(${yPct(ghost.end) - yPct(ghost.start)}% - 6px)`,
                       ...GHOST_STYLE,
                     }}
                   >
