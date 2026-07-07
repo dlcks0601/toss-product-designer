@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useReducer, useState, type Dispatch } from 'react';
 import { useReducedMotion } from 'motion/react';
 import Aurora from '../components/Aurora';
+import FindTimeMobile from '../components/FindTimeMobile';
 import HomeCalendar from '../components/HomeCalendar';
 import InviteCard from '../components/InviteCard';
 import NotificationBell from '../components/NotificationBell';
@@ -146,13 +147,14 @@ function HomeScreen({
   );
 }
 
-// ── find — 스캔 모먼트(1회) → 추천 콘텐츠(T15가 채운다) ─────────────────
+// ── find — 스캔 모먼트(1회) → 추천 리스트(FindTimeMobile) ────────────────
 
 /**
  * '시간 찾아보기' 착지 화면. `!scanPlayed`면 스캔 모먼트를 먼저 재생하고(뒤 콘텐츠는
- * 렌더하지 않는다 — 빈 배경 위 카드 하나), onDone에서 PLAY_SCAN → 콘텐츠 리빌.
+ * 렌더하지 않는다 — 빈 배경 위 카드 하나), onDone에서 PLAY_SCAN → 추천 리스트 리빌.
  * scanPlayed=true면 즉시 콘텐츠 — 조건 변경·재진입 어느 경로로도 스캔은 재등장하지 않는다.
  * reduced-motion: 연출 전체 생략 — 즉시 PLAY_SCAN + aria-live polite 1회 공지.
+ * 데스크톱(lg+)도 당분간 FindTimeMobile을 560px 중앙으로 쓴다 — T16(PC 캔버스)이 교체.
  */
 function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<Action> }) {
   const reduced = !!useReducedMotion();
@@ -180,31 +182,18 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
 
   return (
     <main className="min-h-dvh bg-bg">
-      <div className="mx-auto w-full max-w-[560px] px-4 pt-6 lg:pt-12">
-        {scanning ? (
+      {scanning ? (
+        <div className="mx-auto w-full max-w-[560px] px-4 pt-6 lg:pt-12">
           <ScanMoment
             attendees={attendees}
             insights={insights}
             duration={state.duration}
             onDone={() => dispatch({ type: 'PLAY_SCAN' })}
           />
-        ) : (
-          <>
-            <Reveal className="w-full rounded-card bg-section px-6 py-12 text-center text-[15px] font-medium text-text-body">
-              단계: find — 다음 태스크에서 채워요
-            </Reveal>
-            <Reveal delay={70} className="mt-5 text-center">
-              <button
-                type="button"
-                onClick={() => dispatch({ type: 'SET_STEP', step: 'setup' })}
-                className="pressable inline-flex h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-text-body ring-1 ring-border"
-              >
-                돌아가기
-              </button>
-            </Reveal>
-          </>
-        )}
-      </div>
+        </div>
+      ) : (
+        <FindTimeMobile state={state} dispatch={dispatch} />
+      )}
       {/* reduced-motion 공지 — live 영역은 상시 존재해야 삽입 텍스트가 공지된다 */}
       <div aria-live="polite" className="sr-only">
         {announced ? `${attendees.length}명의 일정을 확인했어요` : ''}
