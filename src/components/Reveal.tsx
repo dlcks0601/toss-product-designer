@@ -12,7 +12,7 @@ import type { CSSProperties, ReactNode } from 'react';
 export interface RevealProps {
   /** 스태거 지연(ms) — 형제 간 60~80ms 간격 권장 */
   delay?: number;
-  as?: 'div' | 'section' | 'span' | 'li' | 'p' | 'header' | 'article';
+  as?: 'div' | 'section' | 'span' | 'li' | 'p' | 'header' | 'article' | 'aside';
   className?: string;
   style?: CSSProperties;
   children?: ReactNode;

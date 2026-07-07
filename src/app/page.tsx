@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useReducer, useState, type Dispatch } from 'react';
+import { useEffect, useReducer, useState, type Dispatch } from 'react';
 import { useReducedMotion } from 'motion/react';
 import Aurora from '../components/Aurora';
+import FindTimeDesktop from '../components/FindTimeDesktop';
 import FindTimeMobile from '../components/FindTimeMobile';
 import HomeCalendar from '../components/HomeCalendar';
 import InviteCard from '../components/InviteCard';
@@ -16,12 +17,10 @@ import WelcomeCard from '../components/WelcomeCard';
 import Wordmark from '../components/Wordmark';
 import { useNotifications } from '../app-state/notifications';
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
+import { useCandidates } from '../app-state/useCandidates';
 import type { Action, AppState, Step } from '../app-state/reducer';
 import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG } from '../data/world';
-import { deriveAllInsights } from '../lib/insights';
 import { fmtTime, weekdayIndex } from '../lib/time';
-import { windowFor } from '../lib/window';
-import type { Person } from '../lib/types';
 
 /**
  * 앱 본체 — 단일 페이지 스텝 머신. reducer가 상태를, 주소창(toUrl/fromUrl)이 딥링크를 소유한다.
@@ -147,28 +146,19 @@ function HomeScreen({
   );
 }
 
-// ── find — 스캔 모먼트(1회) → 추천 리스트(FindTimeMobile) ────────────────
+// ── find — 스캔 모먼트(1회) → 추천 리스트(모바일)/캔버스+레일(데스크톱) ────
 
 /**
  * '시간 찾아보기' 착지 화면. `!scanPlayed`면 스캔 모먼트를 먼저 재생하고(뒤 콘텐츠는
- * 렌더하지 않는다 — 빈 배경 위 카드 하나), onDone에서 PLAY_SCAN → 추천 리스트 리빌.
+ * 렌더하지 않는다 — 빈 배경 위 카드 하나), onDone에서 PLAY_SCAN → 추천 화면 리빌.
  * scanPlayed=true면 즉시 콘텐츠 — 조건 변경·재진입 어느 경로로도 스캔은 재등장하지 않는다.
  * reduced-motion: 연출 전체 생략 — 즉시 PLAY_SCAN + aria-live polite 1회 공지.
- * 데스크톱(lg+)도 당분간 FindTimeMobile을 560px 중앙으로 쓴다 — T16(PC 캔버스)이 교체.
+ * 후보 파생(useCandidates)은 여기서 한 번만 — 모바일(lg 미만)·데스크톱(lg 이상)이 공유하고,
+ * 스캔 문장(scanLine)도 같은 attendees·insights 실출력을 쓴다(하드코딩 금지 계약).
  */
 function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<Action> }) {
   const reduced = !!useReducedMotion();
-  // ORG.find 널가드 — HYDRATE 딥링크가 unknown id를 실어올 수 있다(조용히 건너뛴다).
-  const attendees = useMemo(
-    () =>
-      state.attendeeIds
-        .map((id) => ORG.find((p) => p.id === id))
-        .filter((p): p is Person => p !== undefined),
-    [state.attendeeIds],
-  );
-  // 스캔 문장(scanLine)은 실제 기한 창의 패턴 추출 실출력이다 — 하드코딩 금지 계약.
-  const windowDays = useMemo(() => windowFor(state.deadline), [state.deadline]);
-  const insights = useMemo(() => deriveAllInsights(attendees, windowDays), [attendees, windowDays]);
+  const candidates = useCandidates(state);
   const [announced, setAnnounced] = useState(false);
 
   useEffect(() => {
@@ -185,18 +175,25 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
       {scanning ? (
         <div className="mx-auto w-full max-w-[560px] px-4 pt-6 lg:pt-12">
           <ScanMoment
-            attendees={attendees}
-            insights={insights}
+            attendees={candidates.attendees}
+            insights={candidates.insights}
             duration={state.duration}
             onDone={() => dispatch({ type: 'PLAY_SCAN' })}
           />
         </div>
       ) : (
-        <FindTimeMobile state={state} dispatch={dispatch} />
+        <>
+          <div className="lg:hidden">
+            <FindTimeMobile state={state} dispatch={dispatch} candidates={candidates} />
+          </div>
+          <div className="hidden lg:block">
+            <FindTimeDesktop state={state} dispatch={dispatch} candidates={candidates} />
+          </div>
+        </>
       )}
       {/* reduced-motion 공지 — live 영역은 상시 존재해야 삽입 텍스트가 공지된다 */}
       <div aria-live="polite" className="sr-only">
-        {announced ? `${attendees.length}명의 일정을 확인했어요` : ''}
+        {announced ? `${candidates.attendees.length}명의 일정을 확인했어요` : ''}
       </div>
     </main>
   );

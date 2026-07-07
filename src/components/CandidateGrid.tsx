@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Attendee, CandidateSlot } from '../lib/types';
 import { HARD_BLOCK_KINDS } from '../lib/partial';
-import { fmtDayKorean, fmtTime, overlaps, weekdayIndex, addDaysISO, type Minutes } from '../lib/time';
+import { fmtDayKorean, fmtTime, overlaps, addDaysISO, type Minutes } from '../lib/time';
 import { mondayOf, weekIndexOf, weekLabel, weekMondays } from './MiniLocator';
 
 /**

@@ -8,7 +8,7 @@ import CandidateGrid from './CandidateGrid';
 import Chip from './Chip';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
-import { useCandidates } from '../app-state/useCandidates';
+import type { Candidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
 import { ME_ID } from '../data/world';
 import type { DeadlineKind } from '../lib/types';
@@ -25,24 +25,25 @@ import type { DeadlineKind } from '../lib/types';
  * 카드 확장은 layout이 아니라 카드 내부 height 트윈 — 아래 카드는 문서 흐름으로 밀린다.
  *
  * 빈 상태(후보 0)는 임시 카드 — 결정 모먼트(T17)가 교체한다.
- * 데스크톱(lg+)도 당분간 이 화면을 560px 중앙으로 그대로 쓴다(T16이 교체).
+ * lg 이상은 FindTimeDesktop(캔버스+레일)이 담당한다 — 후보 파생은 부모가 한 번만 계산해 공유.
  */
 
-const DURATION_OPTIONS: { value: 30 | 60 | 90; label: string }[] = [
+// 조건 옵션·라벨 — FindTimeDesktop(좌 조건 패널)이 같은 사전을 쓴다(카피 단일 소스).
+export const DURATION_OPTIONS: { value: 30 | 60 | 90; label: string }[] = [
   { value: 30, label: '30분' },
   { value: 60, label: '1시간' },
   { value: 90, label: '1시간 30분' },
 ];
-const DEADLINE_OPTIONS: { value: DeadlineKind; label: string }[] = [
+export const DEADLINE_OPTIONS: { value: DeadlineKind; label: string }[] = [
   { value: 'this-week', label: '이번 주 안에' },
   { value: 'next-week', label: '다음 주까지' },
   { value: 'flexible', label: '여유 있어요' },
 ];
-const DURATION_LABEL = Object.fromEntries(DURATION_OPTIONS.map((o) => [o.value, o.label])) as Record<
+export const DURATION_LABEL = Object.fromEntries(DURATION_OPTIONS.map((o) => [o.value, o.label])) as Record<
   30 | 60 | 90,
   string
 >;
-const DEADLINE_LABEL = Object.fromEntries(DEADLINE_OPTIONS.map((o) => [o.value, o.label])) as Record<
+export const DEADLINE_LABEL = Object.fromEntries(DEADLINE_OPTIONS.map((o) => [o.value, o.label])) as Record<
   DeadlineKind,
   string
 >;
@@ -55,11 +56,13 @@ const DISCLOSE = { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const };
 export interface FindTimeMobileProps {
   state: AppState;
   dispatch: Dispatch<Action>;
+  /** 후보 파생 — 부모(FindScreen)가 useCandidates를 한 번만 돌려 데스크톱과 공유한다. */
+  candidates: Candidates;
 }
 
-export default function FindTimeMobile({ state, dispatch }: FindTimeMobileProps) {
+export default function FindTimeMobile({ state, dispatch, candidates }: FindTimeMobileProps) {
   const reduced = !!useReducedMotion();
-  const { attendees, windowDays, slots, visible } = useCandidates(state);
+  const { attendees, windowDays, slots, visible } = candidates;
   // 확장된(=지금 보고 있는) 후보 — 딥링크의 선택을 이어받고, 조건이 바뀌어 목록에서
   // 사라지면 자연히 무효가 된다(visible 검증으로 파생 — effect 없음).
   const [expandedId, setExpandedId] = useState<string | null>(() => state.selectedSlotId);
