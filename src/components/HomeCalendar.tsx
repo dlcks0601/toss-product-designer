@@ -294,7 +294,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
       <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white ring-1 ring-border/70 lg:block">
         {/* 요일 헤더 */}
         <div className="flex border-b border-border/70">
-          <div className="w-[60px] shrink-0" aria-hidden />
+          <div className="w-[44px] shrink-0" aria-hidden />
           {days.map((day, i) => {
             const today = day === TODAY;
             return (
@@ -314,7 +314,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
         <div className="relative h-[640px]">
           <div className="absolute inset-x-0 inset-y-4 flex">
           {/* 시각 라벨 — 9시~6시 균등 배치. 처음은 위 정렬, 끝은 아래 정렬, 중간은 중앙 정렬. */}
-          <div className="relative w-[60px] shrink-0" aria-hidden>
+          <div className="relative w-[44px] shrink-0" aria-hidden>
             {hours.map((h, i) => {
               const first = i === 0;
               const last = i === hours.length - 1;
