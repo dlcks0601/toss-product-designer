@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { NOTIFICATION_KIND_STYLE } from './ToastStack';
 import { useIsDesktop } from '../app-state/useIsDesktop';
@@ -12,6 +12,8 @@ import type { AppNotification } from '../lib/types';
  * 모바일은 바텀시트로 list(적립된 알림)를 펼친다. 여는 순간 onOpen(markAllRead 배선)
  * 이 1회 불려 안 읽음 도트가 사라진다. 비어 있으면 '알림이 없어요'.
  * 도트는 제자리 팝 스프링(500/18, 스케일 전용)으로 나타난다.
+ * invite 종류 알림은 표시 전용이 아니라 입구다 — onSelectInvite가 있으면 행 전체가
+ * 버튼(셰브런 표시)이 되어 탭 시 패널을 닫고 초대 화면(여정 B)으로 안내한다.
  */
 
 // ── 순수 헬퍼(테스트 대상) ─────────────────────────────────────────
@@ -26,7 +28,16 @@ export function relativeTimeLabel(elapsedMs: number): string {
 
 // ── 패널 조각 ──────────────────────────────────────────────────────
 
-function NotificationList({ list, now }: { list: AppNotification[]; now: number }) {
+function NotificationList({
+  list,
+  now,
+  onSelectInvite,
+}: {
+  list: AppNotification[];
+  now: number;
+  /** invite 종류 행을 탭했을 때 — 초대 화면으로 가는 입구(없으면 전 행 표시 전용). */
+  onSelectInvite?: (n: AppNotification) => void;
+}) {
   if (list.length === 0) {
     return <p className="py-10 text-center text-[13px] text-text-faint">알림이 없어요</p>;
   }
@@ -34,13 +45,37 @@ function NotificationList({ list, now }: { list: AppNotification[]; now: number 
     <ul className="space-y-0.5">
       {list.map((n) => {
         const { Icon, wrap } = NOTIFICATION_KIND_STYLE[n.kind];
-        return (
-          <li key={n.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
-            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${wrap}`} aria-hidden>
-              <Icon size={15} strokeWidth={2.4} />
-            </span>
+        const icon = (
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${wrap}`} aria-hidden>
+            <Icon size={15} strokeWidth={2.4} />
+          </span>
+        );
+        const body = (
+          <>
             <p className="min-w-0 flex-1 text-[13px] font-medium leading-[1.45] text-text-strong break-keep">{n.text}</p>
             <span className="shrink-0 text-[11px] text-text-faint">{relativeTimeLabel(now - n.at)}</span>
+          </>
+        );
+        // invite 알림은 입구 — 행 전체가 버튼(셰브런)으로 초대 화면을 연다.
+        if (n.kind === 'invite' && onSelectInvite) {
+          return (
+            <li key={n.id}>
+              <button
+                type="button"
+                onClick={() => onSelectInvite(n)}
+                className="pressable flex w-full items-center gap-3 rounded-xl px-2 py-2.5 text-left hover:bg-section"
+              >
+                {icon}
+                {body}
+                <ChevronRight size={15} className="shrink-0 text-text-faint" aria-hidden />
+              </button>
+            </li>
+          );
+        }
+        return (
+          <li key={n.id} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+            {icon}
+            {body}
           </li>
         );
       })}
@@ -56,12 +91,22 @@ export interface NotificationBellProps {
   unreadCount: number;
   /** 패널이 열리는 순간 1회 — markAllRead 배선용. */
   onOpen?: () => void;
+  /** invite 종류 알림을 탭했을 때 — 패널은 스스로 닫힌 뒤 호출한다(초대 화면 배선용). */
+  onSelectInvite?: (n: AppNotification) => void;
 }
 
-export default function NotificationBell({ list = [], unreadCount, onOpen }: NotificationBellProps) {
+export default function NotificationBell({ list = [], unreadCount, onOpen, onSelectInvite }: NotificationBellProps) {
   const reduced = !!useReducedMotion();
   const desktop = useIsDesktop();
   const [open, setOpen] = useState(false);
+
+  // invite 행 탭 → 패널을 닫고 나서 배선된 목적지(초대 화면)로 보낸다.
+  const selectInvite =
+    onSelectInvite &&
+    ((n: AppNotification) => {
+      setOpen(false);
+      onSelectInvite(n);
+    });
 
   const toggle = () => {
     // 여는 순간 읽음 처리 — updater 함수 안이 아니라 이벤트 핸들러에서 호출한다
@@ -133,7 +178,7 @@ export default function NotificationBell({ list = [], unreadCount, onOpen }: Not
               >
                 <h2 className="px-2 pb-1.5 pt-1 text-[14px] font-bold text-text-strong">알림</h2>
                 <div className="max-h-[380px] overflow-y-auto">
-                  <NotificationList list={list} now={now} />
+                  <NotificationList list={list} now={now} onSelectInvite={selectInvite} />
                 </div>
               </motion.section>
             ) : (
@@ -151,7 +196,7 @@ export default function NotificationBell({ list = [], unreadCount, onOpen }: Not
                 <span aria-hidden className="mx-auto block h-1 w-9 rounded-full bg-border" />
                 <h2 className="px-2 pb-1 pt-3 text-[16px] font-bold text-text-strong">알림</h2>
                 <div className="max-h-[55dvh] overflow-y-auto">
-                  <NotificationList list={list} now={now} />
+                  <NotificationList list={list} now={now} onSelectInvite={selectInvite} />
                 </div>
               </motion.section>
             )}

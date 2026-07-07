@@ -49,6 +49,22 @@ describe('createNotificationStore — push/토스트/알림 센터', () => {
     expect(store.getSnapshot().list).toEqual([note('a')]);
   });
 
+  it('seed는 토스트를 거치지 않고 곧장 list 맨 앞에 적립한다(안 읽음 +1, 타이머 없음)', () => {
+    const store = createNotificationStore();
+    store.push(note('a'));
+    vi.advanceTimersByTime(4000); // a → list
+    store.seed(note('invite'));
+
+    const snap = store.getSnapshot();
+    expect(snap.toasts).toEqual([]); // 토스트에는 등장하지 않는다
+    expect(snap.list).toEqual([note('invite'), note('a')]); // 맨 앞에 적립
+    expect(snap.unreadCount).toBe(2);
+
+    // 타이머가 없으니 시간이 흘러도 상태는 그대로다.
+    vi.advanceTimersByTime(10000);
+    expect(store.getSnapshot().list).toEqual([note('invite'), note('a')]);
+  });
+
   it('markAllRead는 unreadCount만 0으로 만들고 list/toasts는 건드리지 않는다', () => {
     const store = createNotificationStore();
     store.push(note('a'));

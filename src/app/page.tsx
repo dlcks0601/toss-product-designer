@@ -8,13 +8,11 @@ import DoneStep from '../components/DoneStep';
 import FindTimeDesktop from '../components/FindTimeDesktop';
 import FindTimeMobile from '../components/FindTimeMobile';
 import HomeCalendar from '../components/HomeCalendar';
-import InviteCard from '../components/InviteCard';
 import InviteView from '../components/InviteView';
 import NotificationBell from '../components/NotificationBell';
 import Reveal from '../components/Reveal';
 import ScanMoment from '../components/ScanMoment';
 import SetupForm from '../components/SetupForm';
-import TaskCard from '../components/TaskCard';
 import ToastStack from '../components/ToastStack';
 import Wordmark from '../components/Wordmark';
 import { playResponseScript, useNotifications } from '../app-state/notifications';
@@ -24,8 +22,7 @@ import { useIsDesktop } from '../app-state/useIsDesktop';
 import type { Action, AppState } from '../app-state/reducer';
 import type { ResponseBadges } from '../components/HomeCalendar';
 import type { AppNotification } from '../lib/types';
-import { CORE_CAST, INCOMING_INVITE, ME_ID, ORG, RESPONSE_SCRIPT } from '../data/world';
-import { fmtTime, weekdayIndex } from '../lib/time';
+import { INCOMING_INVITE, ME_ID, ORG, RESPONSE_SCRIPT } from '../data/world';
 
 /**
  * 앱 본체 — 단일 페이지 스텝 머신. reducer가 상태를, 주소창(toUrl/fromUrl)이 딥링크를 소유한다.
@@ -45,19 +42,10 @@ const ME = ORG.find((p) => p.id === ME_ID)!;
 const INVITE_FROM = ORG.find((p) => p.id === INCOMING_INVITE.fromId)!;
 /** 성을 뗀 호칭 — '최민수' → '민수'(응답 토스트 '준호님' 톤과 맞춘다). 2글자 이름은 그대로. */
 const INVITE_FROM_GIVEN = INVITE_FROM.name.length >= 3 ? INVITE_FROM.name.slice(1) : INVITE_FROM.name;
-const CORE_PEOPLE = CORE_CAST.map((id) => ORG.find((p) => p.id === id)!);
-
-const WEEKDAY_SHORT = ['월', '화', '수', '목', '금', '토', '일'] as const;
-
-/** INCOMING_INVITE → '목 7월 9일 오후 2:00' */
-function inviteDateLabel(): string {
-  const [, month, day] = INCOMING_INVITE.day.split('-').map(Number);
-  return `${WEEKDAY_SHORT[weekdayIndex(INCOMING_INVITE.day)]} ${month}월 ${day}일 ${fmtTime(INCOMING_INVITE.start)}`;
-}
 
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
-  const { list, toasts, unreadCount, push, dismiss, markAllRead } = useNotifications();
+  const { list, toasts, unreadCount, push, seed, dismiss, markAllRead } = useNotifications();
 
   // 마운트 시 1회 — 주소창의 딥링크 상태를 흡수한다. (아래 동기화 effect보다 먼저
   // 선언되어 있어 초기 상태가 주소창을 덮어쓰기 전에 원본 쿼리를 읽는다.)
@@ -69,6 +57,24 @@ export default function Page() {
   useEffect(() => {
     history.replaceState(null, '', `?${toUrl(state)}`);
   }, [state]);
+
+  // ── 받은 초대 적립 — 마운트 시 1회, 알림 센터의 안 읽은 항목으로(토스트 아님) ──
+  // 초대는 "이 세션이 시작되기 전에 이미 도착해 있던" 사실이라 transient 토스트가 아니라
+  // seed로 곧장 list에 심는다. StrictMode 이중 호출은 ref로 가드(응답 각본 가드와 같은 결).
+  const inviteSeededRef = useRef(false);
+  useEffect(() => {
+    if (inviteSeededRef.current) return;
+    inviteSeededRef.current = true;
+    if (state.inviteResponded === null) {
+      seed({
+        id: 'invite-minsu',
+        kind: 'invite',
+        personId: INCOMING_INVITE.fromId,
+        text: '민수님이 회의에 초대했어요',
+        at: Date.now(),
+      });
+    }
+  }, [state.inviteResponded, seed]);
 
   // ── 초대 뷰 mode — 직전 스텝 추적(done → 'preview', 그 외 → 'incoming') ──
   const [inviteMode, setInviteMode] = useState<'incoming' | 'preview'>('incoming');
@@ -151,7 +157,7 @@ export default function Page() {
   );
 }
 
-// ── 홈 — 분기점: 여정 A(새 일정/할 일 카드) · 여정 B(받은 초대) ──────────
+// ── 홈 — 분기점: 여정 A(새 일정/할 일 카드) · 여정 B(받은 초대 — 알림 벨·고스트) ──
 
 function HomeScreen({
   state,
@@ -168,41 +174,35 @@ function HomeScreen({
   onOpenNotifications: () => void;
   responseBadges: ResponseBadges | null;
 }) {
-  const startMeeting = () => dispatch({ type: 'PREFILL_CAST' }); // 할 일 카드 → 6인 프리필 셋업
   const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
   const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
-  // 응답을 마친 초대는 카드·고스트 모두 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).
+  // 응답을 마친 초대는 캘린더의 고스트가 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).
+  // 알림 센터의 초대 알림은 기록으로 남는다 — 탭하면 응답 완료 상태의 초대 화면이 열린다.
   const invitePending = state.inviteResponded === null;
 
   return (
     <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
-      {/* 상단 오로라 — 헤더·카드 영역까지만. 본문은 순백으로 가라앉힌다. */}
-      <div className="relative overflow-hidden">
-        <Aurora variant="home" />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white"
-        />
-        <div className="relative mx-auto max-w-[1200px] px-4 lg:px-6">
+      {/* 상단 오로라 — 배경 레이어만 overflow-hidden으로 가둔다. 헤더 콘텐츠(벨·알림 드롭다운)는
+          이 클립 밖에 둬야 드롭다운이 헤더 높이에 잘리지 않는다. */}
+      <div className="relative">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <Aurora variant="home" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
+        </div>
+        <div className="relative mx-auto max-w-[1200px] px-4 pb-4 lg:px-6 lg:pb-6">
           <Reveal as="header" className="flex h-16 items-center justify-between lg:h-[72px]">
             <Wordmark />
-            <NotificationBell unreadCount={unreadCount} list={notifications} onOpen={onOpenNotifications} />
+            <NotificationBell
+              unreadCount={unreadCount}
+              list={notifications}
+              onOpen={onOpenNotifications}
+              onSelectInvite={openInvite}
+            />
           </Reveal>
-
-          <div className="grid gap-2.5 pb-7 pt-3.5 lg:grid-cols-2 lg:gap-3">
-            <Reveal delay={70}>
-              <TaskCard people={CORE_PEOPLE} onPress={startMeeting} />
-            </Reveal>
-            {invitePending && (
-              <Reveal delay={140}>
-                <InviteCard from={INVITE_FROM} fromLabel={INVITE_FROM_GIVEN} dateLabel={inviteDateLabel()} onPress={openInvite} />
-              </Reveal>
-            )}
-          </div>
         </div>
       </div>
 
-      <Reveal delay={210} className="mx-auto max-w-[1200px] px-4 lg:px-6">
+      <Reveal delay={70} className="mx-auto max-w-[1200px] px-4 lg:px-6">
         {/* 내 기본 일정 + 셋업 혼자 경로로 저장한 개인 일정(myEvents)을 함께 그린다. */}
         <HomeCalendar
           events={[...ME.events, ...state.myEvents]}

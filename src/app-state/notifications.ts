@@ -25,6 +25,7 @@ export interface NotificationStore {
   getSnapshot(): NotificationsSnapshot;
   subscribe(listener: () => void): () => void;
   push(n: AppNotification): void;
+  seed(n: AppNotification): void;
   dismiss(id: string): void;
   markAllRead(): void;
 }
@@ -32,6 +33,8 @@ export interface NotificationStore {
 /**
  * 순수 알림 스토어 — 토스트(transient 오버레이 큐)와 알림 센터(list, 영구 적립)를 관리한다.
  * push → toasts에 추가 + unreadCount 증가 + 4초 뒤 자동으로 list로 이동.
+ * seed → 토스트를 거치지 않고 곧장 list 맨 앞에 적립 + unreadCount 증가(타이머 없음)
+ *        — 마운트 시점에 "이미 도착해 있던" 알림(받은 초대)을 심는 용도.
  * dismiss → 수동으로 즉시 list로 이동(예약된 타이머는 취소).
  * markAllRead → unreadCount만 0으로.
  */
@@ -71,6 +74,12 @@ export function createNotificationStore(): NotificationStore {
       notify();
     },
 
+    seed(n) {
+      list = [n, ...list];
+      unreadCount += 1;
+      notify();
+    },
+
     dismiss(id) {
       const timer = timers.get(id);
       if (timer) clearTimeout(timer);
@@ -89,6 +98,7 @@ export interface UseNotificationsResult {
   toasts: AppNotification[];
   unreadCount: number;
   push(n: AppNotification): void;
+  seed(n: AppNotification): void;
   dismiss(id: string): void;
   markAllRead(): void;
 }
@@ -101,10 +111,11 @@ export function useNotifications(): UseNotificationsResult {
   useEffect(() => store.subscribe(() => setSnapshot(store.getSnapshot())), [store]);
 
   const push = useCallback((n: AppNotification) => store.push(n), [store]);
+  const seed = useCallback((n: AppNotification) => store.seed(n), [store]);
   const dismiss = useCallback((id: string) => store.dismiss(id), [store]);
   const markAllRead = useCallback(() => store.markAllRead(), [store]);
 
-  return { list: snapshot.list, toasts: snapshot.toasts, unreadCount: snapshot.unreadCount, push, dismiss, markAllRead };
+  return { list: snapshot.list, toasts: snapshot.toasts, unreadCount: snapshot.unreadCount, push, seed, dismiss, markAllRead };
 }
 
 /**
