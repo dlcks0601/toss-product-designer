@@ -16,7 +16,6 @@ import ScanMoment from '../components/ScanMoment';
 import SetupForm from '../components/SetupForm';
 import TaskCard from '../components/TaskCard';
 import ToastStack from '../components/ToastStack';
-import WelcomeCard from '../components/WelcomeCard';
 import Wordmark from '../components/Wordmark';
 import { playResponseScript, useNotifications } from '../app-state/notifications';
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
@@ -169,7 +168,7 @@ function HomeScreen({
   onOpenNotifications: () => void;
   responseBadges: ResponseBadges | null;
 }) {
-  const startMeeting = () => dispatch({ type: 'PREFILL_CAST' }); // 웰컴·할 일 카드 공용
+  const startMeeting = () => dispatch({ type: 'PREFILL_CAST' }); // 할 일 카드 → 6인 프리필 셋업
   const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
   const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
   // 응답을 마친 초대는 카드·고스트 모두 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).
@@ -190,18 +189,12 @@ function HomeScreen({
             <NotificationBell unreadCount={unreadCount} list={notifications} onOpen={onOpenNotifications} />
           </Reveal>
 
-          {!state.welcomeDismissed && (
-            <Reveal delay={70} className="pt-2">
-              <WelcomeCard onStart={startMeeting} onDismiss={() => dispatch({ type: 'DISMISS_WELCOME' })} />
-            </Reveal>
-          )}
-
           <div className="grid gap-2.5 pb-7 pt-3.5 lg:grid-cols-2 lg:gap-3">
-            <Reveal delay={140}>
+            <Reveal delay={70}>
               <TaskCard people={CORE_PEOPLE} onPress={startMeeting} />
             </Reveal>
             {invitePending && (
-              <Reveal delay={210}>
+              <Reveal delay={140}>
                 <InviteCard from={INVITE_FROM} fromLabel={INVITE_FROM_GIVEN} dateLabel={inviteDateLabel()} onPress={openInvite} />
               </Reveal>
             )}
@@ -209,7 +202,7 @@ function HomeScreen({
         </div>
       </div>
 
-      <Reveal delay={280} className="mx-auto max-w-[1200px] px-4 lg:px-6">
+      <Reveal delay={210} className="mx-auto max-w-[1200px] px-4 lg:px-6">
         {/* 내 기본 일정 + 셋업 혼자 경로로 저장한 개인 일정(myEvents)을 함께 그린다. */}
         <HomeCalendar
           events={[...ME.events, ...state.myEvents]}

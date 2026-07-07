@@ -15,7 +15,6 @@ describe('initialState', () => {
     expect(s.allowPartialRequiredId).toBeNull();
     expect(s.roomId).toBeNull();
     expect(s.scanPlayed).toBe(false);
-    expect(s.welcomeDismissed).toBe(false);
     expect(s.mitigations).toEqual({ delayTen: false, fiftyMin: false });
     expect(s.inviteResponded).toBeNull();
     expect(s.confirmedAt).toBe(false);
@@ -295,10 +294,9 @@ describe('PREFILL_CAST — 웰컴/할 일 카드 공용 6인 프리필', () => {
     expect(isMeeting(s)).toBe(true);
   });
 
-  it('여정 시작이므로 웰컴 카드를 접고, 이전 선택을 무효화한다', () => {
+  it('참석자 구성을 통째로 바꾸므로 이전 선택을 무효화한다', () => {
     const messy: AppState = { ...initialState(), selectedSlotId: 'slot-1', allowPartialRequiredId: 'junho' };
     const s = reducer(messy, { type: 'PREFILL_CAST' });
-    expect(s.welcomeDismissed).toBe(true);
     expect(s.selectedSlotId).toBeNull();
     expect(s.allowPartialRequiredId).toBeNull();
   });
@@ -331,26 +329,11 @@ describe('HYDRATE — 마운트 1회 딥링크 병합', () => {
     const meOptional = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl(`p=${ME_ID}.o,junho.r`) });
     expect(meOptional.required[ME_ID]).toBe(true); // .o로 와도 필수로 강제
   });
-
-  it('홈 밖 스텝으로 착지하면 웰컴 카드를 접고, 홈이면 그대로 둔다', () => {
-    const away = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl('s=setup') });
-    expect(away.welcomeDismissed).toBe(true);
-    const home = reducer(initialState(), { type: 'HYDRATE', patch: fromUrl('s=home') });
-    expect(home.welcomeDismissed).toBe(false);
-  });
 });
 
 describe('그 외 단순 액션', () => {
   it('SET_STEP', () => {
     expect(reducer(initialState(), { type: 'SET_STEP', step: 'setup' }).step).toBe('setup');
-  });
-  it('SET_STEP — 홈을 떠나면 웰컴 카드가 자동으로 접히고, 홈 복귀로는 되살아나지 않는다', () => {
-    const away = reducer(initialState(), { type: 'SET_STEP', step: 'invite' });
-    expect(away.welcomeDismissed).toBe(true);
-    const back = reducer(away, { type: 'SET_STEP', step: 'home' });
-    expect(back.welcomeDismissed).toBe(true);
-    // 홈 → 홈은 웰컴을 건드리지 않는다
-    expect(reducer(initialState(), { type: 'SET_STEP', step: 'home' }).welcomeDismissed).toBe(false);
   });
   it('SET_TITLE', () => {
     expect(reducer(initialState(), { type: 'SET_TITLE', title: '주간 싱크' }).title).toBe('주간 싱크');
@@ -361,9 +344,6 @@ describe('그 외 단순 액션', () => {
   });
   it('PLAY_SCAN', () => {
     expect(reducer(initialState(), { type: 'PLAY_SCAN' }).scanPlayed).toBe(true);
-  });
-  it('DISMISS_WELCOME', () => {
-    expect(reducer(initialState(), { type: 'DISMISS_WELCOME' }).welcomeDismissed).toBe(true);
   });
   it('TOGGLE_MITIGATION은 지정한 키만 뒤집는다', () => {
     const once = reducer(initialState(), { type: 'TOGGLE_MITIGATION', key: 'delayTen' });
@@ -429,7 +409,7 @@ describe('RESPOND_INVITE — 여정 B 응답(수락→캘린더 반영 / 거절�
 });
 
 describe('RESET', () => {
-  it('welcomeDismissed를 보존하고 나머지는 initialState()로 되돌린다', () => {
+  it('myEvents만 보존하고 나머지는 initialState()로 되돌린다', () => {
     const messy: AppState = {
       ...initialState(),
       step: 'done',
@@ -442,20 +422,13 @@ describe('RESET', () => {
       allowPartialRequiredId: 'junho',
       roomId: 'room-1',
       scanPlayed: true,
-      welcomeDismissed: true,
       mitigations: { delayTen: true, fiftyMin: true },
       inviteResponded: 'accepted',
       confirmedAt: true,
       confirmedSlotId: 'slot-1',
     };
     const next = reducer(messy, { type: 'RESET' });
-    expect(next).toEqual({ ...initialState(), welcomeDismissed: true });
-  });
-
-  it('welcomeDismissed가 false였으면 RESET 후에도 false다', () => {
-    // SET_STEP은 홈을 떠날 때 웰컴을 접으므로, 접히지 않은 상태를 직접 구성한다.
-    const s: AppState = { ...initialState(), step: 'done', welcomeDismissed: false };
-    expect(reducer(s, { type: 'RESET' }).welcomeDismissed).toBe(false);
+    expect(next).toEqual(initialState());
   });
 });
 

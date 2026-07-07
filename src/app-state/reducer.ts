@@ -33,7 +33,6 @@ export interface AppState {
   allowPartialRequiredId: string | null;
   roomId: string | 'remote' | null;
   scanPlayed: boolean;
-  welcomeDismissed: boolean;
   mitigations: { delayTen: boolean; fiftyMin: boolean };
   inviteResponded: 'accepted' | 'difficult' | null;
   /** 이번 세션 중 한 번이라도 확정한 적이 있는가 — CTA 분기는 이 값이 아니라 confirmedSlotId를 본다. */
@@ -65,7 +64,6 @@ export type Action =
   | { type: 'PREFILL_CAST' }
   | { type: 'HYDRATE'; patch: Partial<AppState> }
   | { type: 'PLAY_SCAN' }
-  | { type: 'DISMISS_WELCOME' }
   | { type: 'TOGGLE_MITIGATION'; key: keyof AppState['mitigations'] }
   | { type: 'RESPOND_INVITE'; response: 'accepted' | 'difficult' }
   | { type: 'CONFIRM'; event?: { day: string; start: number; end: number } }
@@ -84,7 +82,6 @@ export function initialState(): AppState {
     allowPartialRequiredId: null,
     roomId: null,
     scanPlayed: false,
-    welcomeDismissed: false,
     mitigations: { delayTen: false, fiftyMin: false },
     inviteResponded: null,
     confirmedAt: false,
@@ -111,8 +108,7 @@ function applyAndInvalidateSelection(s: AppState, patch: Partial<AppState>): App
 export function reducer(s: AppState, a: Action): AppState {
   switch (a.type) {
     case 'SET_STEP':
-      // 홈을 떠나는 순간 어느 여정이든 시작된 것 — 웰컴 카드(첫 방문 1회)는 자동으로 접는다.
-      return { ...s, step: a.step, welcomeDismissed: s.welcomeDismissed || a.step !== 'home' };
+      return { ...s, step: a.step };
 
     case 'SET_TITLE':
       return { ...s, title: a.title };
@@ -165,8 +161,8 @@ export function reducer(s: AppState, a: Action): AppState {
       return { ...s, roomId: a.roomId };
 
     case 'PREFILL_CAST': {
-      // 웰컴/할 일 카드 공용 프리필 — 기본 6인(필수 4 + 선택 2)으로 셋업을 시작한다.
-      // 참석자 구성을 통째로 바꾸므로 이전 선택은 무효, 여정이 시작되므로 웰컴은 접는다.
+      // 할 일 카드 공용 프리필 — 기본 6인(필수 4 + 선택 2)으로 셋업을 시작한다.
+      // 참석자 구성을 통째로 바꾸므로 이전 선택은 무효.
       const required: Record<string, boolean> = {};
       for (const id of DEFAULT_CAST.requiredIds) required[id] = true;
       for (const id of DEFAULT_CAST.optionalIds) required[id] = false;
@@ -176,7 +172,6 @@ export function reducer(s: AppState, a: Action): AppState {
           required,
         }),
         step: 'setup',
-        welcomeDismissed: true,
       };
     }
 
@@ -193,16 +188,11 @@ export function reducer(s: AppState, a: Action): AppState {
         merged.attendeeIds = [ME_ID, ...merged.attendeeIds];
       }
       merged.required = { ...merged.required, [ME_ID]: true };
-      // 홈 밖으로 착지하는 딥링크는 이미 여정 중 — 웰컴 카드는 접은 상태로 시작한다.
-      if (merged.step !== 'home') merged.welcomeDismissed = true;
       return merged;
     }
 
     case 'PLAY_SCAN':
       return { ...s, scanPlayed: true };
-
-    case 'DISMISS_WELCOME':
-      return { ...s, welcomeDismissed: true };
 
     case 'TOGGLE_MITIGATION':
       return { ...s, mitigations: { ...s.mitigations, [a.key]: !s.mitigations[a.key] } };
@@ -253,9 +243,8 @@ export function reducer(s: AppState, a: Action): AppState {
     }
 
     case 'RESET': {
-      // 완전 초기화하되, 웰컴 카드는 "첫 방문 1회" 계약이라 다시 보여주지 않고,
-      // 내 캘린더에 이미 저장된 개인 일정(myEvents)도 지우지 않는다 — 조율 여정만 초기화한다.
-      return { ...initialState(), welcomeDismissed: s.welcomeDismissed, myEvents: s.myEvents };
+      // 완전 초기화하되, 내 캘린더에 이미 저장된 개인 일정(myEvents)은 지우지 않는다 — 조율 여정만 초기화한다.
+      return { ...initialState(), myEvents: s.myEvents };
     }
 
     default:
