@@ -2,15 +2,17 @@
 
 import { useState, type Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
-import { CalendarDays, ChevronDown, ChevronLeft, List } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronLeft, List, X } from 'lucide-react';
 import Avatar from './Avatar';
 import CandidateGrid from './CandidateGrid';
 import Chip from './Chip';
+import DecisionMoment, { decisionKey, pickAction } from './DecisionMoment';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
 import type { Candidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
 import { ME_ID } from '../data/world';
+import type { RelaxationSuggestion } from '../lib/relaxation';
 import type { DeadlineKind } from '../lib/types';
 
 /**
@@ -24,7 +26,9 @@ import type { DeadlineKind } from '../lib/types';
  * 자리를 바꾸고, 사라지는/새 카드는 popLayout으로 페이드. 로딩 상태 없음(순수 동기 재계산).
  * 카드 확장은 layout이 아니라 카드 내부 height 트윈 — 아래 카드는 문서 흐름으로 밀린다.
  *
- * 빈 상태(후보 0)는 임시 카드 — 결정 모먼트(T17)가 교체한다.
+ * 결정 모먼트(T17): 후보 0이면 리스트 자리에 단독, 표시 후보 전부 warning이면 리스트 위에
+ * 먼저 + 아래 카드 흐림(opacity .5). '같은 조건 조합에 1회' — 제안을 고르면 그 조합의
+ * decisionKey를 응답한 것으로 기록하고, 조건 패널을 직접 만지는 것도 유효한 응답(기록 초기화).
  * lg 이상은 FindTimeDesktop(캔버스+레일)이 담당한다 — 후보 파생은 부모가 한 번만 계산해 공유.
  */
 
@@ -62,16 +66,37 @@ export interface FindTimeMobileProps {
 
 export default function FindTimeMobile({ state, dispatch, candidates }: FindTimeMobileProps) {
   const reduced = !!useReducedMotion();
-  const { attendees, windowDays, slots, visible } = candidates;
+  const { attendees, windowDays, slots, visible, needsDecision, suggestions, bottleneck } = candidates;
   // 확장된(=지금 보고 있는) 후보 — 딥링크의 선택을 이어받고, 조건이 바뀌어 목록에서
   // 사라지면 자연히 무효가 된다(visible 검증으로 파생 — effect 없음).
   const [expandedId, setExpandedId] = useState<string | null>(() => state.selectedSlotId);
   const [view, setView] = useState<'list' | 'grid'>('list');
   const [condOpen, setCondOpen] = useState(false);
+  // 결정 모먼트 '한 번만' 규칙 — 응답한 조건 조합의 해시. 세션 로컬(URL 비직렬화).
+  const [answeredKey, setAnsweredKey] = useState<string | null>(null);
 
   const activeId = expandedId !== null && visible.some((s) => s.id === expandedId) ? expandedId : null;
   const requiredCount = attendees.filter((a) => a.attendanceType === 'required').length;
   const optionalCount = attendees.length - requiredCount;
+
+  const condKey = decisionKey(state);
+  const showMoment = needsDecision && condKey !== answeredKey;
+  const allowedPartial =
+    state.allowPartialRequiredId !== null
+      ? attendees.find((a) => a.id === state.allowPartialRequiredId) ?? null
+      : null;
+
+  /** 제안 선택 = 이 조건 조합에 대한 응답 — 기록 후 kind별 조건 변화를 dispatch(재계산은 useCandidates가). */
+  const pickSuggestion = (s: RelaxationSuggestion) => {
+    setAnsweredKey(condKey);
+    const action = pickAction(s, state.deadline);
+    if (action) dispatch(action);
+  };
+  /** 조건 패널 직접 조작도 유효한 응답 — 응답 기록을 비워 다음 막다른 조합에서 다시 도울 수 있게 한다. */
+  const touchCondition = (action: Action) => {
+    setAnsweredKey(null);
+    dispatch(action);
+  };
 
   const toggleCard = (id: string) => setExpandedId((cur) => (cur === id ? null : id));
   const selectFromGrid = (id: string) => {
@@ -127,6 +152,20 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
                 className={`text-text-weak transition-transform duration-300 ${condOpen ? 'rotate-180' : ''}`}
               />
             </button>
+            {/* 허락제 상태 칩 — 몰래가 아니라 명시적 상태. 접혀 있어도 보인다. 탭 = 해제(유효한 응답). */}
+            {allowedPartial && (
+              <div className="px-4 pb-3">
+                <button
+                  type="button"
+                  onClick={() => touchCondition({ type: 'ALLOW_PARTIAL', id: null })}
+                  aria-label={`${allowedPartial.name}님 부분 참석 허용 해제`}
+                  className="pressable inline-flex h-8 items-center gap-1 rounded-full bg-primary-tint pl-3 pr-2 text-[12px] font-semibold text-primary"
+                >
+                  {allowedPartial.name}님 부분 참석 허용됨
+                  <X size={13} aria-hidden />
+                </button>
+              </div>
+            )}
             <AnimatePresence initial={false}>
               {condOpen && (
                 <motion.div
@@ -144,7 +183,7 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
                           <Chip
                             key={o.value}
                             selected={state.duration === o.value}
-                            onClick={() => dispatch({ type: 'SET_DURATION', duration: o.value })}
+                            onClick={() => touchCondition({ type: 'SET_DURATION', duration: o.value })}
                           >
                             {o.label}
                           </Chip>
@@ -158,7 +197,7 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
                           <Chip
                             key={o.value}
                             selected={state.deadline === o.value}
-                            onClick={() => dispatch({ type: 'SET_DEADLINE', deadline: o.value })}
+                            onClick={() => touchCondition({ type: 'SET_DEADLINE', deadline: o.value })}
                           >
                             {o.label}
                           </Chip>
@@ -183,7 +222,7 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
                                   type="button"
                                   aria-pressed={required}
                                   aria-label={`${p.name} ${required ? '꼭 참석' : '선택 참석'}`}
-                                  onClick={() => dispatch({ type: 'SET_REQUIRED', id: p.id, required: !required })}
+                                  onClick={() => touchCondition({ type: 'SET_REQUIRED', id: p.id, required: !required })}
                                   className={`pressable h-7 shrink-0 rounded-full px-2.5 text-[12px] font-semibold transition-colors ${
                                     required ? 'bg-primary-tint text-primary' : 'bg-section text-text-weak'
                                   }`}
@@ -203,71 +242,103 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
           </div>
         </Reveal>
 
-        {/* 뷰 헤더 + 시간표 토글 */}
-        <Reveal delay={210} className="flex items-center justify-between pb-2 pt-5">
-          <p className="text-[13px] font-semibold text-text-weak">
-            {view === 'list' ? '추천 순이에요' : '주간 시간표예요'}
-          </p>
-          <button
-            type="button"
-            onClick={() => setView((v) => (v === 'list' ? 'grid' : 'list'))}
-            className="pressable flex h-8 items-center gap-1.5 rounded-full bg-section px-3 text-[13px] font-medium text-text-body"
-          >
-            {view === 'list' ? (
-              <>
-                <CalendarDays size={14} aria-hidden />
-                시간표로 보기
-              </>
-            ) : (
-              <>
-                <List size={14} aria-hidden />
-                리스트로 보기
-              </>
-            )}
-          </button>
-        </Reveal>
+        {/* 뷰 헤더 + 시간표 토글 — 보여줄 후보가 있을 때만 */}
+        {slots.length > 0 && (
+          <Reveal delay={210} className="flex items-center justify-between pb-2 pt-5">
+            <p className="text-[13px] font-semibold text-text-weak">
+              {view === 'list' ? '추천 순이에요' : '주간 시간표예요'}
+            </p>
+            <button
+              type="button"
+              onClick={() => setView((v) => (v === 'list' ? 'grid' : 'list'))}
+              className="pressable flex h-8 items-center gap-1.5 rounded-full bg-section px-3 text-[13px] font-medium text-text-body"
+            >
+              {view === 'list' ? (
+                <>
+                  <CalendarDays size={14} aria-hidden />
+                  시간표로 보기
+                </>
+              ) : (
+                <>
+                  <List size={14} aria-hidden />
+                  리스트로 보기
+                </>
+              )}
+            </button>
+          </Reveal>
+        )}
 
-        <Reveal delay={280}>
+        <Reveal delay={280} className={slots.length === 0 ? 'pt-5' : undefined}>
           {slots.length === 0 ? (
-            /* 빈 상태(임시) — T17 결정 모먼트가 이 자리를 채운다 */
-            <div className="rounded-card bg-section px-6 py-12 text-center">
-              <p className="text-[15px] font-semibold text-text-strong">이 조건으로는 시간이 없어요</p>
-              <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">곧 도와드릴게요</p>
-            </div>
-          ) : view === 'grid' ? (
-            <CandidateGrid
-              slots={visible}
-              windowDays={windowDays}
-              attendees={attendees}
-              selectedId={activeId}
-              onSelect={selectFromGrid}
-            />
+            /* 빈 상태 — 결정 모먼트 단독. 이미 응답한 조합이면 조용한 안내만. */
+            showMoment ? (
+              <DecisionMoment
+                key={condKey}
+                suggestions={suggestions}
+                bottleneck={bottleneck}
+                mode="empty"
+                deadline={state.deadline}
+                onPick={pickSuggestion}
+              />
+            ) : (
+              <div className="rounded-card bg-section px-6 py-12 text-center">
+                <p className="text-[15px] font-semibold text-text-strong">이 조건으로는 시간이 없어요</p>
+                <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">조건을 바꾸면 바로 다시 찾아볼게요</p>
+              </div>
+            )
           ) : (
-            <LayoutGroup>
-              <ul className="space-y-2.5">
-                <AnimatePresence initial={false} mode="popLayout">
-                  {visible.map((slot, i) => (
-                    <motion.li
-                      key={slot.id}
-                      layout={reduced ? false : 'position'}
-                      initial={{ opacity: 0, scale: 0.98 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
-                      transition={POSITION_SPRING}
-                    >
-                      <ReasonCard
-                        slot={slot}
-                        attendees={attendees}
-                        windowDays={windowDays}
-                        expanded={activeId === slot.id}
-                        recommended={i === 0}
-                        onSelect={() => toggleCard(slot.id)}
-                      />
-                    </motion.li>
-                  ))}
-                </AnimatePresence>
-              </ul>
-            </LayoutGroup>
+            <>
+              {/* 전부 아쉬움 — 결정 모먼트 먼저, 아래 후보는 흐리게(그래도 답이 될 수 있으니 남긴다) */}
+              {showMoment && (
+                <div className="pb-3">
+                  <DecisionMoment
+                    key={condKey}
+                    suggestions={suggestions}
+                    bottleneck={bottleneck}
+                    mode="all-warning"
+                    deadline={state.deadline}
+                    onPick={pickSuggestion}
+                  />
+                </div>
+              )}
+              <div className={showMoment ? 'opacity-50' : undefined}>
+                {view === 'grid' ? (
+                  <CandidateGrid
+                    slots={visible}
+                    windowDays={windowDays}
+                    attendees={attendees}
+                    selectedId={activeId}
+                    onSelect={selectFromGrid}
+                  />
+                ) : (
+                  <LayoutGroup>
+                    <ul className="space-y-2.5">
+                      <AnimatePresence initial={false} mode="popLayout">
+                        {visible.map((slot, i) => (
+                          <motion.li
+                            key={slot.id}
+                            layout={reduced ? false : 'position'}
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
+                            transition={POSITION_SPRING}
+                          >
+                            <ReasonCard
+                              slot={slot}
+                              attendees={attendees}
+                              windowDays={windowDays}
+                              expanded={activeId === slot.id}
+                              recommended={i === 0}
+                              onSelect={() => toggleCard(slot.id)}
+                            />
+                          </motion.li>
+                        ))}
+                      </AnimatePresence>
+                    </ul>
+                  </LayoutGroup>
+                )}
+              </div>
+            </>
           )}
         </Reveal>
       </div>

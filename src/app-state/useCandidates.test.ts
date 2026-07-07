@@ -49,8 +49,10 @@ describe('computeCandidates — S1 (기본 6인, 다음 주까지, 1시간)', ()
     ]);
   });
 
-  it('결정 모먼트는 아니다(표시 후보에 non-warning 존재)', () => {
+  it('결정 모먼트는 아니다(표시 후보에 non-warning 존재) — 완화 시뮬도 돌지 않는다', () => {
     expect(result.needsDecision).toBe(false);
+    expect(result.suggestions).toEqual([]);
+    expect(result.bottleneck).toBeNull();
   });
 
   it('insights는 참석자만 키로 갖는다', () => {
@@ -64,6 +66,17 @@ describe('computeCandidates — 조건 변화', () => {
     expect(result.slots).toHaveLength(0);
     expect(result.visible).toHaveLength(0);
     expect(result.needsDecision).toBe(true);
+  });
+
+  it('S4: needsDecision이면 완화 제안(최대 3, 실측)과 병목(준호·데일리 스크럼)이 채워진다', () => {
+    const result = computeCandidates(defaultInput({ deadline: 'this-week' }));
+    expect(result.suggestions.length).toBeGreaterThanOrEqual(1);
+    expect(result.suggestions.length).toBeLessThanOrEqual(3);
+    for (const s of result.suggestions) expect(s.opens).toBeGreaterThan(0);
+    // 준호 부분 참석 허락이 선택지에 있다 — S4 데모의 핵심 경로.
+    const partial = result.suggestions.find((s) => s.kind === 'allow-partial-required');
+    expect(partial?.targetId).toBe('junho');
+    expect(result.bottleneck).toEqual({ personId: 'junho', name: '박준호', eventTitle: '데일리 스크럼' });
   });
 
   it('90분 → 후보 4개 전부 warning → needsDecision', () => {

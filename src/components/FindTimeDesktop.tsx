@@ -2,9 +2,10 @@
 
 import { useCallback, useMemo, useRef, useState, type Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, X } from 'lucide-react';
 import Avatar from './Avatar';
 import Chip from './Chip';
+import DecisionMoment, { decisionKey, pickAction } from './DecisionMoment';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
 import WeekCanvas from './WeekCanvas';
@@ -14,6 +15,7 @@ import { fmtDayKorean, fmtTime } from '../lib/time';
 import { ME_ID } from '../data/world';
 import type { Candidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
+import type { RelaxationSuggestion } from '../lib/relaxation';
 
 /**
  * 시간 찾기 — PC(lg+) 지도 앱 패턴(히어로 2/2). 캘린더 캔버스가 지도, 이유 카드가 장소 카드다.
@@ -28,6 +30,10 @@ import type { Action, AppState } from '../app-state/reducer';
  *
  * 주 스위처: 기한 창이 2주 이상이면 '이번 주 남은 날 | 다음 주 (| 그다음 주)' 세그먼트.
  * 키보드 ←→ 순회로 다른 주의 후보가 선택되면 주도 따라간다. 공지는 aria-live 하나로.
+ *
+ * 결정 모먼트(T17): 후보 0이면 레일 자리에 단독(캔버스는 팀 밀도 지형으로 남는다),
+ * 전부 warning이면 레일 카드 위에 먼저 + 아래 카드 흐림. '한 번만' 규칙은 모바일과 동일 —
+ * decisionKey로 응답한 조합을 기억하고, 조건 패널 직접 조작도 유효한 응답으로 친다.
  */
 
 export interface FindTimeDesktopProps {
@@ -38,11 +44,13 @@ export interface FindTimeDesktopProps {
 
 export default function FindTimeDesktop({ state, dispatch, candidates }: FindTimeDesktopProps) {
   const reduced = !!useReducedMotion();
-  const { attendees, windowDays, slots, visible } = candidates;
+  const { attendees, windowDays, slots, visible, needsDecision, suggestions, bottleneck } = candidates;
 
   const [selectedId, setSelectedId] = useState<string | null>(() => state.selectedSlotId);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [announce, setAnnounce] = useState('');
+  // 결정 모먼트 '한 번만' 규칙 — 응답한 조건 조합의 해시. 세션 로컬(URL 비직렬화).
+  const [answeredKey, setAnsweredKey] = useState<string | null>(null);
   const cardRefs = useRef(new Map<string, HTMLLIElement>());
 
   const mondays = useMemo(() => weekMondays(windowDays), [windowDays]);
@@ -60,6 +68,25 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
   const activeId = selectedId !== null && visible.some((s) => s.id === selectedId) ? selectedId : null;
   const requiredCount = attendees.filter((a) => a.attendanceType === 'required').length;
   const optionalCount = attendees.length - requiredCount;
+
+  const condKey = decisionKey(state);
+  const showMoment = needsDecision && condKey !== answeredKey;
+  const allowedPartial =
+    state.allowPartialRequiredId !== null
+      ? attendees.find((a) => a.id === state.allowPartialRequiredId) ?? null
+      : null;
+
+  /** 제안 선택 = 이 조건 조합에 대한 응답 — 기록 후 kind별 조건 변화를 dispatch(재계산은 useCandidates가). */
+  const pickSuggestion = (s: RelaxationSuggestion) => {
+    setAnsweredKey(condKey);
+    const action = pickAction(s, state.deadline);
+    if (action) dispatch(action);
+  };
+  /** 조건 패널 직접 조작도 유효한 응답 — 응답 기록을 비워 다음 막다른 조합에서 다시 도울 수 있게 한다. */
+  const touchCondition = (action: Action) => {
+    setAnsweredKey(null);
+    dispatch(action);
+  };
 
   /** 밴드 탭·키보드 공용 선택 — 주 전환 + 카드 확장 + 스크롤 인뷰 + 공지까지 한 손에. */
   const selectSlot = useCallback(
@@ -154,7 +181,7 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
                   <Chip
                     key={o.value}
                     selected={state.duration === o.value}
-                    onClick={() => dispatch({ type: 'SET_DURATION', duration: o.value })}
+                    onClick={() => touchCondition({ type: 'SET_DURATION', duration: o.value })}
                   >
                     {o.label}
                   </Chip>
@@ -166,7 +193,7 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
                   <Chip
                     key={o.value}
                     selected={state.deadline === o.value}
-                    onClick={() => dispatch({ type: 'SET_DEADLINE', deadline: o.value })}
+                    onClick={() => touchCondition({ type: 'SET_DEADLINE', deadline: o.value })}
                   >
                     {o.label}
                   </Chip>
@@ -189,7 +216,7 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
                           type="button"
                           aria-pressed={required}
                           aria-label={`${p.name} ${required ? '꼭 참석' : '선택 참석'}`}
-                          onClick={() => dispatch({ type: 'SET_REQUIRED', id: p.id, required: !required })}
+                          onClick={() => touchCondition({ type: 'SET_REQUIRED', id: p.id, required: !required })}
                           className={`pressable h-6 shrink-0 rounded-full px-2 text-[11px] font-semibold transition-colors ${
                             required ? 'bg-primary-tint text-primary' : 'bg-section text-text-weak'
                           }`}
@@ -201,6 +228,18 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
                   );
                 })}
               </div>
+              {/* 허락제 상태 칩 — 몰래가 아니라 명시적 상태. 탭 = 해제(유효한 응답). */}
+              {allowedPartial && (
+                <button
+                  type="button"
+                  onClick={() => touchCondition({ type: 'ALLOW_PARTIAL', id: null })}
+                  aria-label={`${allowedPartial.name}님 부분 참석 허용 해제`}
+                  className="pressable mt-3 inline-flex h-8 items-center gap-1 rounded-full bg-primary-tint pl-3 pr-2 text-[12px] font-semibold text-primary"
+                >
+                  {allowedPartial.name}님 부분 참석 허용됨
+                  <X size={13} aria-hidden />
+                </button>
+              )}
             </div>
           </Reveal>
 
@@ -227,57 +266,87 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
 
           {/* ── 우: 이유 카드 레일(340 고정) + 하단 CTA ── */}
           <Reveal delay={280} as="aside" className="flex w-[340px] shrink-0 flex-col">
-            <p className="shrink-0 pb-2 text-[13px] font-semibold text-text-weak">추천 순이에요</p>
+            {slots.length > 0 && (
+              <p className="shrink-0 pb-2 text-[13px] font-semibold text-text-weak">추천 순이에요</p>
+            )}
             <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pb-2 pt-0.5">
               {slots.length === 0 ? (
-                /* 빈 상태(임시) — T17 결정 모먼트가 이 자리를 채운다 */
-                <div className="rounded-card bg-section px-6 py-12 text-center">
-                  <p className="text-[15px] font-semibold text-text-strong">이 조건으로는 시간이 없어요</p>
-                  <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">곧 도와드릴게요</p>
-                </div>
+                /* 빈 상태 — 결정 모먼트 단독. 이미 응답한 조합이면 조용한 안내만. */
+                showMoment ? (
+                  <DecisionMoment
+                    key={condKey}
+                    suggestions={suggestions}
+                    bottleneck={bottleneck}
+                    mode="empty"
+                    deadline={state.deadline}
+                    onPick={pickSuggestion}
+                  />
+                ) : (
+                  <div className="rounded-card bg-section px-6 py-12 text-center">
+                    <p className="text-[15px] font-semibold text-text-strong">이 조건으로는 시간이 없어요</p>
+                    <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">조건을 바꾸면 바로 다시 찾아볼게요</p>
+                  </div>
+                )
               ) : (
-                <LayoutGroup>
-                  <ul className="space-y-2.5">
-                    <AnimatePresence initial={false} mode="popLayout">
-                      {visible.map((slot, i) => (
-                        <motion.li
-                          key={slot.id}
-                          ref={(el) => {
-                            if (el) cardRefs.current.set(slot.id, el);
-                            else cardRefs.current.delete(slot.id);
-                          }}
-                          layout={reduced ? false : 'position'}
-                          initial={{ opacity: 0, scale: 0.98 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
-                          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                        >
-                          <div
-                            className="relative rounded-card"
-                            onMouseEnter={() => hover(slot.id)}
-                            onMouseLeave={() => hover(null)}
-                          >
-                            <ReasonCard
-                              slot={slot}
-                              attendees={attendees}
-                              windowDays={windowDays}
-                              expanded={activeId === slot.id}
-                              recommended={i === 0}
-                              onSelect={() => toggleCard(slot.id)}
-                            />
-                            {/* 상호 하이라이트 링 — 밴드 호버가 이 카드를 가리킨다(opacity만). */}
-                            <span
-                              aria-hidden
-                              className={`pointer-events-none absolute -inset-[2px] rounded-[18px] ring-2 ring-primary/50 transition-opacity duration-200 ease-out ${
-                                hoveredId === slot.id ? 'opacity-100' : 'opacity-0'
-                              }`}
-                            />
-                          </div>
-                        </motion.li>
-                      ))}
-                    </AnimatePresence>
-                  </ul>
-                </LayoutGroup>
+                <>
+                  {/* 전부 아쉬움 — 결정 모먼트 먼저, 아래 후보는 흐리게(그래도 답이 될 수 있으니 남긴다) */}
+                  {showMoment && (
+                    <div className="pb-2.5">
+                      <DecisionMoment
+                        key={condKey}
+                        suggestions={suggestions}
+                        bottleneck={bottleneck}
+                        mode="all-warning"
+                        deadline={state.deadline}
+                        onPick={pickSuggestion}
+                      />
+                    </div>
+                  )}
+                  <div className={showMoment ? 'opacity-50' : undefined}>
+                    <LayoutGroup>
+                      <ul className="space-y-2.5">
+                        <AnimatePresence initial={false} mode="popLayout">
+                          {visible.map((slot, i) => (
+                            <motion.li
+                              key={slot.id}
+                              ref={(el) => {
+                                if (el) cardRefs.current.set(slot.id, el);
+                                else cardRefs.current.delete(slot.id);
+                              }}
+                              layout={reduced ? false : 'position'}
+                              initial={{ opacity: 0, scale: 0.98 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                            >
+                              <div
+                                className="relative rounded-card"
+                                onMouseEnter={() => hover(slot.id)}
+                                onMouseLeave={() => hover(null)}
+                              >
+                                <ReasonCard
+                                  slot={slot}
+                                  attendees={attendees}
+                                  windowDays={windowDays}
+                                  expanded={activeId === slot.id}
+                                  recommended={i === 0}
+                                  onSelect={() => toggleCard(slot.id)}
+                                />
+                                {/* 상호 하이라이트 링 — 밴드 호버가 이 카드를 가리킨다(opacity만). */}
+                                <span
+                                  aria-hidden
+                                  className={`pointer-events-none absolute -inset-[2px] rounded-[18px] ring-2 ring-primary/50 transition-opacity duration-200 ease-out ${
+                                    hoveredId === slot.id ? 'opacity-100' : 'opacity-0'
+                                  }`}
+                                />
+                              </div>
+                            </motion.li>
+                          ))}
+                        </AnimatePresence>
+                      </ul>
+                    </LayoutGroup>
+                  </div>
+                </>
               )}
             </div>
             <div className="shrink-0 pt-3">

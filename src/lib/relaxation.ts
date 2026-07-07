@@ -29,8 +29,11 @@ interface EngineArgs {
   insights: Record<string, PersonInsights>;
 }
 
-/** 기한 완화는 한 단계만 미룬다(this-week→next-week→flexible). flexible은 더 미룰 곳이 없다. */
-const NEXT_DEADLINE: Record<DeadlineKind, 'next-week' | 'flexible' | null> = {
+/**
+ * 기한 완화는 한 단계만 미룬다(this-week→next-week→flexible). flexible은 더 미룰 곳이 없다.
+ * export — DecisionMoment.pickAction이 같은 사다리를 써야 시뮬이 돌린 patch와 dispatch가 일치한다.
+ */
+export const NEXT_DEADLINE: Record<DeadlineKind, 'next-week' | 'flexible' | null> = {
   'this-week': 'next-week',
   'next-week': 'flexible',
   flexible: null,

@@ -15,8 +15,10 @@
 import { useMemo } from 'react';
 import { ME_ID, ORG, ROOMS } from '../data/world';
 import { deriveAllInsights } from '../lib/insights';
+import { findBottleneck, suggestRelaxations } from '../lib/relaxation';
 import { needsDecisionMoment, rankSlots } from '../lib/scheduler';
 import { windowFor } from '../lib/window';
+import type { RelaxationSuggestion } from '../lib/relaxation';
 import type { Attendee, CandidateSlot, DeadlineKind, PersonInsights } from '../lib/types';
 import type { AppState } from './reducer';
 
@@ -48,6 +50,44 @@ export interface Candidates {
   slots: CandidateSlot[];
   visible: CandidateSlot[];
   needsDecision: boolean;
+  /** 결정 모먼트 선택지 — needsDecision일 때만 시뮬(비용)해서 채운다. 아닐 땐 []. */
+  suggestions: RelaxationSuggestion[];
+  /** 병목 지목(+이름) — needsDecision일 때만. 없거나 계산 안 하면 null. */
+  bottleneck: DecisionBottleneck | null;
+}
+
+export interface DecisionBottleneck {
+  personId: string;
+  name: string;
+  eventTitle: string;
+}
+
+/** needsDecision이 아닐 때 돌려주는 고정 결과 — useMemo 참조 안정성용. */
+const NO_DECISION: { suggestions: RelaxationSuggestion[]; bottleneck: DecisionBottleneck | null } = {
+  suggestions: [],
+  bottleneck: null,
+};
+
+/** 결정 모먼트 재료 — 완화 시뮬 + 병목 지목(이름까지 붙여 UI가 바로 쓰게). needsDecision일 때만 호출. */
+export function computeDecisionContext(input: {
+  attendees: Attendee[];
+  windowDays: string[];
+  insights: Record<string, PersonInsights>;
+  duration: 30 | 60 | 90;
+  deadline: DeadlineKind;
+}): { suggestions: RelaxationSuggestion[]; bottleneck: DecisionBottleneck | null } {
+  const args = {
+    attendees: input.attendees,
+    rules: { days: input.windowDays, durationMinutes: input.duration, deadline: input.deadline },
+    rooms: ROOMS,
+    insights: input.insights,
+  };
+  const suggestions = suggestRelaxations(args);
+  const raw = findBottleneck(args);
+  const bottleneck = raw
+    ? { ...raw, name: input.attendees.find((a) => a.id === raw.personId)?.name ?? raw.personId }
+    : null;
+  return { suggestions, bottleneck };
 }
 
 /** 훅의 계산 전체를 담은 순수 함수 — 테스트가 이 함수를 직접 친다. */
@@ -71,7 +111,11 @@ export function computeCandidates(input: {
     input.allowPartialRequiredId ? { allowPartialFor: input.allowPartialRequiredId } : undefined,
   );
   const visible = slots.slice(0, VISIBLE_COUNT);
-  return { attendees, windowDays, insights, slots, visible, needsDecision: needsDecisionMoment(visible) };
+  const needsDecision = needsDecisionMoment(visible);
+  const decision = needsDecision
+    ? computeDecisionContext({ attendees, windowDays, insights, duration: input.duration, deadline: input.deadline })
+    : NO_DECISION;
+  return { attendees, windowDays, insights, slots, visible, needsDecision, ...decision };
 }
 
 /**
@@ -99,5 +143,14 @@ export function useCandidates(state: AppState): Candidates {
     [attendees, windowDays, insights, state.duration, state.deadline, state.allowPartialRequiredId],
   );
   const visible = useMemo(() => slots.slice(0, VISIBLE_COUNT), [slots]);
-  return { attendees, windowDays, insights, slots, visible, needsDecision: needsDecisionMoment(visible) };
+  const needsDecision = needsDecisionMoment(visible);
+  // 완화 시뮬은 rankSlots를 여러 번 돌리는 비싼 계산 — 결정 모먼트가 필요할 때만 조건부로.
+  const decision = useMemo(
+    () =>
+      needsDecision
+        ? computeDecisionContext({ attendees, windowDays, insights, duration: state.duration, deadline: state.deadline })
+        : NO_DECISION,
+    [needsDecision, attendees, windowDays, insights, state.duration, state.deadline],
+  );
+  return { attendees, windowDays, insights, slots, visible, needsDecision, ...decision };
 }
