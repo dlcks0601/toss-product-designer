@@ -291,7 +291,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
       </div>
 
       {/* ── 데스크톱: 5열 주간 그리드 ── */}
-      <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white ring-1 ring-border/70 lg:block">
+      <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white px-2 ring-1 ring-border/70 lg:block">
         {/* 요일 헤더 */}
         <div className="flex border-b border-border/70">
           <div className="w-[44px] shrink-0" aria-hidden />
