@@ -1,6 +1,7 @@
-import type { Attendee, CandidateSlot, PersonInsights, Room, Rules } from './types';
+import type { Attendee, CandidateSlot, PartialInfo, PersonInsights, Room, Rules } from './types';
 import { isBusinessDay } from './time';
 import { hasBlockingConflict, isOutsideWorkHours, requiredFrame, scoreSlot } from './scoring';
+import { partialAvailability } from './partial';
 import { formatReasons, slotSeverity } from './reasons';
 
 const SLOT_STEP = 30;
@@ -14,9 +15,11 @@ export function rankSlots(args: {
   rules: Rules;
   rooms: Room[];
   insights: Record<string, PersonInsights>;
-}): CandidateSlot[] {
+}, opts?: { allowPartialFor?: string }): CandidateSlot[] {
   const { attendees, rules, rooms, insights } = args;
   const { days, durationMinutes } = rules;
+  // 허락제 부분 참석(결정 3): 이 대상 필수 참석자는 '부분 참석' 가능한 슬롯에서만 하드필터를 통과한다.
+  const allowPartialFor = opts?.allowPartialFor;
 
   const required = attendees.filter((a) => a.attendanceType === 'required');
   const frame = requiredFrame(attendees);
@@ -31,12 +34,38 @@ export function rankSlots(args: {
     for (let start = alignedStart; start <= lastStart; start += SLOT_STEP) {
       const end = start + durationMinutes;
 
-      // 하드필터 (a): 필수 참석자의 meeting·offsite·personal과 겹치면 제거
-      if (required.some((a) => hasBlockingConflict(a, day, start, end))) continue;
+      // 하드필터 (a): 필수 참석자의 meeting·offsite·personal과 겹치면 제거.
+      // 단, allowPartialFor 대상이 '부분 참석'(앞/뒤 절반 이상 빔) 가능하면 그 슬롯은 통과시킨다.
+      // allowPartialFor가 없으면 이 루프는 `required.some(hasBlockingConflict)`와 완전히 동일하게 동작한다.
+      let partialForTarget: PartialInfo | null = null;
+      let blocked = false;
+      for (const a of required) {
+        if (!hasBlockingConflict(a, day, start, end)) continue;
+        if (a.id === allowPartialFor) {
+          const pa = partialAvailability(a, day, { start, end });
+          if (pa.kind === 'partial') {
+            partialForTarget = pa.info; // 통과 — 부분 참석으로 함께한다
+            continue;
+          }
+        }
+        blocked = true; // 예외 대상이 아니거나 'none'이면 여전히 막는다
+        break;
+      }
+      if (blocked) continue;
       // 하드필터 (b): 필수 참석자 근무시간 밖이면 제거(프레임으로 대부분 보장되나 불변식 유지)
       if (required.some((a) => isOutsideWorkHours(a, start, end))) continue;
 
       const { effects, partials, roomIds } = scoreSlot({ day, start, end, attendees, insights, rooms });
+      // 허락제 통과 슬롯: optional-partial(delta 0) effect + PartialInfo를 덧붙인다 — 카피가 필수에게도 그대로 읽힌다.
+      if (partialForTarget) {
+        effects.push({
+          code: 'optional-partial',
+          delta: 0,
+          who: partialForTarget.attendeeId,
+          data: { part: partialForTarget.part, minutes: partialForTarget.minutes, title: partialForTarget.conflictTitle },
+        });
+        partials.push(partialForTarget);
+      }
       const score = effects.reduce((sum, e) => sum + e.delta, 0);
       const reasons = formatReasons(effects, attendees);
 
