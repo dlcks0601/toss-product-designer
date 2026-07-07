@@ -98,6 +98,32 @@ describe('조건 변경 → 선택 낡음(stale) 초기화', () => {
     expect(next.allowPartialRequiredId).toBeNull();
   });
 
+  it('TOGGLE_ATTENDEE(추가)는 selectedSlotId·allowPartialRequiredId를 초기화한다', () => {
+    const next = reducer(withSelection, { type: 'TOGGLE_ATTENDEE', id: 'seoyeon' });
+    expect(next.attendeeIds).toContain('seoyeon');
+    expect(next.selectedSlotId).toBeNull();
+    expect(next.allowPartialRequiredId).toBeNull();
+  });
+
+  it('TOGGLE_ATTENDEE(제거)도 selectedSlotId·allowPartialRequiredId를 초기화한다', () => {
+    const withJunho: AppState = {
+      ...withSelection,
+      attendeeIds: [ME_ID, 'junho'],
+      required: { [ME_ID]: true, junho: true },
+    };
+    const next = reducer(withJunho, { type: 'TOGGLE_ATTENDEE', id: 'junho' });
+    expect(next.attendeeIds).not.toContain('junho');
+    expect(next.selectedSlotId).toBeNull();
+    expect(next.allowPartialRequiredId).toBeNull();
+  });
+
+  it('주최자 TOGGLE_ATTENDEE는 no-op이라 선택도 보존된다', () => {
+    const next = reducer(withSelection, { type: 'TOGGLE_ATTENDEE', id: ME_ID });
+    expect(next).toBe(withSelection);
+    expect(next.selectedSlotId).toBe('slot-1');
+    expect(next.allowPartialRequiredId).toBe('junho');
+  });
+
   it('SELECT_SLOT·ALLOW_PARTIAL 자체는 서로를 지우지 않는다', () => {
     const selected = reducer(initialState(), { type: 'SELECT_SLOT', slotId: 'slot-9' });
     const allowed = reducer(selected, { type: 'ALLOW_PARTIAL', id: 'junho' });

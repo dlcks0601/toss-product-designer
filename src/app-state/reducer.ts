@@ -7,7 +7,7 @@
  * 불변식:
  *  - 주최자(ME_ID)는 항상 attendeeIds[]에 있고 필수(required)다 — TOGGLE_ATTENDEE로 제거 불가.
  *  - attendeeIds.length >= 2 이면 "회의 모드"다(파생 셀렉터 isMeeting).
- *  - 조건(기한·길이·필수 여부)이 바뀌면 이전 선택은 낡은 것이다 — selectedSlotId·
+ *  - 조건(기한·길이·필수 여부·참석자 구성)이 바뀌면 이전 선택은 낡은 것이다 — selectedSlotId·
  *    allowPartialRequiredId를 초기화해 find 화면이 새 조건으로 다시 계산하게 한다.
  *  - CONFIRM은 selectedSlotId가 있어야만 유효하다(없으면 상태 불변).
  */
@@ -96,10 +96,17 @@ export function reducer(s: AppState, a: Action): AppState {
         if (a.id === ME_ID) return s; // 주최자는 고정 — 제거 불가(no-op)
         const required = { ...s.required };
         delete required[a.id];
-        return { ...s, attendeeIds: s.attendeeIds.filter((id) => id !== a.id), required };
+        // 참석자 구성이 바뀌면 후보 집합이 바뀐다 → 이전 선택 무효화.
+        return applyAndInvalidateSelection(s, {
+          attendeeIds: s.attendeeIds.filter((id) => id !== a.id),
+          required,
+        });
       }
-      // 새로 추가되는 참석자는 기본값 "꼭 참석"이다.
-      return { ...s, attendeeIds: [...s.attendeeIds, a.id], required: { ...s.required, [a.id]: true } };
+      // 새로 추가되는 참석자는 기본값 "꼭 참석"이다. 추가 역시 후보 집합을 바꾼다 → 선택 무효화.
+      return applyAndInvalidateSelection(s, {
+        attendeeIds: [...s.attendeeIds, a.id],
+        required: { ...s.required, [a.id]: true },
+      });
     }
 
     case 'SET_REQUIRED':
