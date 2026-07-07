@@ -229,7 +229,8 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
 
   const confirmMeeting = () => {
     if (chosen === null) return;
-    dispatch({ type: 'CONFIRM', event: { day: slot.day, start: adj.start, end: adj.end } });
+    const roomName = chosen === 'remote' ? '화상' : rooms.find((r) => r.id === chosen)?.name;
+    dispatch({ type: 'CONFIRM', event: { day: slot.day, start: adj.start, end: adj.end, room: roomName } });
   };
 
   const hasMitigationSection = opts.delayTen || opts.fiftyMin || slot.partials.length > 0;

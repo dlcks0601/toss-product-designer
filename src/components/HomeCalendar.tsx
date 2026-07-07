@@ -188,6 +188,7 @@ function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] |
         </p>
         <p className="mt-0.5 text-[12px]" style={{ color: st.sub }}>
           {fmtRange(ev.start, ev.end)}
+          {ev.room ? `, ${ev.room}` : ''}
         </p>
       </div>
       {badges && badges.length > 0 && <BadgeStack people={badges} />}
@@ -312,15 +313,6 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
               </span>
             ))}
           </div>
-          <div aria-hidden className="pointer-events-none absolute inset-y-0 left-[60px] right-0">
-            {hours.slice(1, -1).map((h, i) => (
-              <div
-                key={h}
-                className="absolute inset-x-0 border-t border-border/45"
-                style={{ top: `${((i + 1) / (hours.length - 1)) * 100}%` }}
-              />
-            ))}
-          </div>
           {days.map((day) => {
             const ghost = ghostOn(day);
             return (
@@ -346,6 +338,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                       {!compact && (
                         <p className="truncate text-[11px] leading-[1.3]" style={{ color: st.sub }}>
                           {fmtRange(ev.start, ev.end)}
+                          {ev.room ? `, ${ev.room}` : ''}
                         </p>
                       )}
                       {badges && (

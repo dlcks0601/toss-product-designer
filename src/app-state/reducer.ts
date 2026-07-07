@@ -66,7 +66,7 @@ export type Action =
   | { type: 'PLAY_SCAN' }
   | { type: 'TOGGLE_MITIGATION'; key: keyof AppState['mitigations'] }
   | { type: 'RESPOND_INVITE'; response: 'accepted' | 'difficult' }
-  | { type: 'CONFIRM'; event?: { day: string; start: number; end: number } }
+  | { type: 'CONFIRM'; event?: { day: string; start: number; end: number; room?: string } }
   | { type: 'RESET' };
 
 /** 앱 시작 상태 — 주최자(나) 1인, 회의 모드 아님. */
@@ -236,6 +236,7 @@ export function reducer(s: AppState, a: Action): AppState {
               end: a.event.end,
               title: s.title.trim() || '팀 회의',
               kind: 'meeting' as const,
+              room: a.event.room,
             },
           ]
         : s.myEvents;
