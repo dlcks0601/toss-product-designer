@@ -350,14 +350,25 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
               )}
             </div>
             <div className="shrink-0 pt-3">
-              <button
-                type="button"
-                onClick={confirm}
-                disabled={activeId === null}
-                className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white transition-colors active:bg-primary-pressed disabled:bg-section disabled:text-text-faint"
-              >
-                이 시간으로 할게요
-              </button>
+              {state.confirmedAt ? (
+                /* 확정 후 되돌아온 경우 — 이미 잡힌 회의를 다시 잡게 하지 않는다(상태 일관). */
+                <button
+                  type="button"
+                  onClick={() => dispatch({ type: 'SET_STEP', step: 'home' })}
+                  className="pressable h-[54px] w-full rounded-2xl bg-primary-tint text-[16px] font-semibold text-primary"
+                >
+                  확정됨 · 내 캘린더에서 보기
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={confirm}
+                  disabled={activeId === null}
+                  className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white transition-colors active:bg-primary-pressed disabled:bg-section disabled:text-text-faint"
+                >
+                  이 시간으로 할게요
+                </button>
+              )}
             </div>
           </Reveal>
         </div>

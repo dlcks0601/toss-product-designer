@@ -73,7 +73,27 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
   to { filter: blur(0); transform: translateY(0); }
 }
 
+/* ── 이리데슨트 텍스트 — 완료 화면 타이틀 1곳만. clip-text + 8s sheen.
+   DOM 텍스트 유지(접근성) — 색만 그라데이션으로 칠한다. 팔레트는 실측
+   #7890EA→#50D5FF→#FFFFBB, 밝은 노랑은 좁은 밴드로만 스쳐 지나가 가독을 지킨다. ── */
+.iridescent {
+  background-image: linear-gradient(
+    100deg,
+    #7890ea 0%, #50d5ff 26%, #ffffbb 38%, #50d5ff 50%, #7890ea 64%, #50d5ff 82%, #7890ea 100%
+  );
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: iridescent-sheen 8s linear infinite;
+}
+@keyframes iridescent-sheen {
+  from { background-position: 0% 50%; }
+  to { background-position: -250% 50%; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aurora-l1, .aurora-l2, .aurora-l3, .aurora-l4 { animation: none; }
   .reveal { animation: none; }
+  .iridescent { animation: none; }
 }

@@ -3,6 +3,8 @@
 import { useEffect, useReducer, useState, type Dispatch } from 'react';
 import { useReducedMotion } from 'motion/react';
 import Aurora from '../components/Aurora';
+import ConfirmStep from '../components/ConfirmStep';
+import DoneStep from '../components/DoneStep';
 import FindTimeDesktop from '../components/FindTimeDesktop';
 import FindTimeMobile from '../components/FindTimeMobile';
 import HomeCalendar from '../components/HomeCalendar';
@@ -25,7 +27,7 @@ import { fmtTime, weekdayIndex } from '../lib/time';
 
 /**
  * 앱 본체 — 단일 페이지 스텝 머신. reducer가 상태를, 주소창(toUrl/fromUrl)이 딥링크를 소유한다.
- * 'home'만 실제 화면이고 나머지 스텝은 다음 태스크(T13~T19)가 채울 자리 표시자다.
+ * home·setup·find·confirm·done은 실제 화면, 'invite'만 T19가 채울 자리 표시자다.
  */
 
 const ME = ORG.find((p) => p.id === ME_ID)!;
@@ -65,6 +67,10 @@ export default function Page() {
         <SetupForm state={state} dispatch={dispatch} />
       ) : state.step === 'find' ? (
         <FindScreen state={state} dispatch={dispatch} />
+      ) : state.step === 'confirm' ? (
+        <ConfirmStep state={state} dispatch={dispatch} />
+      ) : state.step === 'done' ? (
+        <DoneStep state={state} dispatch={dispatch} />
       ) : (
         <PlaceholderScreen step={state.step} dispatch={dispatch} />
       )}

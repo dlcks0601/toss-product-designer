@@ -33,7 +33,10 @@ export interface AppState {
   mitigations: { delayTen: boolean; fiftyMin: boolean };
   inviteResponded: 'accepted' | 'difficult' | null;
   confirmedAt: boolean;
-  /** 혼자 경로로 저장한 내 개인 일정 — 홈 캘린더가 ME.events에 얹어 그린다. URL 비직렬화(세션 한정). */
+  /**
+   * 홈 캘린더가 ME.events에 얹어 그리는 내 세션 일정 — 혼자 경로 저장(personal)과
+   * 확정된 회의(CONFIRM, meeting)가 여기 쌓인다. URL 비직렬화(세션 한정).
+   */
   myEvents: CalendarEvent[];
 }
 
@@ -54,7 +57,7 @@ export type Action =
   | { type: 'DISMISS_WELCOME' }
   | { type: 'TOGGLE_MITIGATION'; key: keyof AppState['mitigations'] }
   | { type: 'RESPOND_INVITE'; response: 'accepted' | 'difficult' }
-  | { type: 'CONFIRM' }
+  | { type: 'CONFIRM'; event?: { day: string; start: number; end: number } }
   | { type: 'RESET' };
 
 /** 앱 시작 상태 — 주최자(나) 1인, 회의 모드 아님. */
@@ -190,9 +193,25 @@ export function reducer(s: AppState, a: Action): AppState {
     case 'RESPOND_INVITE':
       return { ...s, inviteResponded: a.response };
 
-    case 'CONFIRM':
+    case 'CONFIRM': {
       if (s.selectedSlotId === null) return s; // 슬롯 미선택이면 무효
-      return { ...s, confirmedAt: true, step: 'done' };
+      // 확정 = 내 캘린더의 사실이 된다 — 조정 반영된 시간(event)을 회의로 추가한다.
+      // ADD_MY_EVENT는 personal 강제 + 홈 복귀라 재사용하지 않고 여기서 meeting으로 넣는다.
+      const myEvents = a.event
+        ? [
+            ...s.myEvents,
+            {
+              id: `confirmed-${a.event.day}T${a.event.start}`,
+              day: a.event.day,
+              start: a.event.start,
+              end: a.event.end,
+              title: s.title.trim() || '팀 회의',
+              kind: 'meeting' as const,
+            },
+          ]
+        : s.myEvents;
+      return { ...s, myEvents, confirmedAt: true, step: 'done' };
+    }
 
     case 'RESET': {
       // 완전 초기화하되, 웰컴 카드는 "첫 방문 1회" 계약이라 다시 보여주지 않고,

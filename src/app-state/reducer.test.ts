@@ -68,6 +68,51 @@ describe('CONFIRM — selectedSlotId 필수', () => {
     expect(next.confirmedAt).toBe(true);
     expect(next.step).toBe('done');
   });
+
+  it('event를 실어 보내면 확정 회의가 내 캘린더(myEvents)에 meeting으로 추가된다', () => {
+    const withSlot: AppState = { ...initialState(), selectedSlotId: 'slot-1' };
+    const next = reducer(withSlot, {
+      type: 'CONFIRM',
+      event: { day: '2026-07-15', start: 610, end: 670 }, // 완화 조정 반영 시간 그대로
+    });
+    expect(next.myEvents).toHaveLength(1);
+    expect(next.myEvents[0]).toMatchObject({
+      day: '2026-07-15',
+      start: 610,
+      end: 670,
+      kind: 'meeting',
+      title: '팀 회의', // 제목 미입력 기본값
+    });
+  });
+
+  it('제목이 있으면 그 제목으로 캘린더에 추가된다', () => {
+    const withTitle: AppState = { ...initialState(), selectedSlotId: 'slot-1', title: '3분기 킥오프' };
+    const next = reducer(withTitle, {
+      type: 'CONFIRM',
+      event: { day: '2026-07-15', start: 600, end: 660 },
+    });
+    expect(next.myEvents[0].title).toBe('3분기 킥오프');
+  });
+
+  it('selectedSlotId가 없으면 event가 있어도 캘린더에 추가되지 않는다', () => {
+    const s = initialState();
+    const next = reducer(s, { type: 'CONFIRM', event: { day: '2026-07-15', start: 600, end: 660 } });
+    expect(next).toBe(s);
+    expect(next.myEvents).toHaveLength(0);
+  });
+
+  it('기존 myEvents(혼자 경로 저장)는 유지된 채 뒤에 쌓인다', () => {
+    const withPersonal: AppState = {
+      ...initialState(),
+      selectedSlotId: 'slot-1',
+      myEvents: [{ id: 'p1', day: '2026-07-13', start: 540, end: 600, title: '운동', kind: 'personal' }],
+    };
+    const next = reducer(withPersonal, {
+      type: 'CONFIRM',
+      event: { day: '2026-07-15', start: 600, end: 660 },
+    });
+    expect(next.myEvents.map((e) => e.kind)).toEqual(['personal', 'meeting']);
+  });
 });
 
 describe('조건 변경 → 선택 낡음(stale) 초기화', () => {
