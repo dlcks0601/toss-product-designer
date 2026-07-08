@@ -209,7 +209,13 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                     type="button"
                     disabled={isMe}
                     aria-pressed={selected}
-                    onClick={() => onToggle(p.id)}
+                    onClick={() => {
+                      onToggle(p.id);
+                      // 피크가 열린 채 선택하면 — 체크가 차오르는 걸 한 박자 보여주고 접는다.
+                      if (peekId === p.id) {
+                        window.setTimeout(() => setPeekId((cur) => (cur === p.id ? null : cur)), 220);
+                      }
+                    }}
                     className="flex min-w-0 flex-1 items-center gap-3 py-1.5 text-left disabled:cursor-default"
                   >
                     <span className="min-w-0 flex-1">
@@ -238,9 +244,17 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                     type="button"
                     aria-expanded={peekId === p.id}
                     aria-label={`${p.name} 일정 보기`}
-                    /* 펼침은 제자리에서 — 자동 스크롤 추적은 제어감을 깨고, 피크 높이가
-                       사람마다 달라 어떤 상수도 맞지 않는다(시도 후 기각). 스크롤은 사용자 몫. */
-                    onClick={() => setPeekId((cur) => (cur === p.id ? null : p.id))}
+                    /* 펼치면 그 사람이 리스트 맨 위로 도킹 — 목표가 고정이라 피크 높이와
+                       무관하게 항상 자연스럽고, 아래 공간이 최대로 열려 피크가 잘리지 않는다. */
+                    onClick={(e) => {
+                      const opening = peekId !== p.id;
+                      setPeekId((cur) => (cur === p.id ? null : p.id));
+                      if (opening) {
+                        (e.currentTarget as HTMLElement)
+                          .closest('[data-attendee-row]')
+                          ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+                      }
+                    }}
                     className="pressable flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-section hover:text-text-weak"
                   >
                     <ChevronDown
@@ -250,34 +264,10 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                     />
                   </button>
                 </div>
+                {/* 피크 안 별도 '선택하기'는 두지 않는다 — 도킹 덕에 행의 체크 원이 항상 보이므로
+                    원을 누르는 것이 곧 선택이고, 선택하면 피크가 접힌다(중복 UI 제거). */}
                 <AnimatePresence initial={false}>
-                  {peekId === p.id && (
-                    <ProfilePeek
-                      person={p}
-                      windowDays={windowDays}
-                      mode="inline"
-                      action={
-                        // 보면서 바로 결정 — v1 프로필 시트의 유산(주최자는 항상 포함이라 액션 없음).
-                        !isMe ? (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onToggle(p.id);
-                              // 행의 체크가 차오르는 걸 한 박자 보여준 뒤 피크가 우아하게 접힌다.
-                              window.setTimeout(() => setPeekId((cur) => (cur === p.id ? null : cur)), 220);
-                            }}
-                            className={`pressable h-10 w-full rounded-xl text-[13px] font-semibold transition-colors ${
-                              selected
-                                ? 'bg-white text-text-body ring-1 ring-border'
-                                : 'bg-primary text-white active:bg-primary-pressed'
-                            }`}
-                          >
-                            {selected ? '선택 해제' : '선택하기'}
-                          </button>
-                        ) : undefined
-                      }
-                    />
-                  )}
+                  {peekId === p.id && <ProfilePeek person={p} windowDays={windowDays} mode="inline" />}
                 </AnimatePresence>
               </div>
             );
