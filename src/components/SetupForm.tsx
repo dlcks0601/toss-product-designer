@@ -49,17 +49,25 @@ const DEADLINE_OPTIONS: { value: DeadlineKind; label: string }[] = [
 /** 개인 일정 날짜 후보 — 앵커 다음 영업일부터 데이터가 있는 7/24까지 13일. */
 const DAY_OPTIONS = businessDaysFrom(ANCHOR_DATE, 13);
 
-/** 혼자 일정의 종류 — meeting은 시간 찾기 경로 전용이라 여기 없다. 이 앱이 캘린더 원본이므로
- *  집중·외근·점심도 여기서 선언된다(동료들의 캘린더도 같은 경로로 만들어졌다는 세계관).
+/** 혼자 일정의 종류 — 회사 캘린더엔 회사 일정만 적는다(개인 약속은 휴가라는 회사의 언어로 나타난다).
+ *  집중 시간 = 개인 업무를 반드시 봐야 하는 시간, 외근 = 출장, 휴가 = 시간 단위로도 쓴다(personal kind
+ *  재해석 — 하드 블록이라 휴가인 사람에겐 회의가 잡히지 않는다). meeting은 시간 찾기 경로 전용.
  *  칩 색은 홈 캘린더 카드 색(KIND_STYLE)과 단일 소스 — 고른 색 그대로 캘린더에 앉는다.
  *  점심만 예외: 카드 bg(#F2F4F6)가 비선택 칩과 같아 구분이 안 돼 한 단계 진하게. */
 export type MyEventKind = 'personal' | 'focus' | 'offsite' | 'lunch';
 const MY_KIND_OPTIONS: { value: MyEventKind; label: string; tint: { bg: string; text: string } }[] = [
-  { value: 'personal', label: '개인 약속', tint: { bg: KIND_STYLE.personal.bg, text: KIND_STYLE.personal.title } },
   { value: 'focus', label: '집중 시간', tint: { bg: KIND_STYLE.focus.bg, text: KIND_STYLE.focus.title } },
   { value: 'offsite', label: '외근', tint: { bg: KIND_STYLE.offsite.bg, text: KIND_STYLE.offsite.title } },
   { value: 'lunch', label: '점심', tint: { bg: '#E5E8EB', text: '#4E5968' } },
+  { value: 'personal', label: '휴가', tint: { bg: KIND_STYLE.personal.bg, text: KIND_STYLE.personal.title } },
 ];
+/** 종류별 제목 힌트 — 회사 캘린더의 언어로. */
+const KIND_PLACEHOLDER: Record<MyEventKind, string> = {
+  focus: '기획서 집중',
+  offsite: '고객사 방문',
+  lunch: '점심',
+  personal: '오후 휴가',
+};
 /** 30분 스텝 시각(9:00~19:00) — 홈 캘린더 프레임과 같은 범위. */
 const TIME_OPTIONS: Minutes[] = Array.from({ length: 21 }, (_, i) => 540 + i * 30);
 
@@ -280,7 +288,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   const [day, setDay] = useState(DAY_OPTIONS[0]);
   const [start, setStart] = useState<Minutes>(600);
   const [end, setEnd] = useState<Minutes>(660);
-  const [kind, setKind] = useState<MyEventKind>('personal');
+  const [kind, setKind] = useState<MyEventKind>('focus');
 
   const windowDays = useMemo(() => windowFor(state.deadline), [state.deadline]);
   // ORG.find 널가드 — HYDRATE 딥링크가 unknown id를 실어올 수 있다(조용히 건너뛴다).
@@ -405,7 +413,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           <input
             value={state.title}
             onChange={(e) => dispatch({ type: 'SET_TITLE', title: e.target.value })}
-            placeholder="치과 예약"
+            placeholder={shownMeeting ? '주간 싱크' : KIND_PLACEHOLDER[kind]}
             aria-label="일정 제목"
             className="w-full border-b-2 border-border bg-transparent py-2.5 text-[19px] font-semibold text-text-strong outline-none transition-colors placeholder:text-text-faint focus:border-primary"
           />

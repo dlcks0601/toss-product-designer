@@ -254,16 +254,16 @@ describe('ADD_MY_EVENT — 혼자 경로의 개인 일정 저장', () => {
     expect(next.title).toBe('');
   });
 
-  it('meeting kind는 personal로 강등된다 — 회의는 시간 찾기 경로에서만 태어난다', () => {
+  it('meeting kind는 focus로 강등된다 — 회의는 시간 찾기 경로에서만 태어난다', () => {
     const next = reducer(initialState(), {
       type: 'ADD_MY_EVENT',
       event: { ...event, kind: 'meeting' },
     });
-    expect(next.myEvents[0].kind).toBe('personal');
+    expect(next.myEvents[0].kind).toBe('focus');
   });
 
-  it('폼이 고른 종류(집중·외근·점심)는 존중된다', () => {
-    for (const kind of ['focus', 'offsite', 'lunch'] as const) {
+  it('폼이 고른 종류(집중·외근·점심·휴가)는 존중된다', () => {
+    for (const kind of ['focus', 'offsite', 'lunch', 'personal'] as const) {
       const next = reducer(initialState(), { type: 'ADD_MY_EVENT', event: { ...event, kind } });
       expect(next.myEvents[0].kind).toBe(kind);
     }
