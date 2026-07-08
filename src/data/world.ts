@@ -76,6 +76,8 @@ const ichan: Person = {
     ev('ichan-w0-1', W0_MON, 690, 780, '주간 스프린트 계획', 'meeting', '미팅룸 3'),
     ev('ichan-w0-l0', W0_MON, 780, 870, '점심', 'lunch'),
     ev('ichan-w0-2', W0_TUE, 660, 780, '제품 리뷰', 'meeting', 'UT룸'),
+    // 화는 11~13시 회의라 점심을 13:00 으로 미룬다(자율 점심).
+    ev('ichan-w0-l0b', W0_TUE, 780, 840, '점심', 'lunch'),
     ev('ichan-w0-f2', W0_TUE, 840, 960, '기획서 집중', 'focus'),
     ev('ichan-w0-l1', W0_WED, 720, 810, '점심', 'lunch'),
     ev('ichan-w0-3', W0_WED, 840, 960, '로드맵 정리', 'meeting', '미팅룸 2'),
@@ -98,12 +100,20 @@ const ichan: Person = {
     ev('ichan-w1-l5', W1_FRI, 720, 810, '점심', 'lunch'),
     ev('ichan-w1-5', W1_FRI, 810, 930, '위클리 랩업', 'meeting', '미팅룸 4'),
 
-    // ── flexible ──
+    // ── flexible(7/20 주) — 심사 시점의 '미래'라 실제 주간처럼 꽉 채운다(주간 리듬 반복) ──
     // Mon 은 11:30~13:00 회의라 이날만 13:00 으로 미룬다(자율 점심 — 그날 사정에 맞춘다).
+    ev('ichan-w2-f1', W2_MON, 540, 660, '집중 — 주간 계획 정리', 'focus'),
     ev('ichan-w2-l1', W2_MON, 780, 870, '점심', 'lunch'),
-    ev('ichan-w2-1', W2_MON, 690, 780, '주간 스프린트 계획', 'meeting'),
+    ev('ichan-w2-1', W2_MON, 690, 780, '주간 스프린트 계획', 'meeting', '미팅룸 3'),
+    ev('ichan-w2-1b', W2_TUE, 660, 780, '제품 리뷰', 'meeting', 'UT룸'),
+    ev('ichan-w2-l1b', W2_TUE, 780, 840, '점심', 'lunch'),
+    ev('ichan-w2-f2', W2_TUE, 840, 960, '기획서 집중', 'focus'),
     ev('ichan-w2-l2', W2_WED, 720, 810, '점심', 'lunch'),
-    ev('ichan-w2-2', W2_WED, 840, 960, '로드맵 정리', 'meeting'),
+    ev('ichan-w2-2', W2_WED, 840, 960, '로드맵 정리', 'meeting', '미팅룸 2'),
+    ev('ichan-w2-l3', W2_THU, 720, 810, '점심', 'lunch'),
+    ev('ichan-w2-3', W2_THU, 900, 1020, '이해관계자 싱크', 'meeting', '미팅룸 5'),
+    ev('ichan-w2-l4', W2_FRI, 720, 810, '점심', 'lunch'),
+    ev('ichan-w2-4', W2_FRI, 960, 1080, '주간 마감 회의', 'meeting', '미팅룸 1'),
   ],
 };
 
@@ -154,10 +164,18 @@ const junho: Person = {
     ev('junho-w1-5', W1_FRI, 660, 900, 'API 연동 리뷰', 'meeting'),
     ev('junho-w1-5b', W1_FRI, 900, 1080, '배포 준비', 'meeting'),
 
-    // ── flexible ──
+    // ── flexible(7/20 주) — 실제 주간처럼 ──
     ev('junho-w2-1', W2_MON, 600, 690, '스프린트 계획', 'meeting'),
     ev('junho-w2-l1', W2_MON, 690, 765, '점심', 'lunch'),
+    ev('junho-w2-f1', W2_MON, 840, 960, '집중 — 코드 정리', 'focus'),
+    ev('junho-w2-1b', W2_TUE, 600, 720, '프론트 팀 싱크', 'meeting'),
+    ev('junho-w2-l2', W2_TUE, 720, 795, '점심', 'lunch'),
+    ev('junho-w2-2b', W2_WED, 600, 630, '데일리 스크럼', 'meeting'),
+    ev('junho-w2-l3', W2_WED, 690, 765, '점심', 'lunch'),
+    ev('junho-w2-2c', W2_WED, 840, 960, '코드 리뷰 타임', 'meeting'),
     ev('junho-w2-2', W2_THU, 540, 900, '외근 — 파트너사 미팅', 'offsite'),
+    ev('junho-w2-3', W2_FRI, 900, 1080, '배포 준비', 'meeting'),
+    ev('junho-w2-l4', W2_FRI, 690, 765, '점심', 'lunch'),
   ],
 };
 
@@ -197,10 +215,17 @@ const seoyeon: Person = {
     ev('seoyeon-w1-l5', W1_FRI, 810, 885, '점심', 'lunch'),
     ev('seoyeon-w1-5', W1_FRI, 690, 810, '리서치 싱크', 'meeting'),
 
-    // ── flexible ──
+    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    ev('seoyeon-w2-l0', W2_MON, 735, 810, '점심', 'lunch'),
+    ev('seoyeon-w2-0', W2_MON, 840, 1020, '대시보드 작업', 'meeting'),
     ev('seoyeon-w2-l1', W2_TUE, 735, 810, '점심', 'lunch'),
     ev('seoyeon-w2-f1', W2_TUE, 540, 690, '집중 작업 — 지표 분석', 'focus'),
     ev('seoyeon-w2-1', W2_WED, 840, 960, '데이터 리뷰', 'meeting'),
+    ev('seoyeon-w2-l2', W2_WED, 735, 810, '점심', 'lunch'),
+    ev('seoyeon-w2-2', W2_THU, 840, 1020, '지표 공유', 'meeting'),
+    ev('seoyeon-w2-l3', W2_THU, 735, 810, '점심', 'lunch'),
+    ev('seoyeon-w2-3', W2_FRI, 690, 810, '리서치 싱크', 'meeting'),
+    ev('seoyeon-w2-l4', W2_FRI, 810, 885, '점심', 'lunch'),
   ],
 };
 
@@ -237,9 +262,17 @@ const minsu: Person = {
     ev('minsu-w1-l5', W1_FRI, 705, 780, '점심', 'lunch'),
     ev('minsu-w1-5', W1_FRI, 780, 960, '브랜드 리뷰', 'meeting'),
 
-    // ── flexible ──
+    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    ev('minsu-w2-l0', W2_MON, 705, 780, '점심', 'lunch'),
+    ev('minsu-w2-0', W2_MON, 840, 1020, '포트폴리오 리뷰', 'meeting'),
+    ev('minsu-w2-f1', W2_TUE, 600, 720, '디자인 탐색 집중', 'focus'),
+    ev('minsu-w2-l1b', W2_TUE, 720, 795, '점심', 'lunch'),
     ev('minsu-w2-l1', W2_WED, 705, 780, '점심', 'lunch'),
     ev('minsu-w2-1', W2_WED, 780, 900, '디자인 크리틱', 'meeting'),
+    ev('minsu-w2-l2', W2_THU, 705, 780, '점심', 'lunch'),
+    ev('minsu-w2-2', W2_THU, 900, 1080, '디자인 시스템 정리', 'meeting'),
+    ev('minsu-w2-l3', W2_FRI, 705, 780, '점심', 'lunch'),
+    ev('minsu-w2-3', W2_FRI, 780, 960, '브랜드 리뷰', 'meeting'),
   ],
 };
 
@@ -281,9 +314,17 @@ const haneul: Person = {
     ev('haneul-w1-5', W1_FRI, 600, 780, '제휴 미팅', 'meeting'),
     ev('haneul-w1-l5', W1_FRI, 780, 855, '점심', 'lunch'),
 
-    // ── flexible ──
+    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    ev('haneul-w2-0', W2_MON, 960, 1020, '캠페인 정기 회의', 'meeting'),
+    ev('haneul-w2-l0', W2_MON, 720, 780, '점심', 'lunch'),
     ev('haneul-w2-1', W2_TUE, 540, 1020, '외근 — 고객사 방문', 'offsite'),
     ev('haneul-w2-l1', W2_WED, 720, 780, '점심', 'lunch'),
+    ev('haneul-w2-2', W2_WED, 660, 720, '콘텐츠 리뷰', 'meeting'),
+    ev('haneul-w2-2b', W2_WED, 780, 900, '광고 소재 리뷰', 'meeting'),
+    ev('haneul-w2-3', W2_THU, 600, 780, '퍼포먼스 리뷰', 'meeting'),
+    ev('haneul-w2-l2', W2_THU, 780, 855, '점심', 'lunch'),
+    ev('haneul-w2-4', W2_FRI, 840, 960, '제휴 미팅', 'meeting'),
+    ev('haneul-w2-l3', W2_FRI, 720, 780, '점심', 'lunch'),
   ],
 };
 
@@ -326,9 +367,18 @@ const sehun: Person = {
     ev('sehun-w1-5', W1_FRI, 600, 780, '성능 리뷰', 'meeting'),
     ev('sehun-w1-l5', W1_FRI, 780, 840, '점심', 'lunch'),
 
-    // ── flexible ──
+    // ── flexible(7/20 주) — 실제 주간처럼 ──
     ev('sehun-w2-l1', W2_MON, 780, 840, '점심', 'lunch'),
     ev('sehun-w2-1', W2_MON, 600, 720, '배포 점검', 'meeting'),
+    ev('sehun-w2-2', W2_TUE, 630, 780, '인프라 점검', 'meeting'),
+    ev('sehun-w2-l2', W2_TUE, 780, 840, '점심', 'lunch'),
+    ev('sehun-w2-f1', W2_TUE, 900, 1020, '집중 — 코드 리뷰', 'focus'),
+    ev('sehun-w2-3', W2_WED, 900, 1020, '장애 회고', 'meeting'),
+    ev('sehun-w2-l3', W2_WED, 780, 840, '점심', 'lunch'),
+    ev('sehun-w2-4', W2_THU, 660, 780, 'DB 마이그레이션', 'meeting'),
+    ev('sehun-w2-l4', W2_THU, 780, 840, '점심', 'lunch'),
+    ev('sehun-w2-5', W2_FRI, 840, 960, '성능 리뷰', 'meeting'),
+    ev('sehun-w2-l5', W2_FRI, 780, 840, '점심', 'lunch'),
   ],
 };
 
