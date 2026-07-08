@@ -149,7 +149,8 @@ export default function DateField({
                 </span>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-y-3.5">
+            {/* PC 행간 28px — 패널이 폭 416과 같은 정사각 비율(≈407)이 된다. 모바일은 확정 규격(14px). */}
+            <div className="grid grid-cols-7 gap-y-3.5 lg:gap-y-7">
               {buildMonthCells().map(({ day, inMonth }) => {
                 const enabled = inMonth && selectableSet.has(day);
                 const isSel = day === value;
