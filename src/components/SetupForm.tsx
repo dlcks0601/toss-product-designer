@@ -4,8 +4,10 @@ import { useMemo, useState, type Dispatch, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronDown, ChevronLeft, Plus } from 'lucide-react';
 import AttendeePicker from './AttendeePicker';
+import Aurora from './Aurora';
 import Avatar from './Avatar';
 import Chip from './Chip';
+import Wordmark from './Wordmark';
 import ProfilePeek from './ProfilePeek';
 import Reveal from './Reveal';
 import { isMeeting } from '../app-state/reducer';
@@ -350,10 +352,23 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   );
 
   return (
-    <div className="min-h-dvh bg-bg pb-32 lg:pb-0">
-      <div className="mx-auto max-w-[520px] px-4 lg:pb-16">
+    <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
+      {/* 데스크톱 헤더 — 홈과 같은 오로라·워드마크. 스텝이 바뀌어도 페이지 틀은 유지된다. */}
+      <div className="relative hidden lg:block">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <Aurora variant="home" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
+        </div>
+        <div className="relative mx-auto max-w-[1200px] px-6 py-4">
+          <header className="flex items-center">
+            <Wordmark />
+          </header>
+        </div>
+      </div>
+
+      <div className="mx-auto max-w-[520px] px-4 lg:max-w-[720px] lg:px-0">
         {/* 헤더 — 뒤로가기 → 홈 */}
-        <Reveal as="header" className="-mx-1 flex h-14 items-center">
+        <Reveal as="header" className="-mx-1 flex h-14 items-center lg:mx-0 lg:h-auto lg:pb-4 lg:pt-8">
           <button
             type="button"
             onClick={goHome}
@@ -363,6 +378,9 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
             일정 만들기
           </button>
         </Reveal>
+
+        {/* 데스크톱: 홈 캘린더 카드와 같은 문법의 흰 카드 안에 폼이 앉는다. 모바일: 카드 없이 그대로. */}
+        <div className="lg:rounded-[20px] lg:bg-white lg:px-12 lg:pb-12 lg:pt-8 lg:ring-1 lg:ring-border/70">
 
         <Reveal delay={70} className="pt-3">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
@@ -483,6 +501,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         <Reveal delay={350} className="hidden pt-9 lg:block">
           {cta}
         </Reveal>
+        </div>
       </div>
 
       {/* CTA(모바일) — 홈과 같은 하단 고정 패턴. 접히는 폼 위에 항상 떠 있어 크로스페이드가 보인다. */}
