@@ -299,19 +299,21 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           >
             <ChevronLeft size={17} aria-hidden />
           </button>
-          <button
-            type="button"
-            onClick={() => setMonthOpen(!monthOpen)}
-            aria-expanded={monthOpen}
-            aria-label="월간 달력 열기"
-            className="pressable rounded-lg px-1.5 text-[20px] font-bold tracking-[-0.02em] text-text-strong hover:bg-section lg:text-[22px]"
-          >
-            {Number(month)}월
-          </button>
-          {/* 보이는 주의 날짜 범위 — "6일 – 10일" */}
-          <span className="mx-1 text-[13px] font-medium text-text-weak lg:text-[14px]">
-            {Number(days[0].slice(8, 10))}일 – {Number(days[days.length - 1].slice(8, 10))}일
-          </span>
+          {/* 월 + 주 범위 — 베이스라인 정렬(작은 글자가 큰 글자의 밑줄에 앉는다) */}
+          <div className="flex items-baseline">
+            <button
+              type="button"
+              onClick={() => setMonthOpen(!monthOpen)}
+              aria-expanded={monthOpen}
+              aria-label="월간 달력 열기"
+              className="pressable rounded-lg px-1.5 text-[20px] font-bold tracking-[-0.02em] text-text-strong hover:bg-section lg:text-[22px]"
+            >
+              {Number(month)}월
+            </button>
+            <span className="mx-1 text-[13px] font-medium text-text-weak lg:text-[14px]">
+              {Number(days[0].slice(8, 10))}일 – {Number(days[days.length - 1].slice(8, 10))}일
+            </span>
+          </div>
           <button
             type="button"
             onClick={() => goWeek(1)}
