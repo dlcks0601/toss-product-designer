@@ -238,24 +238,9 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                     type="button"
                     aria-expanded={peekId === p.id}
                     aria-label={`${p.name} 일정 보기`}
-                    onClick={(e) => {
-                      const opening = peekId !== p.id;
-                      setPeekId((cur) => (cur === p.id ? null : p.id));
-                      if (opening) {
-                        const row = (e.currentTarget as HTMLElement).closest<HTMLElement>('[data-attendee-row]');
-                        const list = row?.closest<HTMLElement>('.overflow-y-auto');
-                        if (!row || !list) return;
-                        // 펼침(200ms) '동안' 프레임 단위로 따라간다 — 성장과 스크롤이 한 동작.
-                        // (끝나고 한 번에 점프하면 확 움직여 보인다.)
-                        const started = performance.now();
-                        const track = () => {
-                          const overflow = row.getBoundingClientRect().bottom - (list.getBoundingClientRect().bottom - 72);
-                          if (overflow > 0) list.scrollTop += overflow;
-                          if (performance.now() - started < 300) requestAnimationFrame(track);
-                        };
-                        requestAnimationFrame(track);
-                      }
-                    }}
+                    /* 펼침은 제자리에서 — 자동 스크롤 추적은 제어감을 깨고, 피크 높이가
+                       사람마다 달라 어떤 상수도 맞지 않는다(시도 후 기각). 스크롤은 사용자 몫. */
+                    onClick={() => setPeekId((cur) => (cur === p.id ? null : p.id))}
                     className="pressable flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-section hover:text-text-weak"
                   >
                     <ChevronDown
