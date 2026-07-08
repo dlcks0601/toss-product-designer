@@ -71,8 +71,12 @@ const ichan: Person = {
   workHours: { start: 540, end: 1080 },
   events: [
     // ── 현재 주(캘린더용 + S4 this-week) : 오전은 비워 junho 병목이 드러나게 ──
+    // 월·화는 this-week 후보창(수목금) 밖 — 색 어휘(집중·점심)를 첫 화면에 보여주는 자리.
+    ev('ichan-w0-f1', W0_MON, 540, 660, '집중 — 주간 계획 정리', 'focus'),
     ev('ichan-w0-1', W0_MON, 690, 780, '주간 스프린트 계획', 'meeting', '미팅룸 3'),
+    ev('ichan-w0-l0', W0_MON, 780, 870, '점심', 'lunch'),
     ev('ichan-w0-2', W0_TUE, 660, 780, '제품 리뷰', 'meeting', 'UT룸'),
+    ev('ichan-w0-f2', W0_TUE, 840, 960, '기획서 집중', 'focus'),
     ev('ichan-w0-l1', W0_WED, 720, 810, '점심', 'lunch'),
     ev('ichan-w0-3', W0_WED, 840, 960, '로드맵 정리', 'meeting', '미팅룸 2'),
     ev('ichan-w0-l2', W0_THU, 720, 810, '점심', 'lunch'),
@@ -117,6 +121,7 @@ const junho: Person = {
     // ── 현재 주 : S4 병목(이번 주 남은 3일을 준호가 잠근다) ──
     ev('junho-w0-1', W0_MON, 600, 690, '스프린트 계획', 'meeting'),
     ev('junho-w0-l0', W0_MON, 690, 765, '점심', 'lunch'),
+    ev('junho-w0-f0', W0_MON, 840, 960, '집중 — 코드 정리', 'focus'),
     ev('junho-w0-2', W0_TUE, 600, 720, '프론트 팀 싱크', 'meeting'),
     // Tue 는 12:00 까지 회의라 이날만 12:00 으로 미룬다.
     ev('junho-w0-l1', W0_TUE, 720, 795, '점심', 'lunch'),
@@ -165,6 +170,8 @@ const seoyeon: Person = {
   workHours: { start: 540, end: 1080 },
   events: [
     // ── 현재 주 : 오전 비움(병목은 junho) + focus 화·수 ──
+    ev('seoyeon-w0-f0', W0_MON, 540, 690, '집중 작업 — 지표 분석', 'focus'),
+    ev('seoyeon-w0-l0', W0_MON, 735, 810, '점심', 'lunch'),
     ev('seoyeon-w0-f1', W0_TUE, 540, 690, '집중 작업 — 지표 분석', 'focus'),
     ev('seoyeon-w0-l1', W0_TUE, 735, 810, '점심', 'lunch'),
     ev('seoyeon-w0-f2', W0_WED, 540, 690, '집중 작업 — 리포트', 'focus'),
@@ -205,7 +212,9 @@ const minsu: Person = {
   id: 'minsu', name: '최민수', role: 'Product Designer', faceId: 'minsu',
   workHours: { start: 600, end: 1140 },
   events: [
-    // ── 현재 주 : 오전 비움 ──
+    // ── 현재 주 : 오전 비움(후보창인 수목금 기준 — 월·화는 색 어휘 자리) ──
+    ev('minsu-w0-f0', W0_MON, 840, 990, '디자인 탐색 집중', 'focus'),
+    ev('minsu-w0-v0', W0_TUE, 900, 1140, '오후 휴가', 'personal'),
     ev('minsu-w0-l1', W0_WED, 705, 780, '점심', 'lunch'),
     ev('minsu-w0-1', W0_WED, 840, 960, '디자인 크리틱', 'meeting'),
     ev('minsu-w0-l2', W0_THU, 705, 780, '점심', 'lunch'),
@@ -245,6 +254,8 @@ const haneul: Person = {
   workHours: { start: 540, end: 1080 },
   events: [
     // ── 현재 주 ──
+    ev('haneul-w0-f0', W0_MON, 600, 720, '캠페인 기획 집중', 'focus'),
+    ev('haneul-w0-l0', W0_MON, 720, 780, '점심', 'lunch'),
     ev('haneul-w0-1', W0_MON, 960, 1020, '캠페인 정기 회의', 'meeting'),
     ev('haneul-w0-2', W0_TUE, 540, 1020, '외근 — 고객사 방문', 'offsite'),
     ev('haneul-w0-l1', W0_WED, 720, 780, '점심', 'lunch'),
@@ -290,6 +301,7 @@ const sehun: Person = {
     ev('sehun-w0-l1', W0_MON, 780, 840, '점심', 'lunch'),
     ev('sehun-w0-2', W0_TUE, 630, 780, '인프라 점검', 'meeting'),
     ev('sehun-w0-l2', W0_TUE, 780, 840, '점심', 'lunch'),
+    ev('sehun-w0-f0', W0_TUE, 900, 1020, '집중 — 코드 리뷰', 'focus'),
     ev('sehun-w0-l3', W0_WED, 780, 840, '점심', 'lunch'),
     ev('sehun-w0-3', W0_WED, 900, 1020, '장애 회고', 'meeting'),
     ev('sehun-w0-l4', W0_THU, 780, 840, '점심', 'lunch'),
@@ -340,6 +352,8 @@ interface ExtraSpec {
   offsite?: [number, number, number, string];
   /** 집중시간(soft). [weekday, start, end, title] */
   focus?: [number, number, number, string];
+  /** 휴가(단발 — 매주 반복이면 부자연스럽다). [주(0=현재·1=다음·2=flexible), weekday, start, end, title] */
+  vacation?: [number, number, number, number, string];
 }
 
 const WEEKDAY_DATES: Record<number, [string, string, string]> = {
@@ -375,6 +389,11 @@ function buildExtra(s: ExtraSpec): Person {
       if (s.focus && s.focus[0] === wd) {
         events.push(ev(`${s.id}-f-${wd}-${wi}`, day, s.focus[1], s.focus[2], s.focus[3], 'focus'));
       }
+      // 휴가(단발, hard) — 그 주·그 요일에만.
+      if (s.vacation && s.vacation[0] === wi && s.vacation[1] === wd) {
+        events.push(ev(`${s.id}-v-${wd}-${wi}`, day, s.vacation[2], s.vacation[3], s.vacation[4], 'personal'));
+        hard.push({ start: s.vacation[2], end: s.vacation[3] });
+      }
       // 자율 점심 — 하드 일정과 겹치는 날은 거른다(그날은 점심을 못 챙긴 날).
       const clash = hard.some((h) => s.lunch[0] < h.end && h.start < s.lunch[1]);
       if (!clash) {
@@ -403,32 +422,38 @@ const EXTRA_SPECS: ExtraSpec[] = [
   {
     id: 'yerin', name: '신예린', role: 'Product Manager', faceId: 'yerin',
     workHours: { start: 540, end: 1080 }, lunch: [765, 825],
+    vacation: [0, 4, 840, 1080, '오후 휴가'],
     meetings: [[0, 600, 720, '제품 기획 정례'], [1, 900, 1020, '로드맵 리뷰'], [2, 660, 780, '스프린트 그루밍'], [3, 840, 960, '이해관계자 싱크'], [4, 600, 720, '위클리 랩업']],
   },
   {
     id: 'taeyang', name: '문태양', role: 'Android Engineer', faceId: 'taeyang',
     workHours: { start: 540, end: 1080 }, lunch: [750, 840],
+    focus: [1, 540, 660, '집중 — 코드 정리'],
     meetings: [[0, 600, 720, '안드로이드 스탠드업'], [2, 660, 780, '릴리즈 회고'], [3, 600, 720, '코드 리뷰 타임']],
   },
   {
     id: 'onyu', name: '최온유', role: 'Legal Counsel', faceId: 'onyu',
     workHours: { start: 540, end: 1080 }, lunch: [755, 830],
+    vacation: [1, 3, 540, 1080, '연차'],
     meetings: [[1, 630, 750, '계약 검토 미팅'], [3, 900, 1020, '심의 회의']],
   },
   // 3 lunch-rhythm people (11:00 / 12:20 / 13:30 — 이른·보통·늦은 점심)
   {
     id: 'saebom', name: '윤새봄', role: 'UX Writer', faceId: 'saebom',
     workHours: { start: 540, end: 1080 }, lunch: [660, 735],
+    focus: [0, 540, 630, '집중 — 원고 작업'],
     meetings: [[1, 840, 960, '카피 리뷰'], [3, 660, 780, '보이스 톤 워크숍'], [4, 600, 660, '릴리즈 노트']],
   },
   {
     id: 'sujin', name: '강수진', role: 'QA Engineer', faceId: 'sujin',
     workHours: { start: 540, end: 1080 }, lunch: [740, 815],
+    focus: [3, 840, 960, '집중 — 테스트 설계'],
     meetings: [[0, 840, 960, '스프린트 테스트 계획'], [2, 600, 720, 'QA 위클리'], [4, 900, 1020, '릴리즈 리그레션']],
   },
   {
     id: 'soyul', name: '박소율', role: 'Content Marketer', faceId: 'soyul',
     workHours: { start: 540, end: 1080 }, lunch: [810, 870],
+    vacation: [2, 0, 540, 1080, '연차'],
     meetings: [[1, 600, 720, '콘텐츠 기획'], [3, 660, 780, '콘텐츠 편집 회의'], [4, 840, 960, '발행 점검']],
   },
   // 2 early-birds (workHours 480~1020)
@@ -441,6 +466,7 @@ const EXTRA_SPECS: ExtraSpec[] = [
   {
     id: 'yeonghun', name: '조영훈', role: 'Server Engineer', faceId: 'yeonghun',
     workHours: { start: 480, end: 1020 }, lunch: [675, 750],
+    focus: [2, 480, 570, '집중 — 리뷰 준비'],
     meetings: [[0, 540, 660, '서버 정기 점검'], [1, 840, 960, '인프라 리뷰'], [3, 630, 750, '용량 계획']],
   },
   // 2 flexible (workHours 600~1140)
@@ -453,17 +479,20 @@ const EXTRA_SPECS: ExtraSpec[] = [
   {
     id: 'eunchae', name: '오은채', role: 'Finance Manager', faceId: 'eunchae',
     workHours: { start: 600, end: 1140 }, lunch: [790, 850],
+    vacation: [0, 3, 900, 1140, '오후 반차'],
     meetings: [[0, 900, 1020, '월 결산 준비'], [2, 840, 960, '예산 리뷰'], [4, 660, 780, '정산 점검']],
   },
   // 2 busy-dense
   {
     id: 'doyun', name: '한도윤', role: 'iOS Engineer', faceId: 'doyun',
     workHours: { start: 540, end: 1080 }, lunch: [730, 790],
+    focus: [4, 540, 630, '집중 — 크래시 분석'],
     meetings: [[0, 600, 720, 'iOS 스탠드업'], [1, 780, 900, '빌드 점검'], [2, 600, 720, '릴리즈 트레인'], [3, 840, 960, '크래시 리뷰'], [4, 660, 780, '주간 회고']],
   },
   {
     id: 'bada', name: '김바다', role: 'Business Developer', faceId: 'bada',
     workHours: { start: 540, end: 1080 }, lunch: [745, 820],
+    vacation: [1, 4, 840, 1080, '오후 휴가'],
     meetings: [[0, 840, 960, '사업 검토'], [1, 600, 720, '제휴 협상'], [2, 900, 1020, '파트너 리뷰'], [3, 660, 780, '딜 파이프라인'], [4, 840, 960, '주간 사업 싱크']],
   },
 ];
