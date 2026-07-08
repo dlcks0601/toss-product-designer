@@ -136,7 +136,7 @@ export default function DateField({
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }}
             style={{ transformOrigin: 'top' }}
-            className="absolute left-1/2 top-[calc(100%+6px)] z-40 w-[340px] max-w-[calc(100vw-24px)] -translate-x-1/2 rounded-[24px] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:left-0 lg:translate-x-0"
+            className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-[24px] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:inset-x-auto lg:left-0 lg:w-[340px]"
           >
             {/* 홈 월간 피커(7월 탭)와 같은 규격 — 모바일은 폭만 필드에 정합 */}
             <div className="grid grid-cols-7 pb-2">
@@ -146,7 +146,7 @@ export default function DateField({
                 </span>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-y-3">
+            <div className="grid grid-cols-7 gap-y-3.5 lg:gap-y-3">
               {buildMonthCells().map(({ day, inMonth }) => {
                 const enabled = inMonth && selectableSet.has(day);
                 const isSel = day === value;
@@ -158,7 +158,7 @@ export default function DateField({
                     disabled={!enabled}
                     aria-pressed={isSel}
                     onClick={() => pick(day)}
-                    className={`pressable relative mx-auto flex h-10 w-10 items-center justify-center rounded-[13px] text-[16px] font-semibold ${
+                    className={`pressable relative mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] text-[16px] font-semibold lg:h-10 lg:w-10 lg:rounded-[13px] ${
                       isSel
                         ? 'bg-primary text-white'
                         : enabled
