@@ -39,6 +39,14 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
 .pressable:active { transform: scale(0.96); transition-duration: 120ms; }
 @media (prefers-reduced-motion: reduce) { .pressable, .pressable:active { transform: none; } }
 
+/* 스쿼클 — 연속 곡률 코너(iOS·피그마 corner smoothing 문법). 점진적 향상:
+   미지원 브라우저는 이 블록을 통째로 무시하고 일반 라운드로 본다.
+   원형이어야 하는 것들(아바타·날짜 원·점 등 rounded-full)은 진짜 원을 유지한다. */
+@supports (corner-shape: squircle) {
+  * { corner-shape: squircle; }
+  .rounded-full { corner-shape: round; }
+}
+
 /* ── 오로라 — 합성 전용. radial-gradient 레이어를 transform만으로 흘려보낸다.
    blur 필터 금지(그라데이션 falloff가 부드러움을 만든다), 리페인트 0.
    주기는 서로소(12s/17s/23s/19s) — 패턴이 사실상 반복되지 않는다. ─────── */
