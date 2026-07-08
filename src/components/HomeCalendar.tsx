@@ -113,14 +113,15 @@ export function styleFor(ev: CalendarEvent): KindStyle {
   return ev.kind === 'meeting' && ev.external ? EXTERNAL_STYLE : KIND_STYLE[ev.kind];
 }
 
-// 응답대기(받은 초대) 고스트 — 배경 없이 점선만. 색은 azure 미팅 톤에 맞춘다.
-const GHOST_BORDER = '#DFF9FE';
-const GHOST_TITLE = '#0099FF';
-const GHOST_SUB = '#5CB8F5';
-const GHOST_STYLE: CSSProperties = {
-  backgroundColor: 'transparent',
-  borderColor: GHOST_BORDER,
-};
+// 응답대기(받은 초대) 고스트 — 평소엔 점선 유령, 호버하면 솔리드 블루로 차오르며 떠오른다.
+// 그림자는 애니메이션 금지 원칙(성능)에 따라 after: 오버레이의 opacity로만 켠다.
+const GHOST_CARD =
+  'group relative border-2 border-dashed border-[#DFF9FE] bg-transparent ' +
+  'transition-[background-color,border-color] duration-200 hover:border-transparent hover:bg-[#5E93F6] ' +
+  'after:pointer-events-none after:absolute after:-inset-px after:-z-10 after:rounded-[inherit] ' +
+  'after:shadow-[0_10px_24px_rgba(49,130,246,0.35)] after:opacity-0 after:transition-opacity after:duration-200 hover:after:opacity-100';
+const GHOST_TITLE_CLS = 'text-[#0099FF] transition-colors duration-200 group-hover:text-white';
+const GHOST_SUB_CLS = 'text-[#5CB8F5] transition-colors duration-200 group-hover:text-white/80';
 
 const WEEKDAY_LABELS = ['월', '화', '수', '목', '금'] as const;
 
@@ -193,11 +194,10 @@ function MobileDayList({
         <button
           type="button"
           onClick={onOpenInvite}
-          className="pressable w-full rounded-2xl border-2 border-dashed px-4 py-3.5 text-left"
-          style={GHOST_STYLE}
+          className={`pressable w-full rounded-2xl px-4 py-3.5 text-left ${GHOST_CARD}`}
         >
-          <p className="truncate text-[14px] font-semibold" style={{ color: GHOST_TITLE }}>{ghost.title}</p>
-          <p className="mt-0.5 text-[12px]" style={{ color: GHOST_SUB }}>{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
+          <p className={`truncate text-[14px] font-semibold ${GHOST_TITLE_CLS}`}>{ghost.title}</p>
+          <p className={`mt-0.5 text-[12px] ${GHOST_SUB_CLS}`}>{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
         </button>
       )}
       {ghostIndex !== -1 &&
@@ -478,15 +478,14 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   <button
                     type="button"
                     onClick={onOpenInvite}
-                    className="pressable absolute inset-x-1.5 overflow-hidden rounded-xl border-2 border-dashed px-3 py-2 text-left"
+                    className={`pressable absolute inset-x-1.5 rounded-xl px-3 py-2 text-left ${GHOST_CARD}`}
                     style={{
                       top: `calc(${yPct(ghost.start)}% + 3px)`,
                       height: `calc(${yPct(ghost.end) - yPct(ghost.start)}% - 6px)`,
-                      ...GHOST_STYLE,
                     }}
                   >
-                    <p className="truncate text-[13px] font-bold leading-[1.3]" style={{ color: GHOST_TITLE }}>{ghost.title}</p>
-                    <p className="truncate text-[11px] font-medium leading-[1.3]" style={{ color: GHOST_SUB }}>
+                    <p className={`truncate text-[13px] font-bold leading-[1.3] ${GHOST_TITLE_CLS}`}>{ghost.title}</p>
+                    <p className={`truncate text-[11px] font-medium leading-[1.3] ${GHOST_SUB_CLS}`}>
                       {fmtRange(ghost.start, ghost.end)} · 응답 대기
                     </p>
                   </button>
