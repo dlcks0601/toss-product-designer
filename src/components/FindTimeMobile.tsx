@@ -118,16 +118,16 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
           <button
             type="button"
             onClick={() => dispatch({ type: 'SET_STEP', step: 'setup' })}
-            className="pressable -ml-1 flex h-10 items-center gap-1 rounded-full pl-1.5 pr-3 text-[15px] font-semibold text-text-strong hover:bg-section"
+            aria-label="뒤로"
+            className="pressable -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-text-strong hover:bg-section"
           >
-            <ChevronLeft size={20} aria-hidden />
-            일정 만들기
+            <ChevronLeft size={22} aria-hidden />
           </button>
         </Reveal>
       </FrostedBar>
       <div className="mx-auto w-full max-w-[560px] px-4">
         {/* 타이틀 + 조건 요약 */}
-        <Reveal delay={70} className="pt-2">
+        <Reveal delay={70} className="pt-0">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
             모두를 생각한 {DURATION_LABEL[state.duration]}이에요
           </h1>
