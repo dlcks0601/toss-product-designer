@@ -21,6 +21,7 @@ import { playResponseScript, useNotifications } from '../app-state/notifications
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
 import { useCandidates } from '../app-state/useCandidates';
 import { useIsDesktop } from '../app-state/useIsDesktop';
+import useScrollProgress from '../lib/useScrollProgress';
 import type { Action, AppState } from '../app-state/reducer';
 import type { ResponseBadges } from '../components/HomeCalendar';
 import type { AppNotification } from '../lib/types';
@@ -184,26 +185,27 @@ function HomeScreen({
 }) {
   const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
   const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
+  const headerVeil = useScrollProgress();
   // 응답을 마친 초대는 캘린더의 고스트가 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).
   // 알림 센터의 초대 알림은 기록으로 남는다 — 탭하면 응답 완료 상태의 초대 화면이 열린다.
   const invitePending = state.inviteResponded === null;
 
   return (
-    <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
-      {/* 상단 오로라 — 배경 레이어만 overflow-hidden으로 가둔다. 헤더 콘텐츠(벨·알림 드롭다운)는
-          이 클립 밖에 둬야 드롭다운이 헤더 높이에 잘리지 않는다.
-          스트립 전체가 sticky, frost는 상시(하단 CTA와 같은 문법) — frost를 오로라 '아래'에 깔아
-          지나가는 캘린더만 흐려지고 오로라는 선명하게 그 위에서 빛난다. */}
+    <div className="relative min-h-dvh bg-bg pb-32 lg:pb-16">
+      {/* 오로라 — 헤더가 아니라 '페이지 배경'이다. 헤더~캘린더 상단까지 하나로 이어지고
+          (끊김 없음), 스크롤하면 배경답게 콘텐츠와 함께 밀려 올라간다. */}
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-96 overflow-hidden">
+        <Aurora variant="home" />
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-b from-transparent to-white" />
+      </div>
+
+      {/* 헤더 — 스크롤 연동 베일(FrostedBar와 같은 문법). 정지 상태 = 완전 투명. */}
       <div className="sticky top-0 z-50">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
+          style={{ opacity: headerVeil }}
+          className="pointer-events-none absolute inset-x-0 -bottom-12 top-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_bottom,black_40%,transparent)]"
         />
-        {/* 오로라 — 하단 화이트 그라디언트는 제거: frost 위에 불투명 막을 한 겹 더 발라
-            지나가는 콘텐츠를 지워버렸다. 이제 블렌딩은 frost 마스크가 담당한다. */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <Aurora variant="home" />
-        </div>
         <div className="relative mx-auto max-w-[1200px] px-4 py-3.5 lg:px-6 lg:py-4">
           <Reveal as="header" className="flex items-center justify-between">
             <Wordmark />
@@ -228,7 +230,7 @@ function HomeScreen({
         </div>
       </div>
 
-      <Reveal delay={70} className="mx-auto max-w-[1200px] px-4 lg:px-6">
+      <Reveal delay={70} className="relative mx-auto max-w-[1200px] px-4 lg:px-6">
         {/* 내 기본 일정 + 셋업 혼자 경로로 저장한 개인 일정(myEvents)을 함께 그린다. */}
         <HomeCalendar
           events={[...ME.events, ...state.myEvents]}

@@ -401,8 +401,8 @@ export default function HomeCalendar({ events, invite, onOpenInvite, responseBad
         {/* 일정 만들기 CTA는 페이지가 소유 — 모바일·데스크톱 모두 하단 고정(토스 BottomCTA 문법). */}
       </div>
 
-      {/* ── 데스크톱: 5열 주간 그리드 ── */}
-      <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white px-2 lg:block">
+      {/* ── 데스크톱: 5열 주간 그리드 — bg 없음: 페이지 배경 오로라가 헤더~그리드로 이어진다 ── */}
+      <div className="mt-3 hidden overflow-hidden rounded-[20px] px-2 lg:block">
         <AnimatePresence mode="wait" initial={false}>
         <motion.div key={week} {...weekFade}>
         {/* 요일 헤더 */}
