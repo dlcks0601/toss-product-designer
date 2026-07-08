@@ -205,35 +205,20 @@ function AttendeeRow({
           {isMe && <span className="ml-1.5 text-[12px] font-normal text-text-weak">나 · 주최자</span>}
         </span>
         {!isMe && (
-          /* 꼭/선택 미니 세그먼트 — 두 상태가 모두 보여야 "고르는 것"임이 읽힌다(숨은 토글 금지). */
-          <div
-            role="radiogroup"
-            aria-label={`${person.name} 참석 유형`}
-            className="flex h-7 shrink-0 items-center rounded-full bg-section p-0.5"
+          /* 꼭참석/선택 토글 필 — 단일 필 유지(미감 우선 결정). 탭하면 상태가 뒤집힌다. */
+          <button
+            type="button"
+            aria-pressed={required}
+            aria-label={`${person.name} ${required ? '꼭 참석' : '선택 참석'}`}
+            onClick={onPin}
+            className={`pressable h-7 shrink-0 rounded-full px-2.5 text-[12px] font-semibold transition-colors ${
+              required
+                ? 'bg-primary-tint text-primary hover:bg-[#D6E9FF]'
+                : 'bg-section text-text-weak hover:bg-[#E5E8EB] hover:text-text-strong'
+            }`}
           >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={required}
-              onClick={() => !required && onPin()}
-              className={`pressable h-6 rounded-full px-2.5 text-[12px] font-semibold transition-colors ${
-                required ? 'bg-white text-primary shadow-[0_1px_3px_rgba(25,31,40,0.1)]' : 'text-text-weak'
-              }`}
-            >
-              꼭 참석
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={!required}
-              onClick={() => required && onPin()}
-              className={`pressable h-6 rounded-full px-2.5 text-[12px] font-semibold transition-colors ${
-                !required ? 'bg-white text-text-strong shadow-[0_1px_3px_rgba(25,31,40,0.1)]' : 'text-text-weak'
-              }`}
-            >
-              선택
-            </button>
-          </div>
+            {required ? '꼭 참석' : '선택'}
+          </button>
         )}
         {!isMe && (
           <button
