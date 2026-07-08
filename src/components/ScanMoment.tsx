@@ -54,10 +54,11 @@ export default function ScanMoment({ attendees, insights, duration, onDone }: Sc
   const progress = steps.length === 0 ? 1 : (finale ? steps.length : lit) / steps.length;
 
   return (
-    <Reveal>
+    <Reveal className="w-full lg:flex lg:justify-center">
+      {/* 모바일: 화면 전체가 무대(풀블리드 다크, 콘텐츠 세로 중앙). 데스크톱: 기존 다크 카드. */}
       <section
         aria-label={`${attendees.length}명의 다음 주를 읽고 있어요`}
-        className="relative overflow-hidden rounded-[20px] bg-[#191F28] px-6 py-7"
+        className="relative flex min-h-dvh w-full flex-col justify-center overflow-hidden bg-[#191F28] px-6 py-7 lg:min-h-0 lg:w-full lg:max-w-[560px] lg:rounded-[20px] lg:px-8 lg:py-9"
       >
         {/* 오로라 'scan' — 다크 카드 위 저투명 오버레이(딥 컨텍스트, 은은하게) */}
         <div aria-hidden className="absolute inset-0 opacity-40">

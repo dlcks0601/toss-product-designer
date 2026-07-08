@@ -276,7 +276,8 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
   return (
     <main className="min-h-dvh bg-bg">
       {scanning ? (
-        <div className="mx-auto w-full max-w-[560px] px-4 pt-6 lg:pt-12">
+        /* 무대 배치 — 모바일: 풀스크린 다크(카드가 곧 화면), 데스크톱: 뷰포트 세로 중앙의 카드 */
+        <div className="flex min-h-dvh items-center justify-center lg:px-4">
           <ScanMoment
             attendees={candidates.attendees}
             insights={candidates.insights}
