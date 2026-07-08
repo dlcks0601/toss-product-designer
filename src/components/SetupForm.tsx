@@ -52,13 +52,12 @@ const DAY_OPTIONS = businessDaysFrom(ANCHOR_DATE, 13);
 /** 혼자 일정의 종류 — 회사 캘린더엔 회사 일정만 적는다(개인 약속은 휴가라는 회사의 언어로 나타난다).
  *  집중 시간 = 개인 업무를 반드시 봐야 하는 시간, 외근 = 출장, 휴가 = 시간 단위로도 쓴다(personal kind
  *  재해석 — 하드 블록이라 휴가인 사람에겐 회의가 잡히지 않는다). meeting은 시간 찾기 경로 전용.
- *  칩 색은 홈 캘린더 카드 색(KIND_STYLE)과 단일 소스 — 고른 색 그대로 캘린더에 앉는다.
- *  점심만 예외: 카드 bg(#F2F4F6)가 비선택 칩과 같아 구분이 안 돼 한 단계 진하게. */
+ *  칩 색은 홈 캘린더 카드 색(KIND_STYLE)과 단일 소스 — 고른 색 그대로 캘린더에 앉는다. */
 export type MyEventKind = 'personal' | 'focus' | 'offsite' | 'lunch';
 const MY_KIND_OPTIONS: { value: MyEventKind; label: string; tint: { bg: string; text: string } }[] = [
   { value: 'focus', label: '집중 시간', tint: { bg: KIND_STYLE.focus.bg, text: KIND_STYLE.focus.title } },
   { value: 'offsite', label: '외근', tint: { bg: KIND_STYLE.offsite.bg, text: KIND_STYLE.offsite.title } },
-  { value: 'lunch', label: '점심', tint: { bg: '#E5E8EB', text: '#4E5968' } },
+  { value: 'lunch', label: '점심', tint: { bg: KIND_STYLE.lunch.bg, text: KIND_STYLE.lunch.title } },
   { value: 'personal', label: '휴가', tint: { bg: KIND_STYLE.personal.bg, text: KIND_STYLE.personal.title } },
 ];
 /** 종류별 제목 힌트 — 회사 캘린더의 언어로. */

@@ -82,7 +82,8 @@ export interface KindStyle {
 export const KIND_STYLE: Record<EventKind, KindStyle> = {
   meeting: { bg: '#DFF9FE', border: '#BEEFFB', title: '#0099FF', sub: '#5CB8F5' },
   focus: { bg: '#DFF4E7', border: '#BEE3CF', title: '#12A150', sub: '#5FC08D' },
-  lunch: { bg: '#F2F4F6', border: 'rgba(229,232,235,0.6)', title: '#8B95A1', sub: '#B0B8C1' },
+  // 점심 — 회색이 아니라 따뜻한 오렌지(밥은 소중하니까). 팔레트 가족(네온 파스텔)과 같은 톤.
+  lunch: { bg: '#FFF3DC', border: '#F5E3C1', title: '#FF9500', sub: '#FFBE66' },
   personal: { bg: '#F1ECFE', border: '#DED3F8', title: '#7C4DFF', sub: '#A98BF0' },
   // 외근 — 패턴 없이 민무늬 분홍(색으로만 말한다).
   offsite: { bg: '#FEF0F1', border: '#F3DBDB', title: '#F04452', sub: '#EE99A0' },
