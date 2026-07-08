@@ -308,6 +308,10 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           >
             {Number(month)}월
           </button>
+          {/* 보이는 주의 날짜 범위 — "6일 – 10일" */}
+          <span className="mx-1 text-[13px] font-medium text-text-weak lg:text-[14px]">
+            {Number(days[0].slice(8, 10))}일 – {Number(days[days.length - 1].slice(8, 10))}일
+          </span>
           <button
             type="button"
             onClick={() => goWeek(1)}
