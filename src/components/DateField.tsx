@@ -81,8 +81,8 @@ export default function DateField({
     }
     const r = rootRef.current?.getBoundingClientRect();
     if (r) {
-      // 패널 높이: 모바일 콤팩트(~330) / 데스크톱 홈 규격(~400).
-      const panelH = window.matchMedia('(min-width: 1024px)').matches ? 400 : 330;
+      // 패널 높이 — 홈 월간 피커 규격(~400), 모바일도 동일(폭만 필드 정합).
+      const panelH = 400;
       // 여백 24px + 하단 고정 CTA(~96px) 위까지 — 패널이 바닥/CTA에 붙지 않게.
       const below = window.innerHeight - r.bottom - 6 - 24 - 96;
       const need = panelH - below;
@@ -136,17 +136,17 @@ export default function DateField({
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }}
             style={{ transformOrigin: 'top' }}
-            className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-[20px] bg-white p-4 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:inset-x-auto lg:left-0 lg:w-[340px] lg:rounded-[24px] lg:p-5"
+            className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-[24px] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:inset-x-auto lg:left-0 lg:w-[340px]"
           >
-            {/* 홈 월간 피커(7월 탭) 문법 — 모바일은 콤팩트, 데스크톱은 홈 규격 */}
-            <div className="grid grid-cols-7 pb-1 lg:pb-2">
+            {/* 홈 월간 피커(7월 탭)와 같은 규격 — 모바일은 폭만 필드에 정합 */}
+            <div className="grid grid-cols-7 pb-2">
               {WEEKDAY_HEADER.map((d) => (
-                <span key={d} className="py-0.5 text-center text-[11px] text-text-faint lg:py-1 lg:text-[13px]">
+                <span key={d} className="py-1 text-center text-[13px] text-text-faint">
                   {d}
                 </span>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-y-1.5 lg:gap-y-3">
+            <div className="grid grid-cols-7 gap-y-3">
               {buildMonthCells().map(({ day, inMonth }) => {
                 const enabled = inMonth && selectableSet.has(day);
                 const isSel = day === value;
@@ -158,7 +158,7 @@ export default function DateField({
                     disabled={!enabled}
                     aria-pressed={isSel}
                     onClick={() => pick(day)}
-                    className={`pressable relative mx-auto flex h-9 w-9 items-center justify-center rounded-[11px] text-[14px] font-semibold lg:h-10 lg:w-10 lg:rounded-[13px] lg:text-[16px] ${
+                    className={`pressable relative mx-auto flex h-10 w-10 items-center justify-center rounded-[13px] text-[16px] font-semibold ${
                       isSel
                         ? 'bg-primary text-white'
                         : enabled
@@ -170,7 +170,7 @@ export default function DateField({
                   >
                     {Number(day.slice(8, 10))}
                     {dot && !isSel && (
-                      <span aria-hidden className="absolute bottom-[2px] h-1 w-1 rounded-full bg-primary/60 lg:bottom-[3px]" />
+                      <span aria-hidden className="absolute bottom-[3px] h-1 w-1 rounded-full bg-primary/60" />
                     )}
                   </button>
                 );
