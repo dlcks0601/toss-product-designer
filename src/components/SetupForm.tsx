@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type Dispatch, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ChevronDown, ChevronLeft, Plus } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Plus, X } from 'lucide-react';
 import AttendeePicker from './AttendeePicker';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
@@ -221,6 +221,7 @@ function AttendeeRow({
   windowDays,
   onPeek,
   onPin,
+  onRemove,
 }: {
   person: Person;
   isMe: boolean;
@@ -229,6 +230,7 @@ function AttendeeRow({
   windowDays: string[];
   onPeek: () => void;
   onPin: () => void;
+  onRemove: () => void;
 }) {
   return (
     <div className="relative">
@@ -251,6 +253,16 @@ function AttendeeRow({
             }`}
           >
             {required ? '꼭 참석' : '선택'}
+          </button>
+        )}
+        {!isMe && (
+          <button
+            type="button"
+            aria-label={`${person.name} 빼기`}
+            onClick={onRemove}
+            className="pressable flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-section hover:text-text-weak"
+          >
+            <X size={15} aria-hidden />
           </button>
         )}
       </div>
@@ -420,6 +432,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
                   windowDays={windowDays}
                   onPeek={() => togglePeek(p.id)}
                   onPin={() => dispatch({ type: 'SET_REQUIRED', id: p.id, required: !state.required[p.id] })}
+                  onRemove={() => toggleAttendee(p.id)}
                 />
               ))
             ) : (
@@ -442,6 +455,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
                       windowDays={windowDays}
                       onPeek={() => togglePeek(p.id)}
                       onPin={() => dispatch({ type: 'SET_REQUIRED', id: p.id, required: !state.required[p.id] })}
+                      onRemove={() => toggleAttendee(p.id)}
                     />
                   </motion.div>
                 ))}
