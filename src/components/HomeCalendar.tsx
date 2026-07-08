@@ -41,6 +41,23 @@ export function weekDays(weekIndex: number): string[] {
   return [0, 1, 2, 3, 4].map((i) => addDaysISO(monday, i));
 }
 
+/** 월간 피커 그리드 — 2026년 7월(일요일 시작), 앞뒤 달 채움 포함 35칸. */
+export function buildMonthCells(): { day: string; inMonth: boolean }[] {
+  // 7/1(수) 기준 일요일 시작 → 6/28(일)부터 35일.
+  return Array.from({ length: 35 }, (_, i) => {
+    const day = addDaysISO('2026-06-28', i);
+    return { day, inMonth: day.startsWith('2026-07') };
+  });
+}
+
+/** 해당 날짜가 속한 주 인덱스(0..WEEK_COUNT-1) — 주간 뷰 범위 밖이면 -1. */
+export function weekIndexOfDay(day: string): number {
+  for (let w = 0; w < WEEK_COUNT; w += 1) {
+    if (weekDays(w).includes(day)) return w;
+  }
+  return -1;
+}
+
 /** 분(자정 기준) → 그리드 세로 위치(%) — 9~19시 프레임 기준, 프레임 밖은 클램프. */
 export function yPct(minutes: number): number {
   const clamped = Math.min(Math.max(minutes, DAY_START), DAY_END);
@@ -232,6 +249,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
   const reduced = !!useReducedMotion();
   const [week, setWeek] = useState(0);
   const [selectedDay, setSelectedDay] = useState(TODAY);
+  const [monthOpen, setMonthOpen] = useState(false);
   // 주 넘김 방향(±1) — 전환 페이드가 이 방향으로 살짝 흐른다(다음 주 = 오른쪽에서 들어옴).
   const [dir, setDir] = useState(1);
   const days = weekDays(week);
@@ -259,17 +277,96 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
 
   const ghostOn = (day: string) => (invite && invite.day === day ? invite : null);
 
+  // ── 월간 피커 — '7월' 탭으로 열리고, 일정 있는 날엔 점, 날짜 탭 = 그 주로 점프 ──
+  // 점심은 매일 있어 점의 의미가 사라지므로 제외 — 점 = 진짜 일정(회의·개인·외근 등).
+  const dottedDays = new Set(events.filter((e) => e.kind !== 'lunch').map((e) => e.day));
+  if (invite) dottedDays.add(invite.day);
+
+  const goToDay = (day: string) => {
+    const w = weekIndexOfDay(day);
+    if (w === -1) return;
+    if (w !== week) {
+      setDir(w > week ? 1 : -1);
+      setWeek(w);
+    }
+    setSelectedDay(day);
+    setMonthOpen(false);
+  };
+
   return (
     <section aria-label="내 캘린더">
       {/* ── 헤더: 월 + 범위 + 주 이동 + (데스크톱) CTA ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+        <div className="relative flex items-center gap-3">
           <div className="flex items-baseline gap-2">
-            <h2 className="text-[20px] font-bold tracking-[-0.02em] text-text-strong lg:text-[22px]">
+            <button
+              type="button"
+              onClick={() => setMonthOpen(!monthOpen)}
+              aria-expanded={monthOpen}
+              aria-label="월간 달력 열기"
+              className="pressable -mx-1 rounded-lg px-1 text-[20px] font-bold tracking-[-0.02em] text-text-strong hover:bg-section lg:text-[22px]"
+            >
               {Number(month)}월
-            </h2>
+            </button>
             <span className="text-[13px] font-medium text-text-weak lg:text-[14px]">{rangeLabel}</span>
           </div>
+
+          {/* 월간 피커 팝오버 — 토스 방식: 일~토 그리드, 오늘=파란 칩, 일정 있는 날=점 */}
+          <AnimatePresence>
+            {monthOpen && (
+              <>
+                <div className="fixed inset-0 z-[60]" aria-hidden onClick={() => setMonthOpen(false)} />
+                <motion.div
+                  key="month-picker"
+                  role="dialog"
+                  aria-label="2026년 7월"
+                  initial={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
+                  animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+                  exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
+                  transition={reduced ? { duration: 0.12 } : { type: 'spring', stiffness: 350, damping: 30 }}
+                  style={{ transformOrigin: 'top left' }}
+                  className="absolute left-0 top-full z-[65] mt-2 w-[312px] rounded-[20px] bg-white p-4 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
+                >
+                  <div className="grid grid-cols-7 pb-1">
+                    {['일', '월', '화', '수', '목', '금', '토'].map((d) => (
+                      <span key={d} className="py-1 text-center text-[12px] text-text-faint">
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-y-0.5">
+                    {buildMonthCells().map(({ day, inMonth }) => {
+                      const navigable = inMonth && weekIndexOfDay(day) !== -1;
+                      const today = day === TODAY;
+                      const dotted = inMonth && dottedDays.has(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          disabled={!navigable}
+                          onClick={() => goToDay(day)}
+                          className={`pressable relative mx-auto flex h-9 w-9 items-center justify-center rounded-[12px] text-[15px] font-semibold ${
+                            today
+                              ? 'bg-primary text-white'
+                              : navigable
+                                ? 'text-text-strong hover:bg-section'
+                                : inMonth
+                                  ? 'text-text-faint'
+                                  : 'text-border'
+                          } disabled:pointer-events-none`}
+                        >
+                          {dayNumber(day)}
+                          {dotted && !today && (
+                            <span aria-hidden className="absolute bottom-[3px] h-1 w-1 rounded-full bg-primary/60" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
           <div className="flex items-center gap-0.5">
             <button
               type="button"
