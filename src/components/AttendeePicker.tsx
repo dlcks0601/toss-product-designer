@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
 import { Check, Search, X } from 'lucide-react';
 import Avatar from './Avatar';
 import ProfilePeek from './ProfilePeek';
@@ -53,6 +53,11 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
   const [peekId, setPeekId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  // 모바일 시트 드래그 — 그랩바·헤더에서 시작(dragListener=false). 리스트 스크롤과 충돌하지 않는다.
+  const dragControls = useDragControls();
+  const startDrag = (e: React.PointerEvent) => {
+    if (!desktop && !reduced) dragControls.start(e);
+  };
 
   const filtered = useMemo(() => filterPeople(ORG, query), [query]);
   const selectedSet = useMemo(() => new Set(attendeeIds), [attendeeIds]);
@@ -142,16 +147,32 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
         aria-modal="true"
         aria-label="참석자 선택"
         {...panelMotion}
+        drag={desktop || reduced ? false : 'y'}
+        dragListener={false}
+        dragControls={dragControls}
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.9 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 100 || info.velocity.y > 600) onClose();
+        }}
         className="relative flex h-[78dvh] w-full flex-col overflow-hidden rounded-t-[24px] bg-white lg:h-auto lg:max-h-[min(640px,85dvh)] lg:w-[480px] lg:rounded-[24px]"
       >
-        {/* 헤더 */}
-        <div className="flex items-center justify-between px-5 pb-1 pt-5">
+        {/* 그랩바(모바일) — 아래로 스와이프하면 시트가 닫힌다 */}
+        <div aria-hidden className="touch-none pt-2.5 lg:hidden" onPointerDown={startDrag}>
+          <div className="mx-auto h-1 w-9 rounded-full bg-border" />
+        </div>
+
+        {/* 헤더 — 모바일에선 여기서도 끌어서 닫을 수 있다. X는 데스크톱 전용. */}
+        <div
+          className="flex touch-none items-center justify-between px-5 pb-1 pt-3 lg:touch-auto lg:pt-5"
+          onPointerDown={startDrag}
+        >
           <h2 className="text-[18px] font-bold tracking-[-0.01em] text-text-strong">함께할 사람을 선택해주세요</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="닫기"
-            className="pressable -mr-2 flex h-9 w-9 items-center justify-center rounded-full text-text-weak hover:bg-section"
+            className="pressable -mr-2 hidden h-9 w-9 items-center justify-center rounded-full text-text-weak hover:bg-section lg:flex"
           >
             <X size={19} aria-hidden />
           </button>
