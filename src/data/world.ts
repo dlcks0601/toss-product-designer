@@ -100,19 +100,22 @@ const ichan: Person = {
     ev('ichan-w1-l5', W1_FRI, 720, 810, '점심', 'lunch'),
     ev('ichan-w1-5', W1_FRI, 810, 930, '위클리 랩업', 'meeting', '미팅룸 4'),
 
-    // ── flexible(7/20 주) — 심사 시점의 '미래'라 실제 주간처럼 꽉 채운다(주간 리듬 반복) ──
+    // ── flexible(7/20 주) — 심사 시점의 '미래'. 정례(스프린트 계획·주간 마감)만 반복하고
+    //    나머지는 그 주의 일들로 다르게 — 매주 복붙 캘린더로 보이지 않게. ──
     // Mon 은 11:30~13:00 회의라 이날만 13:00 으로 미룬다(자율 점심 — 그날 사정에 맞춘다).
-    ev('ichan-w2-f1', W2_MON, 540, 660, '집중 — 주간 계획 정리', 'focus'),
-    ev('ichan-w2-l1', W2_MON, 780, 870, '점심', 'lunch'),
     ev('ichan-w2-1', W2_MON, 690, 780, '주간 스프린트 계획', 'meeting', '미팅룸 3'),
-    ev('ichan-w2-1b', W2_TUE, 660, 780, '제품 리뷰', 'meeting', 'UT룸'),
-    ev('ichan-w2-l1b', W2_TUE, 780, 840, '점심', 'lunch'),
-    ev('ichan-w2-f2', W2_TUE, 840, 960, '기획서 집중', 'focus'),
-    ev('ichan-w2-l2', W2_WED, 720, 810, '점심', 'lunch'),
-    ev('ichan-w2-2', W2_WED, 840, 960, '로드맵 정리', 'meeting', '미팅룸 2'),
+    ev('ichan-w2-l1', W2_MON, 780, 870, '점심', 'lunch'),
+    ev('ichan-w2-1b', W2_MON, 900, 1020, '분기 OKR 초안', 'meeting', '미팅룸 2'),
+    ev('ichan-w2-f1', W2_TUE, 540, 660, '집중 — 지표 정리', 'focus'),
+    ev('ichan-w2-l1b', W2_TUE, 720, 810, '점심', 'lunch'),
+    ev('ichan-w2-2b', W2_TUE, 840, 930, '신규 기능 킥오프', 'meeting', '미팅룸 4'),
+    ev('ichan-w2-2', W2_WED, 630, 750, 'UT 세션 참관', 'meeting', 'UT룸'),
+    ev('ichan-w2-l2', W2_WED, 750, 840, '점심', 'lunch'),
     ev('ichan-w2-l3', W2_THU, 720, 810, '점심', 'lunch'),
-    ev('ichan-w2-3', W2_THU, 900, 1020, '이해관계자 싱크', 'meeting', '미팅룸 5'),
+    ev('ichan-w2-3', W2_THU, 840, 930, '채용 인터뷰', 'meeting', '미팅룸 3'),
+    ev('ichan-w2-f2', W2_THU, 960, 1080, '집중 — 분기 리뷰 준비', 'focus'),
     ev('ichan-w2-l4', W2_FRI, 720, 810, '점심', 'lunch'),
+    ev('ichan-w2-4b', W2_FRI, 840, 930, '월간 회고', 'meeting', '미팅룸 2'),
     ev('ichan-w2-4', W2_FRI, 960, 1080, '주간 마감 회의', 'meeting', '미팅룸 1'),
   ],
 };
@@ -164,17 +167,16 @@ const junho: Person = {
     ev('junho-w1-5', W1_FRI, 660, 900, 'API 연동 리뷰', 'meeting'),
     ev('junho-w1-5b', W1_FRI, 900, 1080, '배포 준비', 'meeting'),
 
-    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    // ── flexible(7/20 주) — 정례(스프린트 계획·목 외근)만 반복, 나머지는 그 주의 일들 ──
     ev('junho-w2-1', W2_MON, 600, 690, '스프린트 계획', 'meeting'),
     ev('junho-w2-l1', W2_MON, 690, 765, '점심', 'lunch'),
-    ev('junho-w2-f1', W2_MON, 840, 960, '집중 — 코드 정리', 'focus'),
-    ev('junho-w2-1b', W2_TUE, 600, 720, '프론트 팀 싱크', 'meeting'),
+    ev('junho-w2-1b', W2_MON, 900, 1020, '성능 개선 스파이크', 'meeting'),
+    ev('junho-w2-f1', W2_TUE, 540, 690, '집중 — 라이브러리 업그레이드', 'focus'),
     ev('junho-w2-l2', W2_TUE, 720, 795, '점심', 'lunch'),
-    ev('junho-w2-2b', W2_WED, 600, 630, '데일리 스크럼', 'meeting'),
     ev('junho-w2-l3', W2_WED, 690, 765, '점심', 'lunch'),
-    ev('junho-w2-2c', W2_WED, 840, 960, '코드 리뷰 타임', 'meeting'),
+    ev('junho-w2-2b', W2_WED, 780, 900, '디자인 핸드오프 리뷰', 'meeting'),
     ev('junho-w2-2', W2_THU, 540, 900, '외근 — 파트너사 미팅', 'offsite'),
-    ev('junho-w2-3', W2_FRI, 900, 1080, '배포 준비', 'meeting'),
+    ev('junho-w2-3', W2_FRI, 840, 930, '테크 세미나', 'meeting'),
     ev('junho-w2-l4', W2_FRI, 690, 765, '점심', 'lunch'),
   ],
 };
@@ -215,16 +217,17 @@ const seoyeon: Person = {
     ev('seoyeon-w1-l5', W1_FRI, 810, 885, '점심', 'lunch'),
     ev('seoyeon-w1-5', W1_FRI, 690, 810, '리서치 싱크', 'meeting'),
 
-    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    // ── flexible(7/20 주) — 정례(데이터 리뷰)만 반복, 나머지는 그 주의 일들 ──
     ev('seoyeon-w2-l0', W2_MON, 735, 810, '점심', 'lunch'),
-    ev('seoyeon-w2-0', W2_MON, 840, 1020, '대시보드 작업', 'meeting'),
+    ev('seoyeon-w2-0', W2_MON, 840, 990, '분기 지표 결산', 'meeting'),
     ev('seoyeon-w2-l1', W2_TUE, 735, 810, '점심', 'lunch'),
-    ev('seoyeon-w2-f1', W2_TUE, 540, 690, '집중 작업 — 지표 분석', 'focus'),
+    ev('seoyeon-w2-f1', W2_TUE, 540, 660, '집중 — 설문 응답 분석', 'focus'),
+    ev('seoyeon-w2-1b', W2_TUE, 900, 1020, '리서치 공유회', 'meeting'),
     ev('seoyeon-w2-1', W2_WED, 840, 960, '데이터 리뷰', 'meeting'),
     ev('seoyeon-w2-l2', W2_WED, 735, 810, '점심', 'lunch'),
-    ev('seoyeon-w2-2', W2_THU, 840, 1020, '지표 공유', 'meeting'),
     ev('seoyeon-w2-l3', W2_THU, 735, 810, '점심', 'lunch'),
-    ev('seoyeon-w2-3', W2_FRI, 690, 810, '리서치 싱크', 'meeting'),
+    ev('seoyeon-w2-2', W2_THU, 600, 720, '실험 설계 리뷰', 'meeting'),
+    ev('seoyeon-w2-3', W2_FRI, 690, 810, '온보딩 멘토링', 'meeting'),
     ev('seoyeon-w2-l4', W2_FRI, 810, 885, '점심', 'lunch'),
   ],
 };
@@ -262,17 +265,18 @@ const minsu: Person = {
     ev('minsu-w1-l5', W1_FRI, 705, 780, '점심', 'lunch'),
     ev('minsu-w1-5', W1_FRI, 780, 960, '브랜드 리뷰', 'meeting'),
 
-    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    // ── flexible(7/20 주) — 정례(디자인 크리틱)만 반복, 나머지는 그 주의 일들 ──
     ev('minsu-w2-l0', W2_MON, 705, 780, '점심', 'lunch'),
-    ev('minsu-w2-0', W2_MON, 840, 1020, '포트폴리오 리뷰', 'meeting'),
-    ev('minsu-w2-f1', W2_TUE, 600, 720, '디자인 탐색 집중', 'focus'),
+    ev('minsu-w2-0', W2_MON, 900, 1020, '아이콘 시스템 정리', 'meeting'),
+    ev('minsu-w2-f1', W2_TUE, 600, 705, '집중 — 신규 화면 시안', 'focus'),
     ev('minsu-w2-l1b', W2_TUE, 720, 795, '점심', 'lunch'),
+    ev('minsu-w2-0b', W2_TUE, 840, 960, '디자인 QA', 'meeting'),
     ev('minsu-w2-l1', W2_WED, 705, 780, '점심', 'lunch'),
     ev('minsu-w2-1', W2_WED, 780, 900, '디자인 크리틱', 'meeting'),
     ev('minsu-w2-l2', W2_THU, 705, 780, '점심', 'lunch'),
-    ev('minsu-w2-2', W2_THU, 900, 1080, '디자인 시스템 정리', 'meeting'),
+    ev('minsu-w2-2', W2_THU, 840, 960, '일러스트 외주 미팅', 'meeting'),
     ev('minsu-w2-l3', W2_FRI, 705, 780, '점심', 'lunch'),
-    ev('minsu-w2-3', W2_FRI, 780, 960, '브랜드 리뷰', 'meeting'),
+    ev('minsu-w2-v1', W2_FRI, 840, 1140, '오후 휴가', 'personal'),
   ],
 };
 
@@ -314,17 +318,18 @@ const haneul: Person = {
     ev('haneul-w1-5', W1_FRI, 600, 780, '제휴 미팅', 'meeting'),
     ev('haneul-w1-l5', W1_FRI, 780, 855, '점심', 'lunch'),
 
-    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    // ── flexible(7/20 주) — 정례(캠페인 정기 회의·화 외근)만 반복, 나머지는 그 주의 일들 ──
     ev('haneul-w2-0', W2_MON, 960, 1020, '캠페인 정기 회의', 'meeting'),
     ev('haneul-w2-l0', W2_MON, 720, 780, '점심', 'lunch'),
+    ev('haneul-w2-0b', W2_MON, 600, 720, 'IMC 캠페인 킥오프', 'meeting'),
     ev('haneul-w2-1', W2_TUE, 540, 1020, '외근 — 고객사 방문', 'offsite'),
     ev('haneul-w2-l1', W2_WED, 720, 780, '점심', 'lunch'),
-    ev('haneul-w2-2', W2_WED, 660, 720, '콘텐츠 리뷰', 'meeting'),
-    ev('haneul-w2-2b', W2_WED, 780, 900, '광고 소재 리뷰', 'meeting'),
-    ev('haneul-w2-3', W2_THU, 600, 780, '퍼포먼스 리뷰', 'meeting'),
+    ev('haneul-w2-2', W2_WED, 840, 960, '인플루언서 제안 검토', 'meeting'),
+    ev('haneul-w2-f1', W2_THU, 600, 690, '집중 — 캠페인 카피', 'focus'),
     ev('haneul-w2-l2', W2_THU, 780, 855, '점심', 'lunch'),
-    ev('haneul-w2-4', W2_FRI, 840, 960, '제휴 미팅', 'meeting'),
-    ev('haneul-w2-l3', W2_FRI, 720, 780, '점심', 'lunch'),
+    ev('haneul-w2-3', W2_THU, 900, 1020, '월간 성과 공유', 'meeting'),
+    ev('haneul-w2-4', W2_FRI, 660, 780, '브랜드 협업 미팅', 'meeting'),
+    ev('haneul-w2-l3', W2_FRI, 780, 840, '점심', 'lunch'),
   ],
 };
 
@@ -367,18 +372,17 @@ const sehun: Person = {
     ev('sehun-w1-5', W1_FRI, 600, 780, '성능 리뷰', 'meeting'),
     ev('sehun-w1-l5', W1_FRI, 780, 840, '점심', 'lunch'),
 
-    // ── flexible(7/20 주) — 실제 주간처럼 ──
+    // ── flexible(7/20 주) — 정례(배포 점검)만 반복, 나머지는 그 주의 일들 ──
     ev('sehun-w2-l1', W2_MON, 780, 840, '점심', 'lunch'),
     ev('sehun-w2-1', W2_MON, 600, 720, '배포 점검', 'meeting'),
-    ev('sehun-w2-2', W2_TUE, 630, 780, '인프라 점검', 'meeting'),
+    ev('sehun-w2-2', W2_TUE, 600, 690, '온콜 인수인계', 'meeting'),
     ev('sehun-w2-l2', W2_TUE, 780, 840, '점심', 'lunch'),
-    ev('sehun-w2-f1', W2_TUE, 900, 1020, '집중 — 코드 리뷰', 'focus'),
-    ev('sehun-w2-3', W2_WED, 900, 1020, '장애 회고', 'meeting'),
+    ev('sehun-w2-f1', W2_TUE, 900, 1020, '집중 — 쿼리 튜닝', 'focus'),
+    ev('sehun-w2-3', W2_WED, 660, 780, 'API 스펙 협의', 'meeting'),
     ev('sehun-w2-l3', W2_WED, 780, 840, '점심', 'lunch'),
-    ev('sehun-w2-4', W2_THU, 660, 780, 'DB 마이그레이션', 'meeting'),
     ev('sehun-w2-l4', W2_THU, 780, 840, '점심', 'lunch'),
-    ev('sehun-w2-5', W2_FRI, 840, 960, '성능 리뷰', 'meeting'),
-    ev('sehun-w2-l5', W2_FRI, 780, 840, '점심', 'lunch'),
+    ev('sehun-w2-4', W2_THU, 900, 1020, '보안 점검 리뷰', 'meeting'),
+    ev('sehun-w2-v1', W2_FRI, 540, 1080, '연차', 'personal'),
   ],
 };
 
@@ -414,40 +418,74 @@ const WEEKDAY_DATES: Record<number, [string, string, string]> = {
   4: [W0_FRI, W1_FRI, W2_FRI],
 };
 
-/** ExtraSpec → Person. 세 주(현재·다음·flexible) 전부에 패턴을 펼친다. */
+/** 주마다 다른 단발 일정 제목 풀 — 정례만 반복되면 복붙 캘린더로 보인다. */
+const ONE_OFF_TITLES = [
+  '팀 회고',
+  '1:1 미팅',
+  '분기 계획 리뷰',
+  '전사 타운홀',
+  '교육 세션',
+  '채용 인터뷰',
+  '온보딩 멘토링',
+  '업무 문서 정리',
+] as const;
+/** 단발 일정 후보 시작 시각(60분) — 점심대(11~14시)는 피한다. */
+const ONE_OFF_STARTS = [540, 600, 660, 840, 900, 960, 1020] as const;
+
+/** ExtraSpec → Person. 세 주(현재·다음·flexible) 전부에 패턴을 펼친다.
+ *  정례(meetings·offsite·focus)는 매주 반복(현실의 정례 미팅), 여기에 주마다 다른
+ *  단발 일정 1개를 결정적으로 얹어 세 주가 복붙으로 보이지 않게 한다. */
 function buildExtra(s: ExtraSpec): Person {
   const events: CalendarEvent[] = [];
   const weekdays = [0, 1, 2, 3, 4];
   for (const wd of weekdays) {
     const [d0, d1, d2] = WEEKDAY_DATES[wd];
     for (const [wi, day] of [d0, d1, d2].entries()) {
-      // 그날의 하드 일정(미팅·외근) — 점심 가드의 근거.
+      // 그날의 하드 일정(미팅·외근·휴가) — 점심 가드의 근거.
       const hard: Array<{ start: number; end: number }> = [];
+      // 휴가(단발, hard)를 먼저 — 휴가와 겹치는 정례는 그 주만 거른다(연차면 정례를 거절한다).
+      const vac = s.vacation && s.vacation[0] === wi && s.vacation[1] === wd ? s.vacation : null;
+      if (vac) {
+        events.push(ev(`${s.id}-v-${wd}-${wi}`, day, vac[2], vac[3], vac[4], 'personal'));
+        hard.push({ start: vac[2], end: vac[3] });
+      }
+      const onVacation = (start: number, end: number) => !!vac && start < vac[3] && vac[2] < end;
       // 반복 미팅(해당 요일)
       for (const [mwd, ms, me, title] of s.meetings) {
-        if (mwd === wd) {
+        if (mwd === wd && !onVacation(ms, me)) {
           events.push(ev(`${s.id}-m-${mwd}-${ms}-${wi}`, day, ms, me, title, 'meeting'));
           hard.push({ start: ms, end: me });
         }
       }
       // 외근
-      if (s.offsite && s.offsite[0] === wd) {
+      if (s.offsite && s.offsite[0] === wd && !onVacation(s.offsite[1], s.offsite[2])) {
         events.push(ev(`${s.id}-o-${wd}-${wi}`, day, s.offsite[1], s.offsite[2], s.offsite[3], 'offsite'));
         hard.push({ start: s.offsite[1], end: s.offsite[2] });
       }
       // 집중(soft — 점심 가드 대상 아님)
-      if (s.focus && s.focus[0] === wd) {
+      if (s.focus && s.focus[0] === wd && !onVacation(s.focus[1], s.focus[2])) {
         events.push(ev(`${s.id}-f-${wd}-${wi}`, day, s.focus[1], s.focus[2], s.focus[3], 'focus'));
-      }
-      // 휴가(단발, hard) — 그 주·그 요일에만.
-      if (s.vacation && s.vacation[0] === wi && s.vacation[1] === wd) {
-        events.push(ev(`${s.id}-v-${wd}-${wi}`, day, s.vacation[2], s.vacation[3], s.vacation[4], 'personal'));
-        hard.push({ start: s.vacation[2], end: s.vacation[3] });
       }
       // 자율 점심 — 하드 일정과 겹치는 날은 거른다(그날은 점심을 못 챙긴 날).
       const clash = hard.some((h) => s.lunch[0] < h.end && h.start < s.lunch[1]);
       if (!clash) {
         events.push(ev(`${s.id}-l-${wd}-${wi}`, day, s.lunch[0], s.lunch[1], '점심', 'lunch'));
+      }
+
+      // 주마다 다른 단발 일정 — 그 주의 지정 요일(해시)에, 비는 60분 슬롯을 찾아 하나.
+      const oneOffWd = (hashId(s.id) + wi * 3) % 5;
+      if (wd === oneOffWd) {
+        const occupied = events.filter((e) => e.day === day);
+        const title = ONE_OFF_TITLES[(hashId(s.id) + wi * 5 + wd) % ONE_OFF_TITLES.length];
+        const start = ONE_OFF_STARTS.find(
+          (st) =>
+            st >= s.workHours.start &&
+            st + 60 <= s.workHours.end &&
+            !occupied.some((e) => st < e.end && e.start < st + 60),
+        );
+        if (start !== undefined) {
+          events.push(ev(`${s.id}-x-${wi}`, day, start, start + 60, title, 'meeting'));
+        }
       }
     }
   }
