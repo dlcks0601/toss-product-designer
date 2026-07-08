@@ -630,7 +630,7 @@ export const ROOMS: Room[] = [
 // attendeeCount는 각본 수치(민수가 잡은 회의의 전체 인원) — 초대 카드 헤드라인이 그대로 쓴다.
 export const INCOMING_INVITE: {
   fromId: string; title: string; day: string; days: string[]; start: number; end: number;
-  attendeeCount: number; reasonsForMe: SlotReason[];
+  room: string; attendeeCount: number; reasonsForMe: SlotReason[];
 } = {
   fromId: 'minsu',
   title: '디자인 시스템 리뷰',
@@ -638,6 +638,8 @@ export const INCOMING_INVITE: {
   days: [W0_THU, W1_THU, W2_THU], // 매주 목 14:00~15:00 반복 초대 — 모든 주에 고스트가 산다
   start: 840,
   end: 900,
+  room: '미팅룸 2', // 주최자(민수)가 정한 회의실 — 초대에도 당연히 보인다
+
   attendeeCount: 5,
   reasonsForMe: [
     { code: 'all-required-ok', tone: 'positive', text: '회원님의 금요일 마감 회의를 피했어요' },

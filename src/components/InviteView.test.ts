@@ -38,7 +38,7 @@ describe('incomingInviteModel — 민수의 초대(INCOMING_INVITE) 그대로', 
   });
   it('제목·시각·이유가 세계 데이터와 일치한다', () => {
     expect(model.title).toBe(INCOMING_INVITE.title);
-    expect(model.whenLabel).toBe('매주 목 7월 9일 오후 2:00–3:00');
+    expect(model.whenLabel).toBe('매주 목 7월 9일 오후 2:00–3:00 · 미팅룸 2');
     expect(model.reasons).toEqual(INCOMING_INVITE.reasonsForMe);
   });
   it('내 이야기 행(첫 줄)이 강조 행이다', () => {

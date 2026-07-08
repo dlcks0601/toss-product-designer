@@ -217,6 +217,7 @@ export function reducer(s: AppState, a: Action): AppState {
               end: INCOMING_INVITE.end,
               title: INCOMING_INVITE.title,
               kind: 'meeting' as const,
+              room: INCOMING_INVITE.room,
             })),
           ],
         };

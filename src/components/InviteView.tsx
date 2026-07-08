@@ -63,8 +63,8 @@ export function incomingInviteModel(): InviteModel {
     fromId: INCOMING_INVITE.fromId,
     headline: `${givenName(from.name)}님이 회원님 포함 ${INCOMING_INVITE.attendeeCount}명과 잡은 ${duration}`,
     title: INCOMING_INVITE.title,
-    // 반복 초대 — 첫 회차 날짜 앞에 '매주'를 붙여 시리즈임을 말한다.
-    whenLabel: `매주 ${inviteWhenLabel(INCOMING_INVITE.day, INCOMING_INVITE.start, INCOMING_INVITE.end)}`,
+    // 반복 초대 — 첫 회차 날짜 앞에 '매주', 뒤에 주최자가 정한 회의실.
+    whenLabel: `매주 ${inviteWhenLabel(INCOMING_INVITE.day, INCOMING_INVITE.start, INCOMING_INVITE.end)} · ${INCOMING_INVITE.room}`,
     reasons: INCOMING_INVITE.reasonsForMe,
     highlightIndex: 0,
   };

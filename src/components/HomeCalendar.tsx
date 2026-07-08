@@ -192,6 +192,7 @@ function MobileDayList({
         >
           <p className={`truncate text-[14px] font-semibold ${GHOST_TITLE_CLS}`}>{ghost.title}</p>
           <p className={`mt-0.5 text-[12px] ${GHOST_SUB_CLS}`}>{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
+          {ghost.room && <p className={`mt-px text-[12px] ${GHOST_SUB_CLS}`}>{ghost.room}</p>}
         </button>
       )}
       {ghostIndex !== -1 &&
@@ -240,6 +241,8 @@ export interface HomeCalendarInvite {
   days?: string[];
   start: number;
   end: number;
+  /** 주최자가 정한 회의실 — 초대에도 당연히 보인다. */
+  room?: string;
 }
 
 export interface HomeCalendarProps {
@@ -501,7 +504,8 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   >
                     <p className={`truncate text-[13px] font-bold leading-[1.3] ${GHOST_TITLE_CLS}`}>{ghost.title}</p>
                     <p className={`truncate text-[11px] font-medium leading-[1.3] ${GHOST_SUB_CLS}`}>
-                      {fmtRange(ghost.start, ghost.end)} · 응답 대기
+                      {fmtRange(ghost.start, ghost.end)}
+                      {ghost.room ? `, ${ghost.room}` : ''} · 응답 대기
                     </p>
                   </button>
                 )}
