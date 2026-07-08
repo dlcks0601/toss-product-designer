@@ -2,12 +2,13 @@
 
 import { useMemo, useState, type Dispatch, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ChevronDown, ChevronLeft, Plus, X } from 'lucide-react';
+import { ChevronLeft, Plus, X } from 'lucide-react';
 import AttendeePicker from './AttendeePicker';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
 import Chip from './Chip';
 import FrostedBar from './FrostedBar';
+import PickerField from './PickerField';
 import Wordmark from './Wordmark';
 import Reveal from './Reveal';
 import { isMeeting } from '../app-state/reducer';
@@ -81,37 +82,6 @@ function FieldGroup({
   );
 }
 
-/** grey100 박스 셀렉트 — v2 관례(테두리 대신 구획색). */
-function BoxSelect({
-  value,
-  onChange,
-  options,
-  ariaLabel,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  ariaLabel: string;
-}) {
-  return (
-    <div className="relative flex h-[52px] items-center rounded-2xl bg-section pl-4 pr-10">
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={ariaLabel}
-        className="h-full w-full appearance-none bg-transparent text-[16px] font-medium text-text-strong outline-none lg:text-[15px]"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <ChevronDown size={16} className="pointer-events-none absolute right-4 text-text-weak" aria-hidden />
-    </div>
-  );
-}
-
 // ── 모핑 양면 — 혼자(날짜·시간) / 함께(길이·기한) ───────────────────
 
 function SoloFields({
@@ -134,7 +104,7 @@ function SoloFields({
   return (
     <div className="space-y-6 pt-7">
       <FieldGroup label="날짜" delay={0.12} animate={stagger}>
-        <BoxSelect
+        <PickerField
           value={day}
           onChange={onDay}
           ariaLabel="날짜"
@@ -143,7 +113,7 @@ function SoloFields({
       </FieldGroup>
       <FieldGroup label="시간" delay={0.18} animate={stagger}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5">
-          <BoxSelect
+          <PickerField
             value={String(start)}
             onChange={(v) => {
               const s = Number(v);
@@ -156,7 +126,7 @@ function SoloFields({
           <span className="text-[14px] text-text-weak" aria-hidden>
             –
           </span>
-          <BoxSelect
+          <PickerField
             value={String(end)}
             onChange={(v) => onEnd(Number(v))}
             ariaLabel="종료 시간"
@@ -464,25 +434,24 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
             <div>{shownMeeting ? meetingFields : soloFields}</div>
           ) : (
             <AnimatePresence initial={false}>
+              {/* overflow는 모핑 중에만 hidden — 끝나면 visible로 풀어야 피커 팝오버가 잘리지 않는다. */}
               {shownMeeting ? (
                 <motion.div
                   key="meeting"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+                  animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }}
+                  exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
                   transition={MORPH}
-                  className="overflow-hidden"
                 >
                   {meetingFields}
                 </motion.div>
               ) : (
                 <motion.div
                   key="solo"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  initial={{ height: 0, opacity: 0, overflow: 'hidden' }}
+                  animate={{ height: 'auto', opacity: 1, transitionEnd: { overflow: 'visible' } }}
+                  exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
                   transition={MORPH}
-                  className="overflow-hidden"
                 >
                   {soloFields}
                 </motion.div>
