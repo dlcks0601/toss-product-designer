@@ -9,7 +9,6 @@ import Avatar from './Avatar';
 import Chip from './Chip';
 import FrostedBar from './FrostedBar';
 import Wordmark from './Wordmark';
-import ProfilePeek from './ProfilePeek';
 import Reveal from './Reveal';
 import { isMeeting } from '../app-state/reducer';
 import type { Action, AppState } from '../app-state/reducer';
@@ -218,31 +217,23 @@ function AttendeeRow({
   person,
   isMe,
   required,
-  peeked,
-  windowDays,
-  onPeek,
   onPin,
   onRemove,
 }: {
   person: Person;
   isMe: boolean;
   required: boolean;
-  peeked: boolean;
-  windowDays: string[];
-  onPeek: () => void;
   onPin: () => void;
   onRemove: () => void;
 }) {
   return (
     <div className="relative">
       <div className="flex items-center gap-3 py-2">
-        <Avatar person={person} size={32} onClick={onPeek} />
-        <button type="button" onClick={onPeek} className="min-w-0 flex-1 py-1 text-left">
-          <span className="block truncate text-[15px] font-medium text-text-strong">
-            {person.name}
-            {isMe && <span className="ml-1.5 text-[12px] font-normal text-text-weak">나 · 주최자</span>}
-          </span>
-        </button>
+        <Avatar person={person} size={32} />
+        <span className="min-w-0 flex-1 truncate py-1 text-[15px] font-medium text-text-strong">
+          {person.name}
+          {isMe && <span className="ml-1.5 text-[12px] font-normal text-text-weak">나 · 주최자</span>}
+        </span>
         {!isMe && (
           <button
             type="button"
@@ -267,9 +258,6 @@ function AttendeeRow({
           </button>
         )}
       </div>
-      <AnimatePresence initial={false}>
-        {peeked && <ProfilePeek person={person} windowDays={windowDays} mode="auto" />}
-      </AnimatePresence>
     </div>
   );
 }
@@ -289,7 +277,6 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   const [picker, setPicker] = useState<{ open: boolean; wasMeeting: boolean }>({ open: false, wasMeeting: false });
   const pickerOpen = picker.open;
   const shownMeeting = pickerOpen ? picker.wasMeeting : meeting;
-  const [peekId, setPeekId] = useState<string | null>(null);
   // 개인 일정 필드 — 조율 조건이 아니므로 reducer가 아닌 로컬 상태(저장 순간에만 이벤트로 응고).
   const [day, setDay] = useState(DAY_OPTIONS[0]);
   const [start, setStart] = useState<Minutes>(600);
@@ -326,11 +313,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
       },
     });
   };
-  const togglePeek = (id: string) => setPeekId((cur) => (cur === id ? null : id));
-  const toggleAttendee = (id: string) => {
-    if (peekId === id) setPeekId(null);
-    dispatch({ type: 'TOGGLE_ATTENDEE', id });
-  };
+  const toggleAttendee = (id: string) => dispatch({ type: 'TOGGLE_ATTENDEE', id });
 
   const soloFields = (
     <SoloFields day={day} start={start} end={end} onDay={setDay} onStart={setStart} onEnd={setEnd} stagger={!reduced} />
@@ -431,9 +414,6 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
                   person={p}
                   isMe={p.id === ME_ID}
                   required={!!state.required[p.id]}
-                  peeked={peekId === p.id}
-                  windowDays={windowDays}
-                  onPeek={() => togglePeek(p.id)}
                   onPin={() => dispatch({ type: 'SET_REQUIRED', id: p.id, required: !state.required[p.id] })}
                   onRemove={() => toggleAttendee(p.id)}
                 />
@@ -447,16 +427,12 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
                     animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={POSITION_SPRING}
-                    // 팝오버 피크(행 옆)가 잘리지 않도록, 피크 열림 중엔 클리핑을 푼다.
-                    className={peekId === p.id ? '' : 'overflow-hidden'}
+                    className="overflow-hidden"
                   >
                     <AttendeeRow
                       person={p}
                       isMe={p.id === ME_ID}
                       required={!!state.required[p.id]}
-                      peeked={peekId === p.id}
-                      windowDays={windowDays}
-                      onPeek={() => togglePeek(p.id)}
                       onPin={() => dispatch({ type: 'SET_REQUIRED', id: p.id, required: !state.required[p.id] })}
                       onRemove={() => toggleAttendee(p.id)}
                     />

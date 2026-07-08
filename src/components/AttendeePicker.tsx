@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
-import { Check, Search, X } from 'lucide-react';
+import { Check, ChevronDown, Search, X } from 'lucide-react';
 import Avatar from './Avatar';
 import ProfilePeek from './ProfilePeek';
 import { useIsDesktop } from '../app-state/useIsDesktop';
@@ -204,11 +204,7 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
             return (
               <div key={p.id} className="rounded-xl px-2 transition-colors hover:bg-section/60">
                 <div className="flex items-center gap-3 py-1.5">
-                  <Avatar
-                    person={p}
-                    size={28}
-                    onClick={() => setPeekId((cur) => (cur === p.id ? null : p.id))}
-                  />
+                  <Avatar person={p} size={28} />
                   <button
                     type="button"
                     disabled={isMe}
@@ -235,6 +231,20 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                     >
                       <Check size={13} strokeWidth={3} />
                     </span>
+                  </button>
+                  {/* 일정 펼침 — 보이는 어포던스. 아바타 숨은 탭을 대체한다. */}
+                  <button
+                    type="button"
+                    aria-expanded={peekId === p.id}
+                    aria-label={`${p.name} 일정 보기`}
+                    onClick={() => setPeekId((cur) => (cur === p.id ? null : p.id))}
+                    className="pressable flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-section hover:text-text-weak"
+                  >
+                    <ChevronDown
+                      size={16}
+                      aria-hidden
+                      className={`transition-transform duration-200 ${peekId === p.id ? 'rotate-180' : ''}`}
+                    />
                   </button>
                 </div>
                 <AnimatePresence initial={false}>
