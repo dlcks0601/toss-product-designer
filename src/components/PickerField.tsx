@@ -32,12 +32,44 @@ export default function PickerField({
   ariaLabel: string;
 }) {
   const [open, setOpen] = useState(false);
+  // 팝오버 리스트 최대 높이 — 아래 공간 + 페이지 스크롤 여력까지 계산해 정한다(잘림 방지).
+  const [listMaxH, setListMaxH] = useState(264);
   const desktop = useIsDesktop();
   const reduced = !!useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const dragControls = useDragControls();
   const current = options.find((o) => o.value === value);
+
+  /**
+   * 팝오버는 항상 아래로 연다(방향이 바뀌면 공간 감각이 깨진다).
+   * 뷰포트 아래 공간이 모자라면 페이지가 딱 그만큼 부드럽게 따라 내려간다 —
+   * 의도된 동행 스크롤. 스크롤 여력까지 다 써도 모자랄 때만 리스트 높이를 줄인다.
+   */
+  const toggleOpen = () => {
+    if (!open && !desktop) {
+      setOpen(true);
+      return;
+    }
+    if (!open) {
+      const r = rootRef.current?.getBoundingClientRect();
+      if (r) {
+        const LIST_MAX = 264;
+        const PANEL_CHROME = 12 + 6; // 패널 패딩(p-1.5×2) + 트리거와의 간격
+        const MARGIN = 16; // 화면 가장자리 숨 쉴 틈
+        const listH = Math.min(LIST_MAX, options.length * 44);
+        const below = window.innerHeight - r.bottom - PANEL_CHROME - MARGIN;
+        const doc = document.documentElement;
+        const scrollCapacity = Math.max(0, doc.scrollHeight - window.innerHeight - window.scrollY);
+        const need = listH - below;
+        if (need > 0 && scrollCapacity > 0) {
+          window.scrollBy({ top: Math.min(need, scrollCapacity), behavior: reduced ? 'auto' : 'smooth' });
+        }
+        setListMaxH(Math.max(132, Math.min(listH, below + scrollCapacity)));
+      }
+    }
+    setOpen((v) => !v);
+  };
 
   // 바깥 클릭(데스크톱 팝오버) + ESC 닫기
   useEffect(() => {
@@ -116,7 +148,7 @@ export default function PickerField({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={ariaLabel}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleOpen}
         className="pressable flex h-[52px] w-full items-center justify-between rounded-2xl bg-section pl-4 pr-4 text-[16px] font-medium text-text-strong lg:text-[15px]"
       >
         <span className="truncate">{current?.label ?? ''}</span>
@@ -138,7 +170,13 @@ export default function PickerField({
             style={{ transformOrigin: 'top' }}
             className="absolute inset-x-0 top-[calc(100%+6px)] z-40 overflow-hidden rounded-2xl bg-white p-1.5 shadow-[0_12px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
           >
-            <div ref={listRef} role="listbox" aria-label={ariaLabel} className="max-h-[264px] overflow-y-auto">
+            <div
+              ref={listRef}
+              role="listbox"
+              aria-label={ariaLabel}
+              className="overflow-y-auto"
+              style={{ maxHeight: listMaxH }}
+            >
               {options.map(optionRow)}
             </div>
           </motion.div>
