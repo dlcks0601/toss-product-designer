@@ -188,6 +188,7 @@ function MobileDayList({
           type="button"
           onClick={onOpenInvite}
           className={`pressable relative w-full rounded-2xl px-4 py-3.5 text-left ${GHOST_CARD}`}
+          style={{ minHeight: mobileRowHeight({ start: ghost.start, end: ghost.end } as CalendarEvent) }}
         >
           <p className={`truncate text-[14px] font-semibold ${GHOST_TITLE_CLS}`}>{ghost.title}</p>
           <p className={`mt-0.5 text-[12px] ${GHOST_SUB_CLS}`}>{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
@@ -199,18 +200,31 @@ function MobileDayList({
   );
 }
 
+/** 모바일 카드 높이 — 길이가 곧 높이(캘린더의 기본). 30분=72px 기준, 30분당 +20px, 240px 캡. */
+function mobileRowHeight(ev: CalendarEvent): number {
+  const dur = ev.end - ev.start;
+  return Math.min(240, 72 + Math.max(0, ((dur - 30) / 30) * 20));
+}
+
 function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] | null }) {
   const st = styleFor(ev);
   return (
-    <div className="flex items-center gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: st.bg }}>
+    <div
+      className="flex items-start gap-3 rounded-2xl px-4 py-3.5"
+      style={{ backgroundColor: st.bg, minHeight: mobileRowHeight(ev) }}
+    >
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-semibold" style={{ color: st.title }}>
           {ev.title}
         </p>
         <p className="mt-0.5 text-[12px]" style={{ color: st.sub }}>
           {fmtRange(ev.start, ev.end)}
-          {ev.room ? `, ${ev.room}` : ''}
         </p>
+        {ev.room && (
+          <p className="mt-px text-[12px]" style={{ color: st.sub }}>
+            {ev.room}
+          </p>
+        )}
       </div>
       {badges && badges.length > 0 && <BadgeStack people={badges} />}
     </div>
