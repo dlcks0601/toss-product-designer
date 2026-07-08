@@ -117,7 +117,7 @@ export function styleFor(ev: CalendarEvent): KindStyle {
 // 그림자는 애니메이션 금지 원칙(성능)에 따라 after: 오버레이의 opacity로만 켠다.
 const GHOST_CARD =
   'group relative border-2 border-dashed border-[#DFF9FE] bg-transparent ' +
-  'transition-[background-color,border-color] duration-200 hover:border-transparent hover:bg-[#5995F5] ' +
+  'transition-[background-color,border-color] duration-200 hover:border-transparent hover:bg-primary ' +
   'after:pointer-events-none after:absolute after:-inset-px after:-z-10 after:rounded-[inherit] ' +
   'after:shadow-[0_10px_24px_rgba(89,149,245,0.4)] after:opacity-0 after:transition-opacity after:duration-200 hover:after:opacity-100';
 const GHOST_TITLE_CLS = 'text-[#0099FF] transition-colors duration-200 group-hover:text-white';
