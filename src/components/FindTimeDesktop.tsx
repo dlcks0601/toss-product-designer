@@ -140,6 +140,8 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
           </button>
         </Reveal>
 
+        {/* 고정 영역(헤더·타이틀) 아래 은은한 셰이드 — 캔버스가 밑으로 지나가는 느낌.
+            내부 스크롤 구조라 창 스크롤 frosted 대신 정적 그라디언트를 쓴다. */}
         {/* 타이틀·서브(모바일과 동일 카피) + 주 스위처 */}
         <Reveal delay={70} className="flex shrink-0 items-end justify-between pb-4 pt-1">
           <div>

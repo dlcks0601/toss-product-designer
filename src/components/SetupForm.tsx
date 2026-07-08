@@ -7,6 +7,7 @@ import AttendeePicker from './AttendeePicker';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
 import Chip from './Chip';
+import FrostedBar from './FrostedBar';
 import Wordmark from './Wordmark';
 import ProfilePeek from './ProfilePeek';
 import Reveal from './Reveal';
@@ -378,9 +379,9 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6">
-        {/* 헤더 — 뒤로가기 → 홈 */}
-        <Reveal as="header" className="-mx-1 flex h-14 items-center lg:mx-0 lg:h-auto lg:pb-4 lg:pt-8">
+      {/* 뒤로가기 줄 — 스크롤하면 frosted로 얼어붙는다(홈 헤더와 같은 문법). */}
+      <FrostedBar innerClassName="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6">
+        <Reveal as="header" className="-mx-1 flex h-14 items-center lg:mx-0">
           <button
             type="button"
             onClick={goHome}
@@ -390,7 +391,9 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
             일정 만들기
           </button>
         </Reveal>
+      </FrostedBar>
 
+      <div className="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6 lg:pt-2">
         {/* 데스크톱: 홈 캘린더 카드와 같은 폭(1200 컨테이너)의 흰 카드. 폼 콘텐츠는 640px 중앙 컬럼. */}
         <div className="lg:rounded-[20px] lg:bg-white lg:pb-14 lg:pt-10 lg:ring-1 lg:ring-border/70">
         <div className="lg:mx-auto lg:max-w-[640px] lg:px-4">

@@ -20,6 +20,7 @@ import { playResponseScript, useNotifications } from '../app-state/notifications
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
 import { useCandidates } from '../app-state/useCandidates';
 import { useIsDesktop } from '../app-state/useIsDesktop';
+import useScrolled from '../lib/useScrolled';
 import type { Action, AppState } from '../app-state/reducer';
 import type { ResponseBadges } from '../components/HomeCalendar';
 import type { AppNotification } from '../lib/types';
@@ -183,6 +184,7 @@ function HomeScreen({
 }) {
   const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
   const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
+  const scrolled = useScrolled();
   // 응답을 마친 초대는 캘린더의 고스트가 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).
   // 알림 센터의 초대 알림은 기록으로 남는다 — 탭하면 응답 완료 상태의 초대 화면이 열린다.
   const invitePending = state.inviteResponded === null;
@@ -190,12 +192,20 @@ function HomeScreen({
   return (
     <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
       {/* 상단 오로라 — 배경 레이어만 overflow-hidden으로 가둔다. 헤더 콘텐츠(벨·알림 드롭다운)는
-          이 클립 밖에 둬야 드롭다운이 헤더 높이에 잘리지 않는다. */}
-      <div className="relative">
+          이 클립 밖에 둬야 드롭다운이 헤더 높이에 잘리지 않는다.
+          스트립 전체가 sticky — 스크롤하면 frosted(화이트 틴트+블러)로 얼어붙어 캘린더가 밑으로 흐릿하게 지나간다. */}
+      <div className="sticky top-0 z-50">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <Aurora variant="home" />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
         </div>
+        {/* frost — 경계 없이 아래로 서서히 사라지는 블러(마스크). 그림자·헤어라인 없음. */}
+        <div
+          aria-hidden
+          className={`pointer-events-none absolute inset-x-0 -bottom-10 top-0 bg-white/60 backdrop-blur-lg transition-opacity duration-300 [mask-image:linear-gradient(to_bottom,black_45%,transparent)] ${
+            scrolled ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
         <div className="relative mx-auto max-w-[1200px] px-4 py-3.5 lg:px-6 lg:py-4">
           <Reveal as="header" className="flex items-center justify-between">
             <Wordmark />

@@ -7,6 +7,7 @@ import Avatar from './Avatar';
 import CandidateGrid from './CandidateGrid';
 import Chip from './Chip';
 import DecisionMoment, { decisionKey, pickAction } from './DecisionMoment';
+import FrostedBar from './FrostedBar';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
 import type { Candidates } from '../app-state/useCandidates';
@@ -111,8 +112,8 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
 
   return (
     <div className="pb-36">
-      <div className="mx-auto w-full max-w-[560px] px-4">
-        {/* 헤더 — 뒤로가기 → 셋업 */}
+      {/* 헤더 — 뒤로가기 → 셋업. 스크롤하면 frosted로 얼어붙는다. */}
+      <FrostedBar innerClassName="mx-auto w-full max-w-[560px] px-4">
         <Reveal as="header" className="-mx-1 flex h-14 items-center">
           <button
             type="button"
@@ -123,7 +124,8 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
             일정 만들기
           </button>
         </Reveal>
-
+      </FrostedBar>
+      <div className="mx-auto w-full max-w-[560px] px-4">
         {/* 타이틀 + 조건 요약 */}
         <Reveal delay={70} className="pt-2">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
