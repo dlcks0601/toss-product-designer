@@ -312,13 +312,13 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           {days.map((day, i) => {
             const today = day === TODAY;
             return (
-              <div key={day} className="flex flex-1 flex-col items-center gap-0.5 py-2">
-                {/* 요일 위 + 날짜 아래 — 모바일 요일 칩과 같은 세로 스택(토스 문법). */}
-                <span className={`text-[11px] ${today ? 'font-semibold text-primary' : 'text-text-weak'}`}>
+              <div key={day} className="flex flex-1 flex-col items-center py-1.5">
+                {/* 요일 위 + 날짜 아래 — 모바일과 같은 세로 스택(토스 문법), 높이는 압축. */}
+                <span className={`text-[10.5px] leading-4 ${today ? 'font-semibold text-primary' : 'text-text-weak'}`}>
                   {WEEKDAY_LABELS[i]}
                 </span>
                 <span
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-[15px] font-semibold ${
+                  className={`flex h-[26px] w-[26px] items-center justify-center rounded-full text-[14px] font-semibold ${
                     today ? 'bg-primary text-white' : 'text-text-strong'
                   }`}
                 >
