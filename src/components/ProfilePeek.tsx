@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { Person } from '../lib/types';
 import { deriveInsights } from '../lib/insights';
@@ -40,6 +40,8 @@ export interface ProfilePeekProps {
   windowDays: string[];
   /** auto = 모바일 인라인 + 데스크톱 팝오버(행 옆) / inline = 항상 인라인(피커 안). */
   mode?: 'auto' | 'inline';
+  /** 피크 하단 액션(선택하기/해제 등) — 보면서 바로 결정한다(v1 프로필 시트의 유산). */
+  action?: ReactNode;
 }
 
 /** 하루의 피크 항목 — 점심 제외(리듬 각주가 대신 말한다). */
@@ -135,7 +137,7 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
   );
 }
 
-export default function ProfilePeek({ person, windowDays, mode = 'auto' }: ProfilePeekProps) {
+export default function ProfilePeek({ person, windowDays, mode = 'auto', action }: ProfilePeekProps) {
   const reduced = !!useReducedMotion();
   const dur = reduced ? 0 : 0.2;
 
@@ -150,6 +152,7 @@ export default function ProfilePeek({ person, windowDays, mode = 'auto' }: Profi
     >
       <div className="mb-2 mt-1 rounded-2xl bg-section p-3.5">
         <PeekBody person={person} windowDays={windowDays} />
+        {action && <div className="mt-3">{action}</div>}
       </div>
     </motion.div>
   );

@@ -164,7 +164,7 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
 
         {/* 헤더 — 모바일에선 여기서도 끌어서 닫을 수 있다. X는 데스크톱 전용. */}
         <div
-          className="flex touch-none items-center justify-between px-5 pb-1 pt-3 lg:touch-auto lg:pt-5"
+          className="flex touch-none items-center justify-between px-5 pb-1 pt-5 lg:touch-auto"
           onPointerDown={startDrag}
         >
           <h2 className="text-[18px] font-bold tracking-[-0.01em] text-text-strong">함께할 사람을 선택해주세요</h2>
@@ -194,7 +194,7 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
         </div>
 
         {/* 20명 리스트 — 마지막 행이 frost 아래를 빠져나올 수 있게 하단 여백을 준다. */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-10 pt-1 lg:h-[380px] lg:flex-none">
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-24 pt-1 lg:h-[380px] lg:flex-none">
           {filtered.length === 0 && (
             <p className="py-12 text-center text-[13px] text-text-faint">검색 결과가 없어요</p>
           )}
@@ -202,7 +202,7 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
             const isMe = p.id === ME_ID;
             const selected = selectedSet.has(p.id);
             return (
-              <div key={p.id} className="rounded-xl px-2 transition-colors hover:bg-section/60">
+              <div key={p.id} data-attendee-row className="rounded-xl px-2 transition-colors hover:bg-section/60">
                 <div className="flex items-center gap-3 py-1.5">
                   <Avatar person={p} size={28} />
                   <button
@@ -232,12 +232,26 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                       <Check size={13} strokeWidth={3} />
                     </span>
                   </button>
-                  {/* 일정 펼침 — 보이는 어포던스. 아바타 숨은 탭을 대체한다. */}
+                  {/* 일정 펼침 — 보이는 어포던스. 아바타 숨은 탭을 대체한다.
+                      펼치면 행+피크가 화면에 들어오도록 리스트 스크롤이 따라간다. */}
                   <button
                     type="button"
                     aria-expanded={peekId === p.id}
                     aria-label={`${p.name} 일정 보기`}
-                    onClick={() => setPeekId((cur) => (cur === p.id ? null : p.id))}
+                    onClick={(e) => {
+                      const opening = peekId !== p.id;
+                      setPeekId((cur) => (cur === p.id ? null : p.id));
+                      if (opening) {
+                        const row = (e.currentTarget as HTMLElement).closest<HTMLElement>('[data-attendee-row]');
+                        // 펼침 애니메이션(200ms) 후, 피크가 확정 CTA frost에 깔리는 만큼만 위로.
+                        window.setTimeout(() => {
+                          const list = row?.closest<HTMLElement>('.overflow-y-auto');
+                          if (!row || !list) return;
+                          const overflow = row.getBoundingClientRect().bottom - (list.getBoundingClientRect().bottom - 72);
+                          if (overflow > 0) list.scrollBy({ top: overflow, behavior: 'smooth' });
+                        }, 240);
+                      }
+                    }}
                     className="pressable flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-faint transition-colors hover:bg-section hover:text-text-weak"
                   >
                     <ChevronDown
@@ -248,18 +262,44 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                   </button>
                 </div>
                 <AnimatePresence initial={false}>
-                  {peekId === p.id && <ProfilePeek person={p} windowDays={windowDays} mode="inline" />}
+                  {peekId === p.id && (
+                    <ProfilePeek
+                      person={p}
+                      windowDays={windowDays}
+                      mode="inline"
+                      action={
+                        // 보면서 바로 결정 — v1 프로필 시트의 유산(주최자는 항상 포함이라 액션 없음).
+                        !isMe ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onToggle(p.id);
+                              // 행의 체크가 차오르는 걸 한 박자 보여준 뒤 피크가 우아하게 접힌다.
+                              window.setTimeout(() => setPeekId((cur) => (cur === p.id ? null : cur)), 220);
+                            }}
+                            className={`pressable h-10 w-full rounded-xl text-[13px] font-semibold transition-colors ${
+                              selected
+                                ? 'bg-white text-text-body ring-1 ring-border'
+                                : 'bg-primary text-white active:bg-primary-pressed'
+                            }`}
+                          >
+                            {selected ? '선택 해제' : '선택하기'}
+                          </button>
+                        ) : undefined
+                      }
+                    />
+                  )}
                 </AnimatePresence>
               </div>
             );
           })}
         </div>
 
-        {/* 확정 — 경계선 대신 frost: 리스트가 반투명 너머로 흐릿하게 지나간다. */}
+        {/* 확정 — 경계선 대신 frost: 페이지 하단 CTA와 같은 기하(긴 페이드 꼬리 ~54px). */}
         <div className="relative -mt-9 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3.5 lg:pb-5">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-4 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+            className="pointer-events-none absolute inset-x-0 -top-10 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
           />
           <button
             type="button"

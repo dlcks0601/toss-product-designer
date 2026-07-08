@@ -225,7 +225,7 @@ export default function PickerField({
               <div className="mx-auto h-1 w-9 rounded-full bg-border" />
             </div>
             <p
-              className="touch-none px-5 pb-2 pt-3 text-[18px] font-bold tracking-[-0.01em] text-text-strong"
+              className="touch-none px-5 pb-2 pt-5 text-[18px] font-bold tracking-[-0.01em] text-text-strong"
               onPointerDown={(e) => {
                 if (!reduced) dragControls.start(e);
               }}
