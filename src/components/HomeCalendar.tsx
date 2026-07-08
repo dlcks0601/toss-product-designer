@@ -273,7 +273,6 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
   };
 
   const [, month] = days[0].split('-');
-  const rangeLabel = `${dayNumber(days[0])}일 – ${dayNumber(days[4])}일`;
 
   const ghostOn = (day: string) => (invite && invite.day === day ? invite : null);
 
@@ -297,19 +296,34 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
     <section aria-label="내 캘린더">
       {/* ── 헤더: 월 + 범위 + 주 이동 + (데스크톱) CTA ── */}
       <div className="flex items-center justify-between">
-        <div className="relative flex items-center gap-3">
-          <div className="flex items-baseline gap-2">
-            <button
-              type="button"
-              onClick={() => setMonthOpen(!monthOpen)}
-              aria-expanded={monthOpen}
-              aria-label="월간 달력 열기"
-              className="pressable -mx-1 rounded-lg px-1 text-[20px] font-bold tracking-[-0.02em] text-text-strong hover:bg-section lg:text-[22px]"
-            >
-              {Number(month)}월
-            </button>
-            <span className="text-[13px] font-medium text-text-weak lg:text-[14px]">{rangeLabel}</span>
-          </div>
+        <div className="relative flex items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => goWeek(-1)}
+            disabled={week === 0}
+            aria-label="이전 주"
+            className="pressable flex h-8 w-8 items-center justify-center rounded-full text-text-body hover:bg-section disabled:pointer-events-none disabled:text-text-faint"
+          >
+            <ChevronLeft size={17} aria-hidden />
+          </button>
+          <button
+            type="button"
+            onClick={() => setMonthOpen(!monthOpen)}
+            aria-expanded={monthOpen}
+            aria-label="월간 달력 열기"
+            className="pressable rounded-lg px-1.5 text-[20px] font-bold tracking-[-0.02em] text-text-strong hover:bg-section lg:text-[22px]"
+          >
+            {Number(month)}월
+          </button>
+          <button
+            type="button"
+            onClick={() => goWeek(1)}
+            disabled={week === WEEK_COUNT - 1}
+            aria-label="다음 주"
+            className="pressable flex h-8 w-8 items-center justify-center rounded-full text-text-body hover:bg-section disabled:pointer-events-none disabled:text-text-faint"
+          >
+            <ChevronRight size={17} aria-hidden />
+          </button>
 
           {/* 월간 피커 팝오버 — 토스 방식: 일~토 그리드, 오늘=파란 칩, 일정 있는 날=점 */}
           <AnimatePresence>
@@ -367,26 +381,6 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
               </>
             )}
           </AnimatePresence>
-          <div className="flex items-center gap-0.5">
-            <button
-              type="button"
-              onClick={() => goWeek(-1)}
-              disabled={week === 0}
-              aria-label="이전 주"
-              className="pressable flex h-8 w-8 items-center justify-center rounded-full text-text-body hover:bg-section disabled:pointer-events-none disabled:text-text-faint"
-            >
-              <ChevronLeft size={17} aria-hidden />
-            </button>
-            <button
-              type="button"
-              onClick={() => goWeek(1)}
-              disabled={week === WEEK_COUNT - 1}
-              aria-label="다음 주"
-              className="pressable flex h-8 w-8 items-center justify-center rounded-full text-text-body hover:bg-section disabled:pointer-events-none disabled:text-text-faint"
-            >
-              <ChevronRight size={17} aria-hidden />
-            </button>
-          </div>
         </div>
         {onNewEvent && (
           <button
