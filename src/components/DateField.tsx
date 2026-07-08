@@ -73,14 +73,17 @@ export default function DateField({
     }
   };
 
-  /** 항상 아래로 열고, 공간이 모자라면 딱 그만큼 임시 공간을 만들어 따라 내려간다. */
+  /** 항상 아래로 열고, 공간이 모자라면 딱 그만큼 임시 공간을 만들어 따라 내려간다.
+   *  동행 스크롤은 모바일 전용 — PC는 반반 스플릿이라 필드 아래가 늘 넉넉해서 페이지가
+   *  움직일 이유가 없다(움직이면 오히려 제어감이 깨진다). */
   const toggleOpen = () => {
     if (open) {
       close();
       return;
     }
     const r = rootRef.current?.getBoundingClientRect();
-    if (r) {
+    const mobile = !window.matchMedia('(min-width: 1024px)').matches;
+    if (r && mobile) {
       // 패널 높이 — 홈 월간 피커 규격(~400), 모바일도 동일(폭만 필드 정합).
       const panelH = 400;
       // 여백 24px + 하단 고정 CTA(~96px) 위까지 — 패널이 바닥/CTA에 붙지 않게.

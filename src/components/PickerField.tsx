@@ -63,7 +63,9 @@ export default function PickerField({
       return;
     }
     const r = rootRef.current?.getBoundingClientRect();
-    if (r) {
+    // 동행 스크롤은 모바일 전용 — PC 스플릿은 필드 아래가 늘 넉넉하다(DateField와 동일 계약).
+    const mobile = !window.matchMedia('(min-width: 1024px)').matches;
+    if (r && mobile) {
       const LIST_MAX = 264;
       const PANEL_CHROME = 12 + 6; // 패널 패딩(p-1.5×2) + 트리거와의 간격
       const MARGIN = 24 + 96; // 화면 가장자리 숨 쉴 틈 + 하단 고정 CTA 가드
