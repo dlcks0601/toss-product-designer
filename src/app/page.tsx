@@ -226,12 +226,11 @@ function HomeScreen({
           events={[...ME.events, ...state.myEvents]}
           invite={invitePending ? INCOMING_INVITE : null}
           onOpenInvite={openInvite}
-          onNewEvent={openSetup}
           responseBadges={responseBadges}
         />
       </Reveal>
 
-      {/* 모바일 고정 CTA — 데스크톱은 캘린더 헤더의 인라인 버튼이 담당한다. */}
+      {/* 모바일 고정 CTA — 하단 풀폭(토스 BottomCTA). */}
       <div
         className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pt-6 lg:hidden"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
@@ -240,6 +239,20 @@ function HomeScreen({
           type="button"
           onClick={openSetup}
           className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
+        >
+          일정 만들기
+        </button>
+      </div>
+
+      {/* 데스크톱 고정 CTA — 같은 문법의 PC 연장: 우하단 플로팅, 캘린더 우측 라인에 정렬 */}
+      <div
+        className="fixed bottom-8 z-40 hidden lg:block"
+        style={{ right: 'calc(max(0px, (100vw - 1200px) / 2) + 24px)' }}
+      >
+        <button
+          type="button"
+          onClick={openSetup}
+          className="pressable h-[54px] rounded-2xl bg-primary px-7 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(49,130,246,0.35)] hover:bg-primary-pressed"
         >
           일정 만들기
         </button>
