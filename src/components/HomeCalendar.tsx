@@ -318,7 +318,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   {WEEKDAY_LABELS[i]}
                 </span>
                 <span
-                  className={`flex h-[26px] w-[26px] items-center justify-center rounded-full text-[14px] font-semibold ${
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-[14px] font-semibold ${
                     today ? 'bg-primary text-white' : 'text-text-strong'
                   }`}
                 >
