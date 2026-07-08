@@ -97,12 +97,10 @@ export function kindBoxStyle(kind: EventKind): CSSProperties {
   };
 }
 
-/** 외부/타팀과 함께하는 미팅 — 내부 미팅(파랑)과 구분되는 옐로우그린. */
-export const EXTERNAL_STYLE: KindStyle = { bg: '#F0FED9', border: '#DCF0AC', title: '#7CBE00', sub: '#A4D440' };
-
-/** 이벤트별 표시 스타일 — 회의 중 external은 옐로우그린, 그 외는 종류별 팔레트. */
+/** 이벤트별 표시 스타일 — 색은 곧 종류다. 셋업의 종류 칩과 같은 어휘(KIND_STYLE 단일 소스).
+ *  (과거의 내부/외부 미팅 라임 구분은 종류 어휘에 없는 색이라 폐기 — 회의는 전부 azure.) */
 export function styleFor(ev: CalendarEvent): KindStyle {
-  return ev.kind === 'meeting' && ev.external ? EXTERNAL_STYLE : KIND_STYLE[ev.kind];
+  return KIND_STYLE[ev.kind];
 }
 
 // 응답대기(받은 초대) 고스트 — 평소엔 점선 유령, 호버하면 솔리드 블루로 차오르며 떠오른다.

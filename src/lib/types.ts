@@ -2,7 +2,7 @@ import type { Minutes } from './time';
 
 export type AttendanceType = 'required' | 'optional';
 export type EventKind = 'meeting' | 'focus' | 'offsite' | 'lunch' | 'personal';
-export interface CalendarEvent { id: string; day: string; start: Minutes; end: Minutes; title: string; kind: EventKind; room?: string; external?: boolean; }
+export interface CalendarEvent { id: string; day: string; start: Minutes; end: Minutes; title: string; kind: EventKind; room?: string; }
 export interface Person {
   id: string; name: string; role: string; faceId: string;
   workHours: { start: Minutes; end: Minutes };
