@@ -127,7 +127,7 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
       </FrostedBar>
       <div className="mx-auto w-full max-w-[560px] px-4">
         {/* 타이틀 + 조건 요약 */}
-        <Reveal delay={70} className="pt-0">
+        <Reveal delay={70} className="pt-2">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
             모두를 생각한 {DURATION_LABEL[state.duration]}이에요
           </h1>
