@@ -111,8 +111,9 @@ const ichan: Person = {
     ev('ichan-w2-2b', W2_TUE, 840, 930, '신규 기능 킥오프', 'meeting', '미팅룸 4'),
     ev('ichan-w2-2', W2_WED, 630, 750, 'UT 세션 참관', 'meeting', 'UT룸'),
     ev('ichan-w2-l2', W2_WED, 750, 840, '점심', 'lunch'),
+    // 목 오후 14:00~15:00 은 반복 초대(응답대기 고스트) 자리 — 비워 둔다.
+    ev('ichan-w2-3', W2_THU, 630, 720, '채용 인터뷰', 'meeting', '미팅룸 3'),
     ev('ichan-w2-l3', W2_THU, 720, 810, '점심', 'lunch'),
-    ev('ichan-w2-3', W2_THU, 840, 930, '채용 인터뷰', 'meeting', '미팅룸 3'),
     ev('ichan-w2-f2', W2_THU, 960, 1080, '집중 — 분기 리뷰 준비', 'focus'),
     ev('ichan-w2-l4', W2_FRI, 720, 810, '점심', 'lunch'),
     ev('ichan-w2-4b', W2_FRI, 840, 930, '월간 회고', 'meeting', '미팅룸 2'),
@@ -628,12 +629,13 @@ export const ROOMS: Room[] = [
 // 코드값은 SlotReason 재사용, 세계 사실과 모순 없게 손으로 쓴다.
 // attendeeCount는 각본 수치(민수가 잡은 회의의 전체 인원) — 초대 카드 헤드라인이 그대로 쓴다.
 export const INCOMING_INVITE: {
-  fromId: string; title: string; day: string; start: number; end: number;
+  fromId: string; title: string; day: string; days: string[]; start: number; end: number;
   attendeeCount: number; reasonsForMe: SlotReason[];
 } = {
   fromId: 'minsu',
   title: '디자인 시스템 리뷰',
-  day: W0_THU, // 목 7/9 14:00~15:00
+  day: W0_THU, // 시리즈의 첫 회차 — 응답 화면의 대표 날짜
+  days: [W0_THU, W1_THU, W2_THU], // 매주 목 14:00~15:00 반복 초대 — 모든 주에 고스트가 산다
   start: 840,
   end: 900,
   attendeeCount: 5,

@@ -222,6 +222,8 @@ function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] |
 export interface HomeCalendarInvite {
   title: string;
   day: string;
+  /** 반복 초대 시리즈의 날들 — 없으면 day 단일. 매주 고스트가 살게 한다. */
+  days?: string[];
   start: number;
   end: number;
 }
@@ -267,12 +269,12 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
 
   const [, month] = days[0].split('-');
 
-  const ghostOn = (day: string) => (invite && invite.day === day ? invite : null);
+  const ghostOn = (day: string) => (invite && (invite.days ?? [invite.day]).includes(day) ? invite : null);
 
   // ── 월간 피커 — '7월' 탭으로 열리고, 일정 있는 날엔 점, 날짜 탭 = 그 주로 점프 ──
   // 점심은 매일 있어 점의 의미가 사라지므로 제외 — 점 = 진짜 일정(회의·개인·외근 등).
   const dottedDays = new Set(events.filter((e) => e.kind !== 'lunch').map((e) => e.day));
-  if (invite) dottedDays.add(invite.day);
+  if (invite) for (const d of invite.days ?? [invite.day]) dottedDays.add(d);
 
   const goToDay = (day: string) => {
     const w = weekIndexOfDay(day);

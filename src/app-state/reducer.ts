@@ -204,20 +204,20 @@ export function reducer(s: AppState, a: Action): AppState {
       // 여정 B의 응답은 1회 계약 — 이미 응답했다면 no-op(중복 myEvents 추가 방지).
       if (s.inviteResponded !== null) return s;
       if (a.response === 'accepted') {
-        // 참석할게요 = 초대가 내 캘린더의 사실이 된다 — INCOMING_INVITE를 meeting으로 앉힌다.
+        // 참석할게요 = 초대가 내 캘린더의 사실이 된다 — 반복 초대라 시리즈 전체(매주 목)가 앉는다.
         return {
           ...s,
           inviteResponded: 'accepted',
           myEvents: [
             ...s.myEvents,
-            {
-              id: `invite-${INCOMING_INVITE.day}T${INCOMING_INVITE.start}`,
-              day: INCOMING_INVITE.day,
+            ...INCOMING_INVITE.days.map((day) => ({
+              id: `invite-${day}T${INCOMING_INVITE.start}`,
+              day,
               start: INCOMING_INVITE.start,
               end: INCOMING_INVITE.end,
               title: INCOMING_INVITE.title,
               kind: 'meeting' as const,
-            },
+            })),
           ],
         };
       }
