@@ -313,7 +313,8 @@ function NotificationsScreen({
   return (
     <main className="min-h-dvh bg-bg">
       <div className="mx-auto max-w-[560px] px-4 pb-16 lg:px-0">
-        <Reveal as="header" className="flex h-14 items-center">
+        {/* 내비 바 — 뒤로가기 좌측 + 타이틀 중앙(모바일 표준 문법) */}
+        <Reveal as="header" className="relative flex h-14 items-center">
           <button
             type="button"
             onClick={onBack}
@@ -322,9 +323,9 @@ function NotificationsScreen({
           >
             <ChevronLeft size={22} aria-hidden />
           </button>
-        </Reveal>
-        <Reveal delay={70}>
-          <h1 className="pb-3 pt-1 text-[22px] font-bold tracking-[-0.02em] text-text-strong">알림</h1>
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-bold tracking-[-0.01em] text-text-strong">
+            알림
+          </h1>
         </Reveal>
         <Reveal delay={140}>
           <NotificationList list={notifications} now={Date.now()} onSelectInvite={onSelectInvite} />
