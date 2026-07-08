@@ -312,7 +312,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           {days.map((day, i) => {
             const today = day === TODAY;
             return (
-              <div key={day} className="flex flex-1 flex-col items-center py-1.5">
+              <div key={day} className="flex flex-1 flex-col items-center gap-0.5 py-2.5">
                 {/* 요일 위 + 날짜 아래 — 모바일과 같은 세로 스택(토스 문법), 높이는 압축. */}
                 <span className={`text-[10.5px] leading-4 ${today ? 'font-semibold text-primary' : 'text-text-weak'}`}>
                   {WEEKDAY_LABELS[i]}
