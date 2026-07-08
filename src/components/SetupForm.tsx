@@ -366,7 +366,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[520px] px-4 lg:max-w-[720px] lg:px-0">
+      <div className="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6">
         {/* 헤더 — 뒤로가기 → 홈 */}
         <Reveal as="header" className="-mx-1 flex h-14 items-center lg:mx-0 lg:h-auto lg:pb-4 lg:pt-8">
           <button
@@ -379,8 +379,9 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           </button>
         </Reveal>
 
-        {/* 데스크톱: 홈 캘린더 카드와 같은 문법의 흰 카드 안에 폼이 앉는다. 모바일: 카드 없이 그대로. */}
-        <div className="lg:rounded-[20px] lg:bg-white lg:px-12 lg:pb-12 lg:pt-8 lg:ring-1 lg:ring-border/70">
+        {/* 데스크톱: 홈 캘린더 카드와 같은 폭(1200 컨테이너)의 흰 카드. 폼 콘텐츠는 640px 중앙 컬럼. */}
+        <div className="lg:rounded-[20px] lg:bg-white lg:pb-14 lg:pt-10 lg:ring-1 lg:ring-border/70">
+        <div className="lg:mx-auto lg:max-w-[640px] lg:px-4">
 
         <Reveal delay={70} className="pt-3">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
@@ -501,6 +502,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         <Reveal delay={350} className="hidden pt-9 lg:block">
           {cta}
         </Reveal>
+        </div>
         </div>
       </div>
 

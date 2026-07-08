@@ -127,7 +127,7 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
-      <div className="mx-auto flex w-full max-w-[1500px] flex-1 flex-col overflow-hidden px-6">
+      <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col overflow-hidden px-6">
         {/* 헤더 — 뒤로가기 → 셋업 */}
         <Reveal as="header" className="flex h-14 shrink-0 items-center">
           <button
