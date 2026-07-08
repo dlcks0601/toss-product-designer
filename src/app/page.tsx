@@ -209,13 +209,23 @@ function HomeScreen({
         <div className="relative mx-auto max-w-[1200px] px-4 py-3.5 lg:px-6 lg:py-4">
           <Reveal as="header" className="flex items-center justify-between">
             <Wordmark />
-            <NotificationBell
-              unreadCount={unreadCount}
-              list={notifications}
-              onOpen={onOpenNotifications}
-              onSelectInvite={openInvite}
-              onOpenPage={() => dispatch({ type: 'SET_STEP', step: 'notifications' })}
-            />
+            <div className="flex items-center gap-2">
+              {/* 데스크톱 CTA — frosted sticky 헤더 소속이라 스크롤을 따라오면서 콘텐츠를 가리지 않는다. */}
+              <button
+                type="button"
+                onClick={openSetup}
+                className="pressable hidden h-9 items-center rounded-lg bg-primary px-3.5 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
+              >
+                일정 만들기
+              </button>
+              <NotificationBell
+                unreadCount={unreadCount}
+                list={notifications}
+                onOpen={onOpenNotifications}
+                onSelectInvite={openInvite}
+                onOpenPage={() => dispatch({ type: 'SET_STEP', step: 'notifications' })}
+              />
+            </div>
           </Reveal>
         </div>
       </div>
@@ -244,19 +254,6 @@ function HomeScreen({
         </button>
       </div>
 
-      {/* 데스크톱 고정 CTA — 같은 문법의 PC 연장: 우하단 플로팅, 캘린더 우측 라인에 정렬 */}
-      <div
-        className="fixed bottom-8 z-40 hidden lg:block"
-        style={{ right: 'calc(max(0px, (100vw - 1200px) / 2) + 24px)' }}
-      >
-        <button
-          type="button"
-          onClick={openSetup}
-          className="pressable h-[54px] rounded-2xl bg-primary px-7 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(49,130,246,0.35)] hover:bg-primary-pressed"
-        >
-          일정 만들기
-        </button>
-      </div>
     </div>
   );
 }
