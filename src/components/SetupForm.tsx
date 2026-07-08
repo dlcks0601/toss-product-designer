@@ -9,6 +9,7 @@ import Avatar from './Avatar';
 import Chip from './Chip';
 import FrostedBar from './FrostedBar';
 import { KIND_STYLE } from './HomeCalendar';
+import DateField from './DateField';
 import PickerField from './PickerField';
 import Wordmark from './Wordmark';
 import Reveal from './Reveal';
@@ -109,6 +110,7 @@ function SoloFields({
   start,
   end,
   kind,
+  dottedDays,
   onDay,
   onStart,
   onEnd,
@@ -119,6 +121,8 @@ function SoloFields({
   start: Minutes;
   end: Minutes;
   kind: MyEventKind;
+  /** 내 일정이 있는 날 — 달력 그리드의 점 힌트. */
+  dottedDays: Set<string>;
   onDay: (d: string) => void;
   onStart: (m: Minutes) => void;
   onEnd: (m: Minutes) => void;
@@ -137,12 +141,8 @@ function SoloFields({
         </div>
       </FieldGroup>
       <FieldGroup label="날짜" delay={0.12} animate={stagger}>
-        <PickerField
-          value={day}
-          onChange={onDay}
-          ariaLabel="날짜"
-          options={DAY_OPTIONS.map((d) => ({ value: d, label: fmtDayKorean(d) }))}
-        />
+        {/* 리스트가 아니라 달력 그리드에서 — 홈 월간 피커와 같은 문법. */}
+        <DateField value={day} onChange={onDay} selectable={DAY_OPTIONS} dotted={dottedDays} ariaLabel="날짜" />
       </FieldGroup>
       <FieldGroup label="시간" delay={0.18} animate={stagger}>
         <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2.5">
@@ -322,12 +322,19 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   };
   const toggleAttendee = (id: string) => dispatch({ type: 'TOGGLE_ATTENDEE', id });
 
+  // 내 일정이 있는 날 — 달력 그리드의 점 힌트(홈 월간 피커와 같은 파생).
+  const dottedDays = useMemo(() => {
+    const me = ORG.find((p) => p.id === ME_ID)!;
+    return new Set([...me.events, ...state.myEvents].map((e) => e.day));
+  }, [state.myEvents]);
+
   const soloFields = (
     <SoloFields
       day={day}
       start={start}
       end={end}
       kind={kind}
+      dottedDays={dottedDays}
       onDay={setDay}
       onStart={setStart}
       onEnd={setEnd}
