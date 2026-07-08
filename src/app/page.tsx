@@ -242,13 +242,18 @@ function HomeScreen({
 
       {/* 모바일 고정 CTA — 하단 풀폭(토스 BottomCTA). */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pt-6 lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6 lg:hidden"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
+        {/* 하단 frost — 헤더의 미러: 스크롤 콘텐츠가 반투명 너머로 흐릿하게 지나간다(경계 없음). */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+        />
         <button
           type="button"
           onClick={openSetup}
-          className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
+          className="pressable relative h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
         >
           일정 만들기
         </button>

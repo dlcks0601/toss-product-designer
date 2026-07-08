@@ -193,8 +193,8 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
           </div>
         </div>
 
-        {/* 20명 리스트 */}
-        <div className="min-h-0 flex-1 overflow-y-auto px-3 py-1 lg:h-[380px] lg:flex-none">
+        {/* 20명 리스트 — 마지막 행이 frost 아래를 빠져나올 수 있게 하단 여백을 준다. */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-10 pt-1 lg:h-[380px] lg:flex-none">
           {filtered.length === 0 && (
             <p className="py-12 text-center text-[13px] text-text-faint">검색 결과가 없어요</p>
           )}
@@ -255,13 +255,17 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
           })}
         </div>
 
-        {/* 확정 */}
-        <div className="border-t border-border/60 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3.5 lg:pb-5">
+        {/* 확정 — 경계선 대신 frost: 리스트가 반투명 너머로 흐릿하게 지나간다. */}
+        <div className="relative -mt-9 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3.5 lg:pb-5">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 -top-4 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+          />
           <button
             type="button"
             disabled={confirm.disabled}
             onClick={onClose}
-            className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed disabled:bg-section disabled:text-text-faint"
+            className="pressable relative h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed disabled:bg-section disabled:text-text-faint"
           >
             {confirm.label}
           </button>

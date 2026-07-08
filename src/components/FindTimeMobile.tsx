@@ -347,10 +347,15 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
 
       {/* 하단 고정 CTA — 보고 있는 후보가 있을 때만 산다 */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pt-6"
+        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
-        <div className="mx-auto max-w-[560px]">
+        {/* 하단 frost — 추천 카드들이 반투명 너머로 흐릿하게 지나간다. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+        />
+        <div className="relative mx-auto max-w-[560px]">
           {state.selectedSlotId !== null && state.selectedSlotId === state.confirmedSlotId ? (
             /* 확정 후 되돌아온 경우 — 이미 잡힌 회의를 다시 잡게 하지 않는다(상태 일관). */
             <button

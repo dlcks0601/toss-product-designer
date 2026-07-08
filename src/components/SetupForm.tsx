@@ -517,10 +517,15 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
 
       {/* CTA(모바일) — 홈과 같은 하단 고정 패턴. 접히는 폼 위에 항상 떠 있어 크로스페이드가 보인다. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pt-6 lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6 lg:hidden"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
-        <div className="mx-auto max-w-[520px]">{cta}</div>
+        {/* 하단 frost — 접히는 폼이 반투명 너머로 흐릿하게 지나간다. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+        />
+        <div className="relative mx-auto max-w-[520px]">{cta}</div>
       </div>
 
       {/* 참석자 피커 — 모바일 바텀시트 / 데스크톱 중앙 모달 */}

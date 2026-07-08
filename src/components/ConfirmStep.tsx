@@ -369,10 +369,15 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
 
       {/* 하단 고정 CTA — 장소를 골라야 산다(회의는 어딘가에서 열린다) */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-white via-white/90 to-transparent px-4 pt-6"
+        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
-        <div className="mx-auto max-w-[560px]">
+        {/* 하단 frost — 요약·장소 카드가 반투명 너머로 흐릿하게 지나간다. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+        />
+        <div className="relative mx-auto max-w-[560px]">
           {chosen === null && (
             <p className="pb-2 text-center text-[12px] font-medium text-text-weak">회의 장소를 골라주세요</p>
           )}
