@@ -45,8 +45,19 @@ const W2_THU = '2026-07-23';
 const W2_FRI = '2026-07-24';
 
 /** 이벤트 팩토리 — 결정적 id. */
+/** 회의실 풀 — 명시 room이 없는 미팅에 id 해시로 결정적 배정(Math.random 금지 계약). */
+const ROOM_POOL = ['미팅룸 1', '미팅룸 2', '미팅룸 3', '미팅룸 4', '미팅룸 5', 'UT룸'] as const;
+
+function hashId(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
 function ev(id: string, day: string, start: number, end: number, title: string, kind: EventKind, room?: string, external?: boolean): CalendarEvent {
-  return { id, day, start, end, title, kind, room, external };
+  // 미팅은 회의실이 있는 게 자연스럽다 — 프로필 피크·카드 서브라인이 실감난다.
+  const assigned = room ?? (kind === 'meeting' ? ROOM_POOL[hashId(id) % ROOM_POOL.length] : undefined);
+  return { id, day, start, end, title, kind, room: assigned, external };
 }
 
 // ── 핵심 6인 ───────────────────────────────────────────────
