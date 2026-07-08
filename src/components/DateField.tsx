@@ -136,7 +136,7 @@ export default function DateField({
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }}
             style={{ transformOrigin: 'top' }}
-            className="absolute left-1/2 top-[calc(100%+6px)] z-40 w-[296px] -translate-x-1/2 rounded-[20px] bg-white p-4 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:left-0 lg:w-[340px] lg:translate-x-0 lg:rounded-[24px] lg:p-5"
+            className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-[20px] bg-white p-4 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:inset-x-auto lg:left-0 lg:w-[340px] lg:rounded-[24px] lg:p-5"
           >
             {/* 홈 월간 피커(7월 탭) 문법 — 모바일은 콤팩트, 데스크톱은 홈 규격 */}
             <div className="grid grid-cols-7 pb-1 lg:pb-2">
