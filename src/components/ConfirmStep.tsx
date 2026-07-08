@@ -254,7 +254,7 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
       <div className="mx-auto w-full max-w-[560px] px-4">
 
         {/* 타이틀 + 서브 */}
-        <Reveal delay={70} className="pt-2">
+        <Reveal delay={70} className="pt-2 lg:pt-0">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong lg:text-[24px]">
             {fmtDayKorean(slot.day)} {fmtTime(adj.start)}, 이렇게 잡을까요?
           </h1>

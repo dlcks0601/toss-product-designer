@@ -405,7 +405,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         <div>
         <div className="lg:mx-auto lg:max-w-[640px] lg:px-4">
 
-        <Reveal delay={70} className="pt-3">
+        <Reveal delay={70} className="pt-3 lg:pt-0">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
             어떤 일정을 만들까요?
           </h1>
@@ -514,17 +514,14 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           )}
         </Reveal>
 
-        {/* CTA(데스크톱) — 폼 흐름 안에 살아 모핑의 높이 변화를 같이 탄다 */}
-        <Reveal delay={350} className="hidden pt-9 lg:block">
-          {cta}
-        </Reveal>
         </div>
         </div>
       </div>
 
-      {/* CTA(모바일) — 홈과 같은 하단 고정 패턴. 접히는 폼 위에 항상 떠 있어 크로스페이드가 보인다. */}
+      {/* CTA — 모바일·PC 공통 하단 고정(토스 BottomCTA). 접히는 폼 위에 항상 떠 있어
+          모핑 크로스페이드가 보이고, 폼 흐름과 분리돼 페이지가 깔끔하다. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6 lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
         {/* 하단 frost — 접히는 폼이 반투명 너머로 흐릿하게 지나간다. */}
@@ -532,7 +529,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent"
         />
-        <div className="relative mx-auto max-w-[520px]">{cta}</div>
+        <div className="relative mx-auto max-w-[520px] lg:max-w-[608px]">{cta}</div>
       </div>
 
       {/* 참석자 피커 — 모바일 바텀시트 / 데스크톱 중앙 모달 */}

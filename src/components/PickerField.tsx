@@ -1,18 +1,17 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronDown } from 'lucide-react';
-import { useIsDesktop } from '../app-state/useIsDesktop';
 
 /**
  * 커스텀 셀렉트 — 시스템 <select>를 대체하는 토스 문법 피커.
  *
  * 트리거: grey100 박스(h-52, r16) + 열림 시 셰브론 180° 회전.
- * 데스크톱: 필드 아래 팝오버 — 스프링(400/30) 스케일·페이드, 선택 항목 파랑+체크,
- *   열릴 때 선택 항목으로 스크롤, 바깥 클릭·ESC 닫기.
- * 모바일: 바텀시트 — 그랩바 + 아래로 스와이프 닫기(참석자 피커와 같은 문법),
- *   딤 탭·ESC 닫기, 바디 스크롤 잠금. 탭하면 즉시 선택·닫힘.
+ * 모바일·데스크톱 모두 필드 아래 팝오버 — 시간·날짜는 필드 곁에서 고르는 게 맥락에
+ * 맞고(토스 메뉴 원칙: 누른 자리 가까이), 바텀시트는 여정을 끊는 과한 전환이라 안 쓴다.
+ * 스프링(400/30) 스케일·페이드, 선택 항목 파랑+체크, 열릴 때 선택 항목으로 내부 스크롤,
+ * 바깥 탭·ESC 닫기. 공간이 모자라면 페이지가 딱 그만큼 따라 내려온다(동행 스크롤).
  */
 
 export interface PickerOption {
@@ -32,13 +31,12 @@ export default function PickerField({
   ariaLabel: string;
 }) {
   const [open, setOpen] = useState(false);
-  // 팝오버 리스트 최대 높이 — 아래 공간 + 페이지 스크롤 여력까지 계산해 정한다(잘림 방지).
-  const [listMaxH, setListMaxH] = useState(264);
-  const desktop = useIsDesktop();
   const reduced = !!useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const dragControls = useDragControls();
+  // 동적 스페이서 — 열릴 때만 하단에 임시 공간을 만들고 닫히면 회수한다(DateField와 동일 계약).
+  const spacerRef = useRef<HTMLDivElement | null>(null);
+  const scrolledByRef = useRef(0);
   const current = options.find((o) => o.value === value);
 
   /**
@@ -46,41 +44,58 @@ export default function PickerField({
    * 뷰포트 아래 공간이 모자라면 페이지가 딱 그만큼 부드럽게 따라 내려간다 —
    * 의도된 동행 스크롤. 스크롤 여력까지 다 써도 모자랄 때만 리스트 높이를 줄인다.
    */
-  const toggleOpen = () => {
-    if (!open && !desktop) {
-      setOpen(true);
-      return;
+  /** 닫기 — 열 때 내려간 만큼 부드럽게 원위치하고 스페이서를 회수한다. */
+  const close = () => {
+    setOpen(false);
+    const sp = spacerRef.current;
+    if (sp) {
+      const back = scrolledByRef.current;
+      spacerRef.current = null;
+      scrolledByRef.current = 0;
+      if (back > 0) window.scrollBy({ top: -back, behavior: reduced ? 'auto' : 'smooth' });
+      window.setTimeout(() => sp.remove(), 400);
     }
-    if (!open) {
-      const r = rootRef.current?.getBoundingClientRect();
-      if (r) {
-        const LIST_MAX = 264;
-        const PANEL_CHROME = 12 + 6; // 패널 패딩(p-1.5×2) + 트리거와의 간격
-        const MARGIN = 16; // 화면 가장자리 숨 쉴 틈
-        const listH = Math.min(LIST_MAX, options.length * 44);
-        const below = window.innerHeight - r.bottom - PANEL_CHROME - MARGIN;
-        const doc = document.documentElement;
-        const scrollCapacity = Math.max(0, doc.scrollHeight - window.innerHeight - window.scrollY);
-        const need = listH - below;
-        if (need > 0 && scrollCapacity > 0) {
-          window.scrollBy({ top: Math.min(need, scrollCapacity), behavior: reduced ? 'auto' : 'smooth' });
-        }
-        setListMaxH(Math.max(132, Math.min(listH, below + scrollCapacity)));
-      }
-    }
-    setOpen((v) => !v);
   };
 
-  // 바깥 클릭(데스크톱 팝오버) + ESC 닫기
+  const toggleOpen = () => {
+    if (open) {
+      close();
+      return;
+    }
+    const r = rootRef.current?.getBoundingClientRect();
+    if (r) {
+      const LIST_MAX = 264;
+      const PANEL_CHROME = 12 + 6; // 패널 패딩(p-1.5×2) + 트리거와의 간격
+      const MARGIN = 24 + 96; // 화면 가장자리 숨 쉴 틈 + 하단 고정 CTA 가드
+      const listH = Math.min(LIST_MAX, options.length * 44);
+      const below = window.innerHeight - r.bottom - PANEL_CHROME - MARGIN;
+      const need = listH - below;
+      if (need > 0) {
+        const sp = document.createElement('div');
+        sp.style.height = `${need + 8}px`;
+        sp.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(sp);
+        spacerRef.current = sp;
+        scrolledByRef.current = need;
+        window.scrollBy({ top: need, behavior: reduced ? 'auto' : 'smooth' });
+      }
+    }
+    setOpen(true);
+  };
+
+  // 언마운트 시 스페이서 정리
+  useEffect(() => () => spacerRef.current?.remove(), []);
+
+  // 바깥 클릭 + ESC 닫기 — 스페이서 회수까지 close()로.
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) close();
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        setOpen(false);
+        close();
       }
     };
     document.addEventListener('pointerdown', onDown);
@@ -105,19 +120,9 @@ export default function PickerField({
     });
   }, [open]);
 
-  // 모바일 시트 — 바디 스크롤 잠금
-  useEffect(() => {
-    if (!open || desktop) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [open, desktop]);
-
   const select = (v: string) => {
     onChange(v);
-    setOpen(false);
+    close();
   };
 
   const optionRow = (o: PickerOption) => {
@@ -160,7 +165,7 @@ export default function PickerField({
       </button>
 
       <AnimatePresence>
-        {open && desktop && (
+        {open && (
           <motion.div
             key="popover"
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
@@ -175,73 +180,13 @@ export default function PickerField({
               role="listbox"
               aria-label={ariaLabel}
               className="overflow-y-auto"
-              style={{ maxHeight: listMaxH }}
+              style={{ maxHeight: 264 }}
             >
               {options.map(optionRow)}
             </div>
           </motion.div>
         )}
 
-        {open && !desktop && (
-          <motion.div
-            key="dim"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
-            aria-hidden
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-50 bg-[#191F28]/45"
-          />
-        )}
-        {open && !desktop && (
-          <motion.div
-            key="sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-label={ariaLabel}
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 34 }}
-            drag={reduced ? false : 'y'}
-            dragListener={false}
-            dragControls={dragControls}
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.9 }}
-            onDragEnd={(_, info) => {
-              if (info.offset.y > 80 || info.velocity.y > 600) setOpen(false);
-            }}
-            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[64dvh] flex-col rounded-t-[24px] bg-white"
-          >
-            {/* 그랩바 — 여기서 끌어내리면 닫힌다 */}
-            <div
-              aria-hidden
-              className="touch-none pt-2.5"
-              onPointerDown={(e) => {
-                if (!reduced) dragControls.start(e);
-              }}
-            >
-              <div className="mx-auto h-1 w-9 rounded-full bg-border" />
-            </div>
-            <p
-              className="touch-none px-5 pb-2 pt-5 text-[18px] font-bold tracking-[-0.01em] text-text-strong"
-              onPointerDown={(e) => {
-                if (!reduced) dragControls.start(e);
-              }}
-            >
-              {ariaLabel}
-            </p>
-            <div
-              ref={listRef}
-              role="listbox"
-              aria-label={ariaLabel}
-              className="min-h-0 flex-1 overflow-y-auto px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-1"
-            >
-              {options.map(optionRow)}
-            </div>
-          </motion.div>
-        )}
       </AnimatePresence>
     </div>
   );
