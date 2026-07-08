@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import type { Person } from '../lib/types';
 import { deriveInsights } from '../lib/insights';
@@ -10,9 +10,10 @@ import { eventsOn } from './HomeCalendar';
 /**
  * 프로필 피크('다' 안) — 헤더 없음. 참석자 행 아래 인라인(모바일)/행 옆 팝오버(데스크톱).
  *
- * 형식: 하루 한 줄 텍스트 다이제스트 — "수 8  집중 작업 · 데이터 리뷰".
- * 미니 캘린더 그리드는 읽는 게 아니라 해독하는 화면이라 버렸다(토스 소비 캘린더 문법).
- * 점심은 줄에서 빼고 맨 아래 리듬 각주가 대신 말한다.
+ * 형식: 주간 스트립 + 탭한 날만 상세(progressive disclosure).
+ *  - 스트립: 일정 있는 날은 요일·날짜 밑에 점 하나 — iOS 캘린더 문법. 외근 있는 날은 점이 붉다.
+ *  - 탭하면 그 날의 일정만 제목/시간·미팅룸으로 펼친다(기본 = 첫날). 점심은 줄에서 빼고
+ *    맨 아래 리듬 각주가 대신 말한다. 5일 전체 나열은 산만해서 버렸다.
  *
  * 내용은 전부 파생이다(하드코딩 금지 계약):
  *  - 날들 = 기한 창(windowFor(deadline))의 앞 5영업일 × person.events 실제 블록.
@@ -41,41 +42,81 @@ export interface ProfilePeekProps {
   mode?: 'auto' | 'inline';
 }
 
-/** 피크 본문 — 하루 한 줄 텍스트 다이제스트 + 각주. 컨테이너(인라인/팝오버)가 감싼다. */
+/** 하루의 피크 항목 — 점심 제외(리듬 각주가 대신 말한다). */
+function dayItems(person: Person, day: string) {
+  return eventsOn(person.events, day).filter((ev) => ev.kind !== 'lunch');
+}
+
+/** 피크 본문 — 주간 스트립(점 밀도) + 탭한 날 상세 + 각주. 컨테이너(인라인/팝오버)가 감싼다. */
 function PeekBody({ person, windowDays }: { person: Person; windowDays: string[] }) {
   const days = peekDays(windowDays);
+  const [picked, setPicked] = useState<string | null>(null);
+  // 기한 칩이 바뀌어 창이 달라지면 선택을 첫날로 되돌린다.
+  const selDay = picked && days.includes(picked) ? picked : days[0];
   const headline = useMemo(() => deriveInsights(person, windowDays).headline, [person, windowDays]);
+  const selected = dayItems(person, selDay);
 
   return (
     <div role="region" aria-label={`${person.name}님의 일정 미리보기`}>
-      <div className="space-y-3">
+      {/* 주간 스트립 — 일정 있는 날은 날짜 밑 점 하나. 외근 있는 날은 붉은 점. */}
+      <div className="flex gap-1">
         {days.map((day) => {
-          // 점심은 줄에서 뺀다 — 맨 아래 리듬 각주가 대신 말한다.
-          const items = eventsOn(person.events, day).filter((ev) => ev.kind !== 'lunch');
+          const items = dayItems(person, day);
+          const isSel = day === selDay;
+          const hasOffsite = items.some((ev) => ev.kind === 'offsite');
           return (
-            <div key={day}>
-              <p className="text-[11px] font-semibold leading-none text-text-weak">
-                {WEEKDAY_SHORT[weekdayIndex(day)]} {Number(day.slice(8, 10))}일
-              </p>
-              {items.length === 0 ? (
-                <p className="mt-1.5 text-[12px] leading-[1.4] text-text-faint">일정 없음</p>
-              ) : (
-                <ul className="mt-1.5 space-y-2">
-                  {items.map((ev) => (
-                    <li key={ev.id} className="min-w-0">
-                      <p className="truncate text-[13px] font-medium leading-[1.35] text-text-strong">{ev.title}</p>
-                      <p className="mt-px truncate text-[11.5px] leading-[1.35] text-text-weak">
-                        {fmtRange(ev.start, ev.end)}
-                        {ev.room ? ` · ${ev.room}` : ''}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <button
+              key={day}
+              type="button"
+              aria-pressed={isSel}
+              aria-label={`${WEEKDAY_SHORT[weekdayIndex(day)]} ${Number(day.slice(8, 10))}일 일정 ${items.length}개`}
+              onClick={() => setPicked(day)}
+              className="flex flex-1 flex-col items-center gap-1 py-1.5"
+            >
+              {/* 선택 = 홈 캘린더 데이 칩 문법 — 요일 파랑 + 숫자 파란 원 */}
+              <span className={`text-[10px] leading-none ${isSel ? 'font-semibold text-primary' : 'text-text-weak'}`}>
+                {WEEKDAY_SHORT[weekdayIndex(day)]}
+              </span>
+              <span
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-[13px] font-semibold leading-none transition-colors ${
+                  isSel ? 'bg-primary text-white' : 'text-text-body'
+                }`}
+              >
+                {Number(day.slice(8, 10))}
+              </span>
+              {/* 일정이 있으면 점 하나 — 개수 셈 없이 '있다'만 속삭인다. 외근 날은 붉게. */}
+              <span aria-hidden className="flex h-1 items-center">
+                {items.length > 0 && (
+                  <span
+                    className="h-1 w-1 rounded-full"
+                    style={{ backgroundColor: hasOffsite ? '#EE99A0' : '#B0B8C1' }}
+                  />
+                )}
+              </span>
+            </button>
           );
         })}
       </div>
+
+      {/* 탭한 날 상세 — 제목/시간·미팅룸 */}
+      <div className="mt-2">
+        {selected.length === 0 ? (
+          <p className="py-1 text-[12px] leading-[1.4] text-text-faint">일정 없음 — 하루가 비어 있어요</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {selected.map((ev) => (
+              <li key={ev.id} className="min-w-0">
+                <p className="truncate text-[13px] font-medium leading-[1.35] text-text-strong">{ev.title}</p>
+                <p className="mt-px truncate text-[11.5px] leading-[1.35] text-text-weak">
+                  {fmtRange(ev.start, ev.end)}
+                  {ev.room ? ` · ${ev.room}` : ''}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {headline && (
         <p className="mt-2.5 border-t border-border/60 pt-2 text-[12px] leading-[1.45] text-text-body">{headline}</p>
       )}
