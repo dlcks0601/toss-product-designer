@@ -199,9 +199,10 @@ function HomeScreen({
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_bottom,black_55%,transparent)]"
         />
+        {/* 오로라 — 하단 화이트 그라디언트는 제거: frost 위에 불투명 막을 한 겹 더 발라
+            지나가는 콘텐츠를 지워버렸다. 이제 블렌딩은 frost 마스크가 담당한다. */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <Aurora variant="home" />
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
         </div>
         <div className="relative mx-auto max-w-[1200px] px-4 py-3.5 lg:px-6 lg:py-4">
           <Reveal as="header" className="flex items-center justify-between">
