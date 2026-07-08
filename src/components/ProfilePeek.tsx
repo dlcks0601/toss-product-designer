@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import type { Person } from '../lib/types';
 import { deriveInsights } from '../lib/insights';
 import { fmtRange, weekdayIndex } from '../lib/time';
-import { eventsOn } from './HomeCalendar';
+import { eventsOn, KIND_STYLE } from './HomeCalendar';
 
 /**
  * 프로필 피크('다' 안) — 헤더 없음. 참석자 행 아래 인라인(모바일)/행 옆 팝오버(데스크톱).
@@ -97,21 +97,27 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
         })}
       </div>
 
-      {/* 탭한 날 상세 — 제목 먼저, 시간·미팅룸이 바로 옆에 붙는 인라인 흐름(끝 정렬 금지). */}
-      <div className="mt-2">
+      {/* 탭한 날 상세 — 토스 ListRow 문법: 종류색 세로 바(앵커) + 제목/시간·룸 2줄, 넉넉한 간격.
+          바 색은 홈 캘린더 KIND_STYLE과 단일 소스 — "이 사람의 캘린더 요약"이라는 서사가 이어진다. */}
+      <div className="mt-3">
         {selected.length === 0 ? (
           <p className="py-1 text-[12px] leading-[1.4] text-text-faint">일정 없음 — 하루가 비어 있어요</p>
         ) : (
-          <ul className="space-y-1.5">
+          <ul className="space-y-3">
             {selected.map((ev) => (
-              <li key={ev.id} className="flex min-w-0 items-baseline gap-2">
-                <p className="min-w-0 shrink truncate text-[13px] font-medium leading-[1.5] text-text-strong">
-                  {ev.title}
-                </p>
-                <p className="shrink-0 text-[12px] leading-[1.5] text-text-weak">
-                  {fmtRange(ev.start, ev.end)}
-                  {ev.room ? ` · ${ev.room}` : ''}
-                </p>
+              <li key={ev.id} className="flex min-w-0 gap-2.5">
+                <span
+                  aria-hidden
+                  className="w-[3px] shrink-0 self-stretch rounded-full"
+                  style={{ backgroundColor: KIND_STYLE[ev.kind].title }}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-semibold leading-[1.4] text-text-strong">{ev.title}</p>
+                  <p className="mt-px truncate text-[12px] leading-[1.4] text-text-weak">
+                    {fmtRange(ev.start, ev.end)}
+                    {ev.room ? ` · ${ev.room}` : ''}
+                  </p>
+                </div>
               </li>
             ))}
           </ul>
