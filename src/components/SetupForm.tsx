@@ -31,6 +31,11 @@ import type { DeadlineKind, Person } from '../lib/types';
  *
  * 참석자 행: 꼭/선택 핀(SET_REQUIRED, 주최자는 핀 없음 — 고정 필수), 아바타 탭 → 프로필 피크
  * (모바일 인라인/데스크톱 행 옆 팝오버). ORG.find는 널가드 — HYDRATE가 unknown id를 허용한다.
+ *
+ * PC(lg+)는 반반 스플릿 — 타이틀이 무대 전체를 열고, 왼쪽 "무엇을·언제" / 오른쪽 "누구와 + CTA".
+ * 사람을 더하는 쪽(오른쪽)이 원인, 폼이 변하는 쪽(왼쪽)이 결과라는 구조가 공간으로 드러난다.
+ * CTA는 참석자 아래 인라인("이 사람들과 → 시간 찾아보기") — 고정 오버레이가 없어 폼이 화면에
+ * 들어가면 스크롤도 없다. 모바일은 기존 한 칼럼 + 하단 고정 CTA 그대로.
  */
 
 // ── 상수 — 순수·결정적(데모 앵커 기준) ─────────────────────────────
@@ -372,7 +377,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   );
 
   return (
-    <div className="min-h-dvh bg-bg pb-32 lg:pb-36">
+    <div className="min-h-dvh bg-bg pb-32 lg:pb-20">
       {/* 데스크톱 헤더 — 홈과 같은 오로라·워드마크. 스텝이 바뀌어도 페이지 틀은 유지된다. */}
       <div className="relative hidden lg:block">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -401,9 +406,9 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
       </FrostedBar>
 
       <div className="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6 lg:pt-2">
-        {/* 데스크톱: 테두리·카드 없이 흰 페이지 위 640px 중앙 컬럼(토스 풀페이지 폼 문법). */}
+        {/* 데스크톱: 카드 없이 흰 페이지 위 중앙 무대 — 타이틀 풀스팬 + 아래 반반 스플릿. */}
         <div>
-        <div className="lg:mx-auto lg:max-w-[640px] lg:px-4">
+        <div className="lg:mx-auto lg:max-w-[920px] lg:px-4">
 
         <Reveal delay={70} className="pt-3 lg:pt-0">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
@@ -414,8 +419,12 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           </p>
         </Reveal>
 
+        {/* lg: 좌 "무엇을·언제" / 우 "누구와 + CTA" — DOM 순서(입력→참석자→필드)는 모바일 그대로,
+            grid 배치만으로 갈라진다. 오른쪽은 두 행에 걸쳐 자기 흐름대로 자란다. */}
+        <div className="lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-x-14">
+
         {/* 제목 — 밑줄 입력(혼자·함께 공통) */}
-        <Reveal delay={140} className="pt-6">
+        <Reveal delay={140} className="pt-6 lg:col-start-1 lg:row-start-1">
           <input
             value={state.title}
             onChange={(e) => dispatch({ type: 'SET_TITLE', title: e.target.value })}
@@ -425,8 +434,8 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           />
         </Reveal>
 
-        {/* 참석자 */}
-        <Reveal delay={210} className="pt-7">
+        {/* 참석자 — lg에선 오른쪽 기둥(두 행 스팬), CTA까지 품는다 */}
+        <Reveal delay={210} className="pt-7 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-6">
           <p className="text-[14px] font-semibold text-text-strong">
             참석자 <span className="text-primary">{attendees.length}명</span>
           </p>
@@ -479,11 +488,33 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
               </span>
               <span className="text-[15px] font-medium text-primary">참석자 추가</span>
             </button>
+
+            {/* PC: CTA가 참석자 바로 아래 — "이 사람들과 → 시간 찾아보기" 서사.
+                혼자일 땐 힌트 한 줄이 오른쪽 여백을 초대장으로 만든다. */}
+            <div className="hidden lg:block">
+              <AnimatePresence initial={false}>
+                {!shownMeeting && (
+                  <motion.div
+                    key="invite-hint"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={reduced ? { duration: 0 } : MORPH}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-1 pt-1.5 text-[13px] leading-[1.5] text-text-faint">
+                      함께할 사람을 더하면, 좋은 시간을 대신 찾아드려요
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <div className="pt-7">{cta}</div>
+            </div>
           </div>
         </Reveal>
 
-        {/* 모핑 영역 — 혼자(날짜·시간) ↔ 함께(길이·기한) */}
-        <Reveal delay={280}>
+        {/* 모핑 영역 — 혼자(날짜·시간) ↔ 함께(길이·기한). lg에선 왼쪽 아래 행. */}
+        <Reveal delay={280} className="lg:col-start-1 lg:row-start-2">
           {reduced ? (
             <div>{shownMeeting ? meetingFields : soloFields}</div>
           ) : (
@@ -515,13 +546,14 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         </Reveal>
 
         </div>
+
+        </div>
         </div>
       </div>
 
-      {/* CTA — 모바일·PC 공통 하단 고정(토스 BottomCTA). 접히는 폼 위에 항상 떠 있어
-          모핑 크로스페이드가 보이고, 폼 흐름과 분리돼 페이지가 깔끔하다. */}
+      {/* CTA — 모바일만 하단 고정(토스 BottomCTA). PC는 참석자 기둥 아래 인라인이라 없다. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6"
+        className="fixed inset-x-0 bottom-0 z-40 px-4 pt-6 lg:hidden"
         style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
       >
         {/* 하단 frost — 접히는 폼이 반투명 너머로 흐릿하게 지나간다. */}
@@ -529,7 +561,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           aria-hidden
           className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent"
         />
-        <div className="relative mx-auto max-w-[520px] lg:max-w-[608px]">{cta}</div>
+        <div className="relative mx-auto max-w-[520px]">{cta}</div>
       </div>
 
       {/* 참석자 피커 — 모바일 바텀시트 / 데스크톱 중앙 모달 */}
