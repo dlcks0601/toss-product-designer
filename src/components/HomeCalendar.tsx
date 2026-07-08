@@ -325,16 +325,16 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                   exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
                   transition={reduced ? { duration: 0.12 } : { type: 'spring', stiffness: 350, damping: 30 }}
                   style={{ transformOrigin: 'top left' }}
-                  className="absolute left-0 top-full z-[65] mt-2 w-[312px] rounded-[20px] bg-white p-4 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
+                  className="absolute left-0 top-full z-[65] mt-2 w-[340px] rounded-[24px] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
                 >
-                  <div className="grid grid-cols-7 pb-1">
+                  <div className="grid grid-cols-7 pb-2">
                     {['일', '월', '화', '수', '목', '금', '토'].map((d) => (
-                      <span key={d} className="py-1 text-center text-[12px] text-text-faint">
+                      <span key={d} className="py-1 text-center text-[13px] text-text-faint">
                         {d}
                       </span>
                     ))}
                   </div>
-                  <div className="grid grid-cols-7 gap-y-0.5">
+                  <div className="grid grid-cols-7 gap-y-3">
                     {buildMonthCells().map(({ day, inMonth }) => {
                       const navigable = inMonth && weekIndexOfDay(day) !== -1;
                       const today = day === TODAY;
@@ -345,7 +345,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                           type="button"
                           disabled={!navigable}
                           onClick={() => goToDay(day)}
-                          className={`pressable relative mx-auto flex h-9 w-9 items-center justify-center rounded-[12px] text-[15px] font-semibold ${
+                          className={`pressable relative mx-auto flex h-10 w-10 items-center justify-center rounded-[13px] text-[16px] font-semibold ${
                             today
                               ? 'bg-primary text-white'
                               : navigable
