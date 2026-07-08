@@ -59,11 +59,17 @@ export default function PickerField({
     };
   }, [open]);
 
-  // 열릴 때 선택 항목이 보이게 스크롤
+  // 열릴 때 선택 항목이 보이게 — 리스트 내부만 스크롤한다.
+  // scrollIntoView는 페이지(조상 스크롤러)까지 움직여 화면이 튀므로 금지.
   useEffect(() => {
     if (!open) return;
     requestAnimationFrame(() => {
-      listRef.current?.querySelector('[data-selected="true"]')?.scrollIntoView({ block: 'center' });
+      const list = listRef.current;
+      const sel = list?.querySelector<HTMLElement>('[data-selected="true"]');
+      if (!list || !sel) return;
+      const listRect = list.getBoundingClientRect();
+      const selRect = sel.getBoundingClientRect();
+      list.scrollTop += selRect.top - listRect.top - list.clientHeight / 2 + sel.clientHeight / 2;
     });
   }, [open]);
 
