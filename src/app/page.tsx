@@ -241,7 +241,7 @@ function HomeScreen({
           onClick={openSetup}
           className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
         >
-          새 일정 만들기
+          일정 만들기
         </button>
       </div>
     </div>

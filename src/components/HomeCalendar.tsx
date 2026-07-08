@@ -2,7 +2,7 @@
 
 import { useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Avatar from './Avatar';
 import type { CalendarEvent, EventKind, Person } from '../lib/types';
 import { addDaysISO, fmtRange } from '../lib/time';
@@ -251,7 +251,7 @@ export interface HomeCalendarProps {
   /** 받은 초대 — 캘린더 안에 고스트(점선) 이벤트로 산다. */
   invite?: HomeCalendarInvite | null;
   onOpenInvite?: () => void;
-  /** 데스크톱 캘린더 헤더의 `새 일정 만들기`(모바일 CTA는 페이지가 소유). */
+  /** 데스크톱 캘린더 헤더의 `일정 만들기`(모바일 CTA는 페이지가 소유). */
   onNewEvent?: () => void;
   /** 확정 회의 블록의 응답 아바타 스택 — 응답 토스트 도착에 맞춰 채워진다. */
   responseBadges?: ResponseBadges | null;
@@ -404,9 +404,9 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           <button
             type="button"
             onClick={onNewEvent}
-            className="pressable hidden h-10 items-center gap-1.5 rounded-2xl bg-primary pl-3.5 pr-4 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
+            className="pressable hidden h-10 items-center rounded-lg bg-primary px-4 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
           >
-            <Plus size={16} strokeWidth={2.4} aria-hidden />새 일정 만들기
+            일정 만들기
           </button>
         )}
       </div>
