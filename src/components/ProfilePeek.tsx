@@ -125,8 +125,11 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
         )}
       </div>
 
+      {/* 인사이트 — 각주가 아니라 시스템이 읽어낸 발견. 추천 이유 칩(tradeoff 틴트)과 같은 목소리. */}
       {headline && (
-        <p className="mt-2.5 border-t border-border/60 pt-2 text-[12px] leading-[1.45] text-text-body">{headline}</p>
+        <p className="mt-3 rounded-[10px] bg-primary-tint px-3 py-2 text-[12px] font-semibold leading-[1.45] text-primary break-keep">
+          {headline}
+        </p>
       )}
     </div>
   );
