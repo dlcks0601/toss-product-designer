@@ -372,7 +372,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   );
 
   return (
-    <div className="min-h-dvh bg-bg pb-32 lg:pb-16">
+    <div className="min-h-dvh bg-bg pb-32 lg:pb-36">
       {/* 데스크톱 헤더 — 홈과 같은 오로라·워드마크. 스텝이 바뀌어도 페이지 틀은 유지된다. */}
       <div className="relative hidden lg:block">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
