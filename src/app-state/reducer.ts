@@ -141,15 +141,18 @@ export function reducer(s: AppState, a: Action): AppState {
     case 'SET_DEADLINE':
       return applyAndInvalidateSelection(s, { deadline: a.deadline });
 
-    case 'ADD_MY_EVENT':
-      // 혼자 경로의 저장 — "일정은 혼자면 결정". kind는 personal로 강제(내 캘린더 불변식),
+    case 'ADD_MY_EVENT': {
+      // 혼자 경로의 저장 — 종류는 폼의 선택(개인 약속/집중 시간/외근/점심)을 존중한다.
+      // 단 meeting은 시간 찾기 경로에서만 태어난다(불변식) — 들어오면 personal로 강등.
       // 저장 즉시 홈으로 복귀하고 다음 작성을 위해 제목을 비운다.
+      const kind = a.event.kind === 'meeting' ? 'personal' : a.event.kind;
       return {
         ...s,
-        myEvents: [...s.myEvents, { ...a.event, kind: 'personal' }],
+        myEvents: [...s.myEvents, { ...a.event, kind }],
         title: '',
         step: 'home',
       };
+    }
 
     case 'SELECT_SLOT':
       return { ...s, selectedSlotId: a.slotId };

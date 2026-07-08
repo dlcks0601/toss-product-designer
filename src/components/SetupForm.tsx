@@ -8,6 +8,7 @@ import Aurora from './Aurora';
 import Avatar from './Avatar';
 import Chip from './Chip';
 import FrostedBar from './FrostedBar';
+import { KIND_STYLE } from './HomeCalendar';
 import PickerField from './PickerField';
 import Wordmark from './Wordmark';
 import Reveal from './Reveal';
@@ -47,6 +48,18 @@ const DEADLINE_OPTIONS: { value: DeadlineKind; label: string }[] = [
 
 /** 개인 일정 날짜 후보 — 앵커 다음 영업일부터 데이터가 있는 7/24까지 13일. */
 const DAY_OPTIONS = businessDaysFrom(ANCHOR_DATE, 13);
+
+/** 혼자 일정의 종류 — meeting은 시간 찾기 경로 전용이라 여기 없다. 이 앱이 캘린더 원본이므로
+ *  집중·외근·점심도 여기서 선언된다(동료들의 캘린더도 같은 경로로 만들어졌다는 세계관).
+ *  칩 색은 홈 캘린더 카드 색(KIND_STYLE)과 단일 소스 — 고른 색 그대로 캘린더에 앉는다.
+ *  점심만 예외: 카드 bg(#F2F4F6)가 비선택 칩과 같아 구분이 안 돼 한 단계 진하게. */
+export type MyEventKind = 'personal' | 'focus' | 'offsite' | 'lunch';
+const MY_KIND_OPTIONS: { value: MyEventKind; label: string; tint: { bg: string; text: string } }[] = [
+  { value: 'personal', label: '개인 약속', tint: { bg: KIND_STYLE.personal.bg, text: KIND_STYLE.personal.title } },
+  { value: 'focus', label: '집중 시간', tint: { bg: KIND_STYLE.focus.bg, text: KIND_STYLE.focus.title } },
+  { value: 'offsite', label: '외근', tint: { bg: KIND_STYLE.offsite.bg, text: KIND_STYLE.offsite.title } },
+  { value: 'lunch', label: '점심', tint: { bg: '#E5E8EB', text: '#4E5968' } },
+];
 /** 30분 스텝 시각(9:00~19:00) — 홈 캘린더 프레임과 같은 범위. */
 const TIME_OPTIONS: Minutes[] = Array.from({ length: 21 }, (_, i) => 540 + i * 30);
 
@@ -88,21 +101,34 @@ function SoloFields({
   day,
   start,
   end,
+  kind,
   onDay,
   onStart,
   onEnd,
+  onKind,
   stagger,
 }: {
   day: string;
   start: Minutes;
   end: Minutes;
+  kind: MyEventKind;
   onDay: (d: string) => void;
   onStart: (m: Minutes) => void;
   onEnd: (m: Minutes) => void;
+  onKind: (k: MyEventKind) => void;
   stagger: boolean;
 }) {
   return (
     <div className="space-y-6 pt-7">
+      <FieldGroup label="어떤 시간인가요?" delay={0.09} animate={stagger}>
+        <div className="flex flex-wrap gap-2">
+          {MY_KIND_OPTIONS.map((o) => (
+            <Chip key={o.value} selected={kind === o.value} tint={o.tint} onClick={() => onKind(o.value)}>
+              {o.label}
+            </Chip>
+          ))}
+        </div>
+      </FieldGroup>
       <FieldGroup label="날짜" delay={0.12} animate={stagger}>
         <PickerField
           value={day}
@@ -254,6 +280,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
   const [day, setDay] = useState(DAY_OPTIONS[0]);
   const [start, setStart] = useState<Minutes>(600);
   const [end, setEnd] = useState<Minutes>(660);
+  const [kind, setKind] = useState<MyEventKind>('personal');
 
   const windowDays = useMemo(() => windowFor(state.deadline), [state.deadline]);
   // ORG.find 널가드 — HYDRATE 딥링크가 unknown id를 실어올 수 있다(조용히 건너뛴다).
@@ -282,14 +309,24 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         start,
         end,
         title: state.title.trim(),
-        kind: 'personal',
+        kind,
       },
     });
   };
   const toggleAttendee = (id: string) => dispatch({ type: 'TOGGLE_ATTENDEE', id });
 
   const soloFields = (
-    <SoloFields day={day} start={start} end={end} onDay={setDay} onStart={setStart} onEnd={setEnd} stagger={!reduced} />
+    <SoloFields
+      day={day}
+      start={start}
+      end={end}
+      kind={kind}
+      onDay={setDay}
+      onStart={setStart}
+      onEnd={setEnd}
+      onKind={setKind}
+      stagger={!reduced}
+    />
   );
   const meetingFields = (
     <MeetingFields duration={state.duration} deadline={state.deadline} dispatch={dispatch} stagger={!reduced} />
