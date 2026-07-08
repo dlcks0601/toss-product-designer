@@ -97,18 +97,20 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
         })}
       </div>
 
-      {/* 탭한 날 상세 — 한 줄에 제목(좌)·시간·미팅룸(우). 세로 간격을 줄이고 우측 여백을 쓴다. */}
-      <div className="mt-1.5">
+      {/* 탭한 날 상세 — 어젠다 문법: 시간(고정 열, 좌) → 제목. 시선이 한 방향으로만 흐른다. */}
+      <div className="mt-2">
         {selected.length === 0 ? (
           <p className="py-1 text-[12px] leading-[1.4] text-text-faint">일정 없음 — 하루가 비어 있어요</p>
         ) : (
-          <ul className="space-y-[3px]">
+          <ul className="space-y-1.5">
             {selected.map((ev) => (
-              <li key={ev.id} className="flex min-w-0 items-baseline justify-between gap-3">
-                <p className="truncate text-[13px] font-medium leading-[1.5] text-text-strong">{ev.title}</p>
-                <p className="shrink-0 text-[12px] leading-[1.5] text-text-weak">
+              <li key={ev.id} className="flex min-w-0 items-baseline gap-2.5">
+                <p className="w-[132px] shrink-0 text-[12px] leading-[1.5] text-text-weak">
                   {fmtRange(ev.start, ev.end)}
-                  {ev.room ? ` · ${ev.room}` : ''}
+                </p>
+                <p className="min-w-0 truncate text-[13px] font-medium leading-[1.5] text-text-strong">
+                  {ev.title}
+                  {ev.room ? <span className="ml-1.5 font-normal text-text-weak">{ev.room}</span> : null}
                 </p>
               </li>
             ))}
