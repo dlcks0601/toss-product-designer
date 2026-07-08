@@ -77,8 +77,6 @@ export interface KindStyle {
   border: string;
   title: string;
   sub: string;
-  /** offsite 전용 — 은은한 사선 스트라이프 */
-  stripes?: string;
 }
 
 export const KIND_STYLE: Record<EventKind, KindStyle> = {
@@ -86,21 +84,14 @@ export const KIND_STYLE: Record<EventKind, KindStyle> = {
   focus: { bg: '#DFF4E7', border: '#BEE3CF', title: '#12A150', sub: '#5FC08D' },
   lunch: { bg: '#F2F4F6', border: 'rgba(229,232,235,0.6)', title: '#8B95A1', sub: '#B0B8C1' },
   personal: { bg: '#F1ECFE', border: '#DED3F8', title: '#7C4DFF', sub: '#A98BF0' },
-  offsite: {
-    bg: '#FEF0F1',
-    border: '#F3DBDB',
-    title: '#F04452',
-    sub: '#EE99A0',
-    stripes:
-      'repeating-linear-gradient(135deg, rgba(240,68,82,0.06) 0 4px, transparent 4px 9px)',
-  },
+  // 외근 — 패턴 없이 민무늬 분홍(색으로만 말한다).
+  offsite: { bg: '#FEF0F1', border: '#F3DBDB', title: '#F04452', sub: '#EE99A0' },
 };
 
 export function kindBoxStyle(kind: EventKind): CSSProperties {
   const st = KIND_STYLE[kind];
   return {
     backgroundColor: st.bg,
-    backgroundImage: st.stripes,
     borderColor: st.border,
   };
 }
@@ -117,7 +108,9 @@ export function styleFor(ev: CalendarEvent): KindStyle {
 // 그림자는 애니메이션 금지 원칙(성능)에 따라 after: 오버레이의 opacity로만 켠다.
 const GHOST_CARD =
   // isolate: after:-z-10 글로우가 조상 배경 뒤로 꺼지지 않게 버튼 자신을 스태킹 컨텍스트로.
-  'group relative isolate border-2 border-dashed border-[#DFF9FE] bg-transparent ' +
+  // 주의: 여기에 relative를 넣으면 데스크톱 고스트의 absolute와 충돌해 카드가 흐름 배치로
+  // 떨어진다(폭 쪼그라듦) — position은 사용처가 각자 정한다(데스크톱 absolute/모바일 relative).
+  'group isolate border-2 border-dashed border-[#DFF9FE] bg-transparent ' +
   'transition-[background-color,border-color] duration-200 hover:z-10 hover:border-transparent hover:bg-primary ' +
   'after:pointer-events-none after:absolute after:-inset-px after:-z-10 after:rounded-[inherit] ' +
   'after:shadow-[0_10px_32px_rgba(89,149,245,0.6)] after:opacity-0 after:transition-opacity after:duration-200 hover:after:opacity-100';
@@ -195,7 +188,7 @@ function MobileDayList({
         <button
           type="button"
           onClick={onOpenInvite}
-          className={`pressable w-full rounded-2xl px-4 py-3.5 text-left ${GHOST_CARD}`}
+          className={`pressable relative w-full rounded-2xl px-4 py-3.5 text-left ${GHOST_CARD}`}
         >
           <p className={`truncate text-[14px] font-semibold ${GHOST_TITLE_CLS}`}>{ghost.title}</p>
           <p className={`mt-0.5 text-[12px] ${GHOST_SUB_CLS}`}>{fmtRange(ghost.start, ghost.end)} · 응답 대기</p>
@@ -210,7 +203,7 @@ function MobileDayList({
 function MobileEventRow({ ev, badges }: { ev: CalendarEvent; badges?: Person[] | null }) {
   const st = styleFor(ev);
   return (
-    <div className="flex items-center gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: st.bg, backgroundImage: st.stripes }}>
+    <div className="flex items-center gap-3 rounded-2xl px-4 py-3.5" style={{ backgroundColor: st.bg }}>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[14px] font-semibold" style={{ color: st.title }}>
           {ev.title}
@@ -456,7 +449,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
                     <div
                       key={ev.id}
                       className="absolute inset-x-1.5 overflow-hidden rounded-xl px-3 py-2"
-                      style={{ top: `calc(${top}% + 3px)`, height: `calc(${height}% - 6px)`, backgroundColor: st.bg, backgroundImage: st.stripes }}
+                      style={{ top: `calc(${top}% + 3px)`, height: `calc(${height}% - 6px)`, backgroundColor: st.bg }}
                     >
                       <p className="truncate text-[13px] font-bold leading-[1.3]" style={{ color: st.title }}>
                         {ev.title}
