@@ -106,10 +106,11 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
           <ul className="space-y-3">
             {selected.map((ev) => (
               <li key={ev.id} className="flex min-w-0 gap-2.5">
+                {/* 솔리드 바는 같은 토큰도 텍스트보다 찐하게 보인다 — 서브 톤으로 팔레트와 결을 맞춘다. */}
                 <span
                   aria-hidden
                   className="w-[3px] shrink-0 self-stretch rounded-full"
-                  style={{ backgroundColor: KIND_STYLE[ev.kind].title }}
+                  style={{ backgroundColor: KIND_STYLE[ev.kind].sub }}
                 />
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-semibold leading-[1.4] text-text-strong">{ev.title}</p>
