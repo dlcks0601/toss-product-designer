@@ -11,7 +11,7 @@ import { eventsOn } from './HomeCalendar';
  * 프로필 피크('다' 안) — 헤더 없음. 참석자 행 아래 인라인(모바일)/행 옆 팝오버(데스크톱).
  *
  * 형식: 주간 스트립 + 탭한 날만 상세(progressive disclosure).
- *  - 스트립: 일정 있는 날은 요일·날짜 밑에 점 하나 — iOS 캘린더 문법. 외근 있는 날은 점이 붉다.
+ *  - 스트립: 요일·날짜 밑에 일정 개수만큼 점(최대 3) — 바쁨의 밀도. 외근 있는 날은 점이 붉다.
  *  - 탭하면 그 날의 일정만 제목/시간·미팅룸으로 펼친다(기본 = 첫날). 점심은 줄에서 빼고
  *    맨 아래 리듬 각주가 대신 말한다. 5일 전체 나열은 산만해서 버렸다.
  *
@@ -58,7 +58,7 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
 
   return (
     <div role="region" aria-label={`${person.name}님의 일정 미리보기`}>
-      {/* 주간 스트립 — 일정 있는 날은 날짜 밑 점 하나. 외근 있는 날은 붉은 점. */}
+      {/* 주간 스트립 — 날짜 밑 점 = 일정 개수(최대 3). 외근 있는 날은 붉은 점. */}
       <div className="flex gap-1">
         {days.map((day) => {
           const items = dayItems(person, day);
@@ -84,14 +84,15 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
               >
                 {Number(day.slice(8, 10))}
               </span>
-              {/* 일정이 있으면 점 하나 — 개수 셈 없이 '있다'만 속삭인다. 외근 날은 붉게. */}
-              <span aria-hidden className="flex h-1 items-center">
-                {items.length > 0 && (
+              {/* 점 = 일정 개수(최대 3) — 바쁨의 밀도가 한눈에 보인다. 외근 날은 붉게. */}
+              <span aria-hidden className="flex h-1 items-center gap-[3px]">
+                {Array.from({ length: Math.min(items.length, 3) }).map((_, i) => (
                   <span
+                    key={i}
                     className="h-1 w-1 rounded-full"
                     style={{ backgroundColor: hasOffsite ? '#EE99A0' : '#B0B8C1' }}
                   />
-                )}
+                ))}
               </span>
             </button>
           );
