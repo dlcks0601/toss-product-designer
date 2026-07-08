@@ -100,7 +100,7 @@ function BoxSelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={ariaLabel}
-        className="h-full w-full appearance-none bg-transparent text-[15px] font-medium text-text-strong outline-none"
+        className="h-full w-full appearance-none bg-transparent text-[16px] font-medium text-text-strong outline-none lg:text-[15px]"
       >
         {options.map((o) => (
           <option key={o.value} value={o.value}>

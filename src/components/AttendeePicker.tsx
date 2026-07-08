@@ -167,7 +167,7 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
               onChange={(e) => setQuery(e.target.value)}
               placeholder="이름이나 역할로 검색"
               aria-label="참석자 검색"
-              className="h-full w-full bg-transparent text-[15px] text-text-strong outline-none placeholder:text-text-faint"
+              className="h-full w-full bg-transparent text-[16px] text-text-strong outline-none placeholder:text-text-faint lg:text-[15px]"
             />
           </div>
         </div>
