@@ -353,7 +353,7 @@ export default function FindTimeMobile({ state, dispatch, candidates }: FindTime
         {/* 하단 frost — 추천 카드들이 반투명 너머로 흐릿하게 지나간다. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent"
         />
         <div className="relative mx-auto max-w-[560px]">
           {state.selectedSlotId !== null && state.selectedSlotId === state.confirmedSlotId ? (

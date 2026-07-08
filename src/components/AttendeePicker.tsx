@@ -299,7 +299,7 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
         <div className="relative -mt-9 px-5 pb-[max(16px,env(safe-area-inset-bottom))] pt-3.5 lg:pb-5">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-10 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+            className="pointer-events-none absolute inset-x-0 -top-10 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent"
           />
           <button
             type="button"

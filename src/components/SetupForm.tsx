@@ -523,7 +523,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         {/* 하단 frost — 접히는 폼이 반투명 너머로 흐릿하게 지나간다. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent"
         />
         <div className="relative mx-auto max-w-[520px]">{cta}</div>
       </div>

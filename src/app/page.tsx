@@ -248,7 +248,7 @@ function HomeScreen({
         {/* 하단 frost — 헤더의 미러: 스크롤 콘텐츠가 반투명 너머로 흐릿하게 지나간다(경계 없음). */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-white/60 backdrop-blur-lg [mask-image:linear-gradient(to_top,black_55%,transparent)]"
+          className="pointer-events-none absolute inset-x-0 -top-8 bottom-0 bg-gradient-to-t from-white via-white/85 to-transparent"
         />
         <button
           type="button"
