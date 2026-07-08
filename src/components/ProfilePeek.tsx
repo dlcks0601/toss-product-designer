@@ -11,7 +11,7 @@ import { eventsOn } from './HomeCalendar';
  * 프로필 피크('다' 안) — 헤더 없음. 참석자 행 아래 인라인(모바일)/행 옆 팝오버(데스크톱).
  *
  * 형식: 주간 스트립 + 탭한 날만 상세(progressive disclosure).
- *  - 스트립: 요일·날짜 밑에 일정 개수만큼 점(최대 3) — 바쁨의 밀도. 외근 있는 날은 점이 붉다.
+ *  - 스트립: 요일·날짜 밑에 일정 개수만큼 점(최대 3) — 바쁨의 밀도. 개수 따라 회색→연분홍→분홍.
  *  - 탭하면 그 날의 일정만 제목/시간·미팅룸으로 펼친다(기본 = 첫날). 점심은 줄에서 빼고
  *    맨 아래 리듬 각주가 대신 말한다. 5일 전체 나열은 산만해서 버렸다.
  *
@@ -58,12 +58,14 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
 
   return (
     <div role="region" aria-label={`${person.name}님의 일정 미리보기`}>
-      {/* 주간 스트립 — 날짜 밑 점 = 일정 개수(최대 3). 외근 있는 날은 붉은 점. */}
+      {/* 주간 스트립 — 날짜 밑 점 = 일정 개수(최대 3). 개수 따라 회색→연분홍→분홍. */}
       <div className="flex gap-1">
         {days.map((day) => {
           const items = dayItems(person, day);
           const isSel = day === selDay;
-          const hasOffsite = items.some((ev) => ev.kind === 'offsite');
+          // 색 = 바쁨의 밀도(범례 없이 읽힌다): 개수 따라 회색 → 연분홍 → 분홍으로 데워진다.
+          // 외근 여부는 색으로 숨기지 않는다 — 탭한 날 상세와 각주 문장이 글로 말한다.
+          const dotColor = items.length >= 3 ? '#EE8296' : items.length === 2 ? '#F4B8C1' : '#B0B8C1';
           return (
             <button
               key={day}
@@ -84,14 +86,10 @@ function PeekBody({ person, windowDays }: { person: Person; windowDays: string[]
               >
                 {Number(day.slice(8, 10))}
               </span>
-              {/* 점 = 일정 개수(최대 3) — 바쁨의 밀도가 한눈에 보인다. 외근 날은 붉게. */}
+              {/* 점 = 일정 개수(최대 3) — 바쁨의 밀도가 한눈에 보인다. */}
               <span aria-hidden className="flex h-1 items-center gap-[3px]">
                 {Array.from({ length: Math.min(items.length, 3) }).map((_, i) => (
-                  <span
-                    key={i}
-                    className="h-1 w-1 rounded-full"
-                    style={{ backgroundColor: hasOffsite ? '#EE99A0' : '#B0B8C1' }}
-                  />
+                  <span key={i} className="h-1 w-1 rounded-full" style={{ backgroundColor: dotColor }} />
                 ))}
               </span>
             </button>
