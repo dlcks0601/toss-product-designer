@@ -11,7 +11,7 @@
  */
 import type { DeadlineKind } from './types';
 
-export type UrlStep = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite';
+export type UrlStep = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite' | 'notifications';
 
 export interface UrlAttendee {
   id: string;
@@ -44,7 +44,7 @@ const DEFAULT_DEADLINE: DeadlineKind = 'next-week';
 const DEFAULT_STEP: UrlStep = 'home';
 
 const VALID_DURATIONS = new Set([30, 60, 90]);
-const VALID_STEPS = new Set<UrlStep>(['home', 'setup', 'find', 'confirm', 'done', 'invite']);
+const VALID_STEPS = new Set<UrlStep>(['home', 'setup', 'find', 'confirm', 'done', 'invite', 'notifications']);
 /** id·slot 안전 문자만 직렬화 — 구분자(`.` `,` `&`)와 충돌하는 값은 건너뛴다. */
 const SAFE = /^[A-Za-z0-9_-]+$/;
 

@@ -9,12 +9,12 @@ import { useIsDesktop } from '../app-state/useIsDesktop';
 import type { AppNotification } from '../lib/types';
 
 /**
- * 알림 벨 + 알림 센터 패널 — 헤더의 벨을 탭하면 데스크톱은 드롭다운,
- * 모바일은 바텀시트로 list(적립된 알림)를 펼친다. 여는 순간 onOpen(markAllRead 배선)
- * 이 1회 불려 안 읽음 도트가 사라진다. 비어 있으면 '알림이 없어요'.
- * 도트는 제자리 팝 스프링(500/18, 스케일 전용)으로 나타난다.
+ * 알림 벨 — 헤더의 벨을 탭하면 데스크톱은 제자리 드롭다운, 모바일은 알림 페이지
+ * (step 'notifications', onOpenPage 배선)로 이동한다. 여는 순간 onOpen(markAllRead)이
+ * 1회 불려 안 읽음 도트가 사라진다. 도트는 제자리 팝 스프링(500/18, 스케일 전용).
  * invite 종류 알림은 표시 전용이 아니라 입구다 — onSelectInvite가 있으면 행 전체가
- * 버튼(셰브런 표시)이 되어 탭 시 패널을 닫고 초대 화면(여정 B)으로 안내한다.
+ * 버튼(셰브런 표시)이 되어 탭 시 초대 화면(여정 B)으로 안내한다.
+ * NotificationList는 알림 페이지(page.tsx)와 공유한다.
  */
 
 // ── 순수 헬퍼(테스트 대상) ─────────────────────────────────────────
@@ -29,7 +29,7 @@ export function relativeTimeLabel(elapsedMs: number): string {
 
 // ── 패널 조각 ──────────────────────────────────────────────────────
 
-function NotificationList({
+export function NotificationList({
   list,
   now,
   onSelectInvite,
@@ -87,16 +87,18 @@ function NotificationList({
 // ── 본체 ───────────────────────────────────────────────────────────
 
 export interface NotificationBellProps {
-  /** 알림 센터 목록(적립분) — 패널이 그린다. */
+  /** 알림 센터 목록(적립분) — 데스크톱 드롭다운이 그린다. */
   list?: AppNotification[];
   unreadCount: number;
-  /** 패널이 열리는 순간 1회 — markAllRead 배선용. */
+  /** 패널/페이지가 열리는 순간 1회 — markAllRead 배선용. */
   onOpen?: () => void;
   /** invite 종류 알림을 탭했을 때 — 패널은 스스로 닫힌 뒤 호출한다(초대 화면 배선용). */
   onSelectInvite?: (n: AppNotification) => void;
+  /** 모바일에서 벨 탭 — 바텀시트 대신 알림 페이지로 이동한다(SET_STEP notifications 배선). */
+  onOpenPage?: () => void;
 }
 
-export default function NotificationBell({ list = [], unreadCount, onOpen, onSelectInvite }: NotificationBellProps) {
+export default function NotificationBell({ list = [], unreadCount, onOpen, onSelectInvite, onOpenPage }: NotificationBellProps) {
   const reduced = !!useReducedMotion();
   const desktop = useIsDesktop();
   const [open, setOpen] = useState(false);
@@ -110,6 +112,12 @@ export default function NotificationBell({ list = [], unreadCount, onOpen, onSel
     });
 
   const toggle = () => {
+    // 모바일은 제자리 패널 대신 알림 페이지로 — 바텀시트는 사파리 하단 바와 겹쳐 UX가 나빴다.
+    if (!desktop && onOpenPage) {
+      onOpen?.();
+      onOpenPage();
+      return;
+    }
     // 여는 순간 읽음 처리 — updater 함수 안이 아니라 이벤트 핸들러에서 호출한다
     // (updater는 렌더 중에 실행될 수 있어, 그 안의 markAllRead가 부모 setState를 렌더 중 유발한다).
     if (!open) onOpen?.();
@@ -152,9 +160,9 @@ export default function NotificationBell({ list = [], unreadCount, onOpen, onSel
       </button>
 
       <AnimatePresence>
-        {open && (
+        {open && desktop && (
           <>
-            {/* 바깥 탭으로 닫기 — 모바일은 딤, 데스크톱은 투명 오버레이 */}
+            {/* 바깥 탭으로 닫기 — 투명 오버레이 */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
@@ -163,44 +171,24 @@ export default function NotificationBell({ list = [], unreadCount, onOpen, onSel
               transition={{ duration: 0.2 }}
               onClick={() => setOpen(false)}
               aria-hidden
-              className={`fixed inset-0 z-[70] ${desktop ? '' : 'bg-[rgba(25,31,40,0.35)]'}`}
+              className="fixed inset-0 z-[70]"
             />
-            {desktop ? (
-              // 드롭다운 — 벨 아래 오른쪽 정렬
-              <motion.section
-                key="panel"
-                aria-label="알림 센터"
-                initial={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
-                animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
-                exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
-                transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 350, damping: 30 }}
-                style={{ transformOrigin: 'top right' }}
-                className="absolute right-0 top-12 z-[80] w-[340px] rounded-card bg-white p-3 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
-              >
-                <h2 className="px-2 pb-1.5 pt-1 text-[14px] font-bold text-text-strong">알림</h2>
-                <div className="max-h-[380px] overflow-y-auto">
-                  <NotificationList list={list} now={now} onSelectInvite={selectInvite} />
-                </div>
-              </motion.section>
-            ) : (
-              // 바텀시트 — 모바일
-              <motion.section
-                key="sheet"
-                aria-label="알림 센터"
-                initial={reduced ? { opacity: 0 } : { y: '100%' }}
-                animate={reduced ? { opacity: 1 } : { y: 0 }}
-                exit={reduced ? { opacity: 0 } : { y: '100%' }}
-                transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 350, damping: 32 }}
-                className="fixed inset-x-0 bottom-0 z-[80] rounded-t-[20px] bg-white px-4 pt-2 shadow-[0_-8px_32px_rgba(25,31,40,0.14)]"
-                style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}
-              >
-                <span aria-hidden className="mx-auto block h-1 w-9 rounded-full bg-border" />
-                <h2 className="px-2 pb-1 pt-3 text-[16px] font-bold text-text-strong">알림</h2>
-                <div className="max-h-[55dvh] overflow-y-auto">
-                  <NotificationList list={list} now={now} onSelectInvite={selectInvite} />
-                </div>
-              </motion.section>
-            )}
+            {/* 드롭다운 — 벨 아래 오른쪽 정렬 */}
+            <motion.section
+              key="panel"
+              aria-label="알림 센터"
+              initial={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
+              animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.98 }}
+              transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 350, damping: 30 }}
+              style={{ transformOrigin: 'top right' }}
+              className="absolute right-0 top-12 z-[80] w-[340px] rounded-card bg-white p-3 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
+            >
+              <h2 className="px-2 pb-1.5 pt-1 text-[14px] font-bold text-text-strong">알림</h2>
+              <div className="max-h-[380px] overflow-y-auto">
+                <NotificationList list={list} now={now} onSelectInvite={selectInvite} />
+              </div>
+            </motion.section>
           </>
         )}
       </AnimatePresence>

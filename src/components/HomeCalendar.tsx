@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type CSSProperties } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import Avatar from './Avatar';
 import type { CalendarEvent, EventKind, Person } from '../lib/types';
@@ -229,17 +229,29 @@ export interface HomeCalendarProps {
 }
 
 export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent, responseBadges }: HomeCalendarProps) {
+  const reduced = !!useReducedMotion();
   const [week, setWeek] = useState(0);
   const [selectedDay, setSelectedDay] = useState(TODAY);
+  // 주 넘김 방향(±1) — 전환 페이드가 이 방향으로 살짝 흐른다(다음 주 = 오른쪽에서 들어옴).
+  const [dir, setDir] = useState(1);
   const days = weekDays(week);
   const hours = Array.from({ length: (DAY_END - DAY_START) / 60 + 1 }, (_, i) => DAY_START / 60 + i);
 
   const goWeek = (delta: number) => {
     const next = clampWeek(week + delta);
     if (next === week) return;
+    setDir(delta > 0 ? 1 : -1);
     setWeek(next);
     // 주를 옮기면 모바일 선택일도 따라간다 — 현재 주로 돌아오면 오늘로.
     setSelectedDay(next === 0 ? TODAY : weekDays(next)[0]);
+  };
+
+  // 주 전환 페이드 — 페이지가 바뀌듯 이전 주가 사라지고 새 주가 들어온다(방향 인지, 모션은 설명).
+  const weekFade = {
+    initial: reduced ? { opacity: 1 } : { opacity: 0, x: 20 * dir },
+    animate: { opacity: 1, x: 0 },
+    exit: reduced ? { opacity: 1 } : { opacity: 0, x: -14 * dir },
+    transition: reduced ? { duration: 0 } : { duration: 0.18, ease: [0.4, 0, 0.2, 1] as const },
   };
 
   const [, month] = days[0].split('-');
@@ -292,6 +304,8 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
 
       {/* ── 데스크톱: 5열 주간 그리드 ── */}
       <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white px-2 ring-1 ring-border/70 lg:block">
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={week} {...weekFade}>
         {/* 요일 헤더 */}
         <div className="flex border-b border-border/70">
           <div className="w-[44px] shrink-0" aria-hidden />
@@ -387,10 +401,14 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           })}
           </div>
         </div>
+        </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* ── 모바일: 요일 칩 + 하루 목록 ── */}
       <div className="mt-2 lg:hidden">
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={week} {...weekFade}>
         <div className="grid grid-cols-5">
           {days.map((day, i) => {
             const selected = day === selectedDay;
@@ -422,12 +440,25 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           })}
         </div>
 
-        <MobileDayList
-          events={eventsOn(events, selectedDay)}
-          ghost={ghostOn(selectedDay)}
-          onOpenInvite={onOpenInvite}
-          responseBadges={responseBadges}
-        />
+        {/* 요일 탭 전환도 살짝 페이드 — 주 전환(바깥 키)보다 조용하게. */}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={selectedDay}
+            initial={reduced ? { opacity: 1 } : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={reduced ? { opacity: 1 } : { opacity: 0 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.1, ease: 'easeOut' }}
+          >
+            <MobileDayList
+              events={eventsOn(events, selectedDay)}
+              ghost={ghostOn(selectedDay)}
+              onOpenInvite={onOpenInvite}
+              responseBadges={responseBadges}
+            />
+          </motion.div>
+        </AnimatePresence>
+        </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );

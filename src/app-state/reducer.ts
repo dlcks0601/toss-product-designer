@@ -20,7 +20,7 @@ import { parseState, serializeState } from '../lib/urlState';
 import type { UrlAttendee } from '../lib/urlState';
 import { DEFAULT_CAST, INCOMING_INVITE, ME_ID } from '../data/world';
 
-export type Step = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite';
+export type Step = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite' | 'notifications';
 
 export interface AppState {
   step: Step;

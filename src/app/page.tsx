@@ -9,7 +9,8 @@ import FindTimeDesktop from '../components/FindTimeDesktop';
 import FindTimeMobile from '../components/FindTimeMobile';
 import HomeCalendar from '../components/HomeCalendar';
 import InviteView from '../components/InviteView';
-import NotificationBell from '../components/NotificationBell';
+import NotificationBell, { NotificationList } from '../components/NotificationBell';
+import { ChevronLeft } from 'lucide-react';
 import Reveal from '../components/Reveal';
 import ScanMoment from '../components/ScanMoment';
 import SetupForm from '../components/SetupForm';
@@ -149,6 +150,12 @@ export default function Page() {
         <ConfirmStep state={state} dispatch={dispatch} />
       ) : state.step === 'done' ? (
         <DoneStep state={state} dispatch={dispatch} />
+      ) : state.step === 'notifications' ? (
+        <NotificationsScreen
+          notifications={list}
+          onBack={() => dispatch({ type: 'SET_STEP', step: 'home' })}
+          onSelectInvite={() => dispatch({ type: 'SET_STEP', step: 'invite' })}
+        />
       ) : (
         <InviteView mode={inviteMode} state={state} dispatch={dispatch} onRespond={respondInvite} />
       )}
@@ -197,6 +204,7 @@ function HomeScreen({
               list={notifications}
               onOpen={onOpenNotifications}
               onSelectInvite={openInvite}
+              onOpenPage={() => dispatch({ type: 'SET_STEP', step: 'notifications' })}
             />
           </Reveal>
         </div>
@@ -279,3 +287,38 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
   );
 }
 
+
+// ── 알림 페이지 — 모바일에서 벨 탭 시 진입(바텀시트 대체). 토스 알림함처럼 풀페이지 리스트. ──
+
+function NotificationsScreen({
+  notifications,
+  onBack,
+  onSelectInvite,
+}: {
+  notifications: AppNotification[];
+  onBack: () => void;
+  onSelectInvite: (n: AppNotification) => void;
+}) {
+  return (
+    <main className="min-h-dvh bg-bg">
+      <div className="mx-auto max-w-[560px] px-4 pb-16 lg:px-0">
+        <Reveal as="header" className="flex h-14 items-center">
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="뒤로"
+            className="pressable -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-text-strong hover:bg-section"
+          >
+            <ChevronLeft size={22} aria-hidden />
+          </button>
+        </Reveal>
+        <Reveal delay={70}>
+          <h1 className="pb-3 pt-1 text-[22px] font-bold tracking-[-0.02em] text-text-strong">알림</h1>
+        </Reveal>
+        <Reveal delay={140}>
+          <NotificationList list={notifications} now={Date.now()} onSelectInvite={onSelectInvite} />
+        </Reveal>
+      </div>
+    </main>
+  );
+}
