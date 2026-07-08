@@ -10,8 +10,8 @@ import { fmtDayKorean } from '../lib/time';
  * 날짜 필드 — 리스트가 아니라 달력 그리드에서 고른다(홈 월간 피커와 같은 문법).
  * 모바일·데스크톱 모두 필드 아래 팝오버 — 날짜는 필드 곁에서 고르는 게 맥락에 맞고
  * (토스 메뉴 원칙: 누른 자리 가까이), 바텀시트는 여정을 끊는 과한 전환이라 쓰지 않는다.
- * 그리드는 컴팩트 정사각(셀 36px) — 화면을 넘치지 않게. 공간이 모자라면 페이지가
- * 딱 그만큼 부드럽게 따라 내려온다(시간 피커와 같은 동행 스크롤).
+ * 팝오버 폭 = 필드 폭(시간 피커와 같은 규칙), 셀 44px. 모바일은 공간이 모자라면
+ * 페이지가 딱 그만큼 부드럽게 따라 내려온다(동행 스크롤 — PC는 스플릿이라 불필요).
  */
 
 const WEEKDAY_HEADER = ['일', '월', '화', '수', '목', '금', '토'] as const;
@@ -139,9 +139,9 @@ export default function DateField({
             exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }}
             style={{ transformOrigin: 'top' }}
-            className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-[24px] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60 lg:inset-x-auto lg:left-0 lg:w-[340px]"
+            className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-[24px] bg-white p-5 shadow-[0_16px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
           >
-            {/* 홈 월간 피커(7월 탭)와 같은 규격 — 모바일은 폭만 필드에 정합 */}
+            {/* 팝오버 폭 = 필드 폭 — 시간 피커와 같은 규칙(열린 것이 연 것과 정렬된다). */}
             <div className="grid grid-cols-7 pb-2">
               {WEEKDAY_HEADER.map((d) => (
                 <span key={d} className="py-1 text-center text-[13px] text-text-faint">
@@ -149,7 +149,7 @@ export default function DateField({
                 </span>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-y-3.5 lg:gap-y-3">
+            <div className="grid grid-cols-7 gap-y-3.5">
               {buildMonthCells().map(({ day, inMonth }) => {
                 const enabled = inMonth && selectableSet.has(day);
                 const isSel = day === value;
@@ -161,7 +161,7 @@ export default function DateField({
                     disabled={!enabled}
                     aria-pressed={isSel}
                     onClick={() => pick(day)}
-                    className={`pressable relative mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] text-[16px] font-semibold lg:h-10 lg:w-10 lg:rounded-[13px] ${
+                    className={`pressable relative mx-auto flex h-11 w-11 items-center justify-center rounded-[14px] text-[16px] font-semibold ${
                       isSel
                         ? 'bg-primary text-white'
                         : enabled
