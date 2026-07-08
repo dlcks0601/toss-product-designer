@@ -347,8 +347,8 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
       </FrostedBar>
 
       <div className="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6 lg:pt-2">
-        {/* 데스크톱: 홈 캘린더 카드와 같은 폭(1200 컨테이너)의 흰 카드. 폼 콘텐츠는 640px 중앙 컬럼. */}
-        <div className="lg:rounded-[20px] lg:bg-white lg:pb-14 lg:pt-10 lg:ring-1 lg:ring-border/70">
+        {/* 데스크톱: 테두리·카드 없이 흰 페이지 위 640px 중앙 컬럼(토스 풀페이지 폼 문법). */}
+        <div className="lg:pt-4">
         <div className="lg:mx-auto lg:max-w-[640px] lg:px-4">
 
         <Reveal delay={70} className="pt-3">

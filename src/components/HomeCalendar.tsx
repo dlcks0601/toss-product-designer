@@ -395,7 +395,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
       </div>
 
       {/* ── 데스크톱: 5열 주간 그리드 ── */}
-      <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white px-2 ring-1 ring-border/70 lg:block">
+      <div className="mt-3 hidden overflow-hidden rounded-[20px] bg-white px-2 lg:block">
         <AnimatePresence mode="wait" initial={false}>
         <motion.div key={week} {...weekFade}>
         {/* 요일 헤더 */}
