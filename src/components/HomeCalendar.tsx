@@ -404,7 +404,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, onNewEvent,
           <button
             type="button"
             onClick={onNewEvent}
-            className="pressable hidden h-10 items-center gap-1.5 rounded-xl bg-primary pl-3.5 pr-4 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
+            className="pressable hidden h-10 items-center gap-1.5 rounded-2xl bg-primary pl-3.5 pr-4 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
           >
             <Plus size={16} strokeWidth={2.4} aria-hidden />새 일정 만들기
           </button>
