@@ -3,6 +3,7 @@
 import type { Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronLeft, Video } from 'lucide-react';
+import FrostedBar from './FrostedBar';
 import Badge from './Badge';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
@@ -237,18 +238,20 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
 
   return (
     <main className="min-h-dvh bg-bg pb-44">
-      <div className="mx-auto w-full max-w-[560px] px-4">
-        {/* 헤더 — 뒤로가기 → find */}
+      {/* 헤더 — 뒤로가기 → find. 상시 frost(전 화면 공통 문법). */}
+      <FrostedBar innerClassName="mx-auto w-full max-w-[560px] px-4">
         <Reveal as="header" className="-mx-1 flex h-14 items-center">
           <button
             type="button"
             onClick={() => dispatch({ type: 'SET_STEP', step: 'find' })}
-            className="pressable -ml-1 flex h-10 items-center gap-1 rounded-full pl-1.5 pr-3 text-[15px] font-semibold text-text-strong hover:bg-section"
+            aria-label="뒤로"
+            className="pressable -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-text-strong hover:bg-section"
           >
-            <ChevronLeft size={20} aria-hidden />
-            시간 찾기
+            <ChevronLeft size={22} aria-hidden />
           </button>
         </Reveal>
+      </FrostedBar>
+      <div className="mx-auto w-full max-w-[560px] px-4">
 
         {/* 타이틀 + 서브 */}
         <Reveal delay={70} className="pt-2">

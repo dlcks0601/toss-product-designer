@@ -3,6 +3,7 @@
 import { useState, type Dispatch } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronLeft, Eye } from 'lucide-react';
+import FrostedBar from './FrostedBar';
 import Avatar from './Avatar';
 import Reveal from './Reveal';
 import { REASON_TONE_CLASS, REASON_STAGGER_MS } from './ReasonCard';
@@ -212,17 +213,20 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
 
   return (
     <main className="min-h-dvh bg-bg pb-16">
-      <div className="mx-auto w-full max-w-[560px] px-4">
-        {/* 헤더 — ← 은 home 고정(binding 1) */}
+      {/* 헤더 — ← 은 home 고정(binding 1). 상시 frost(전 화면 공통 문법). */}
+      <FrostedBar innerClassName="mx-auto w-full max-w-[560px] px-4">
         <Reveal as="header" className="-mx-1 flex h-14 items-center">
           <button
             type="button"
             onClick={goHome}
-            className="pressable -ml-1 flex h-10 items-center gap-1 rounded-full pl-1.5 pr-3 text-[15px] font-semibold text-text-strong hover:bg-section"
+            aria-label="홈으로"
+            className="pressable -ml-2 flex h-10 w-10 items-center justify-center rounded-full text-text-strong hover:bg-section"
           >
-            <ChevronLeft size={20} aria-hidden />홈
+            <ChevronLeft size={22} aria-hidden />
           </button>
         </Reveal>
+      </FrostedBar>
+      <div className="mx-auto w-full max-w-[560px] px-4">
 
         {/* 관점 배너 — preview 전용(grey100) */}
         {isPreview && viewerName && (
