@@ -348,7 +348,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
 
       <div className="mx-auto max-w-[520px] px-4 lg:max-w-[1200px] lg:px-6 lg:pt-2">
         {/* 데스크톱: 테두리·카드 없이 흰 페이지 위 640px 중앙 컬럼(토스 풀페이지 폼 문법). */}
-        <div className="lg:pt-4">
+        <div>
         <div className="lg:mx-auto lg:max-w-[640px] lg:px-4">
 
         <Reveal delay={70} className="pt-3">
