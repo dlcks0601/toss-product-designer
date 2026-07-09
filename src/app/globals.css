@@ -106,15 +106,41 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
 
 /* ── 스캔 모먼트 — 라이트 무대. 파스텔 블롭 표류(수렴 없음) + 활성 도트 헤일로 숨쉬기 +
    타이틀 시머(왼→오, 저대비 밴드) + 레일 필 차오름. 재생 게이트는 find 화면이 소유. ── */
-.scan-blob-a { animation: scan-drift-a 8s ease-in-out infinite alternate; }
-.scan-blob-b { animation: scan-drift-b 10s ease-in-out infinite alternate; }
-.scan-blob-c { animation: scan-drift-c 9s ease-in-out infinite alternate; }
-.scan-blob-d { animation: scan-drift-d 11s ease-in-out infinite alternate; }
-/* 이동량은 자기 크기 기준(%) — 블롭이 뷰포트 스케일이라 px보다 %가 몸집에 맞는 보폭. */
-@keyframes scan-drift-a { to { transform: translate(18%, 14%) scale(1.18); } }
-@keyframes scan-drift-b { to { transform: translate(-16%, 15%) scale(1.1); } }
-@keyframes scan-drift-c { to { transform: translate(20%, -12%) scale(1.14); } }
-@keyframes scan-drift-d { to { transform: translate(-18%, -14%) scale(1.2); } }
+/* 당구공 궤도 — 각 원이 화면을 가로지르다 벽에 팅기며 꺾인다(linear = 등속 직선,
+   웨이포인트에서의 급꺾임이 '팅'). 네 원의 주기가 달라 같은 장면이 반복되지 않는다.
+   이동량은 뷰포트 기준(vw/vh) — 코너 앵커에서 출발해 반대편까지 크게 떠돈다. */
+.scan-blob-a { animation: scan-bounce-a 22s linear infinite; }
+.scan-blob-b { animation: scan-bounce-b 27s linear infinite; }
+.scan-blob-c { animation: scan-bounce-c 24s linear infinite; }
+.scan-blob-d { animation: scan-bounce-d 30s linear infinite; }
+@keyframes scan-bounce-a {
+  0% { transform: translate(0, 0); }
+  26% { transform: translate(48vw, 6vh); }
+  52% { transform: translate(10vw, 42vh); }
+  76% { transform: translate(55vw, 34vh); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes scan-bounce-b {
+  0% { transform: translate(0, 0); }
+  28% { transform: translate(-50vw, 12vh); }
+  55% { transform: translate(-8vw, 46vh); }
+  78% { transform: translate(-42vw, 28vh); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes scan-bounce-c {
+  0% { transform: translate(0, 0); }
+  30% { transform: translate(45vw, -10vh); }
+  58% { transform: translate(8vw, -44vh); }
+  80% { transform: translate(50vw, -30vh); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes scan-bounce-d {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-46vw, -8vh); }
+  50% { transform: translate(-12vw, -40vh); }
+  75% { transform: translate(-52vw, -24vh); }
+  100% { transform: translate(0, 0); }
+}
 
 .scan-halo { animation: scan-breathe 2.2s ease-in-out infinite alternate; }
 @keyframes scan-breathe {
