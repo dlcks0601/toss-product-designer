@@ -386,7 +386,8 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
         </div>
         <div className="relative mx-auto max-w-[1200px] px-6 py-4">
-          <header className="flex items-center">
+          {/* h-10 — 홈 헤더 줄(우측 버튼 36px 때문에 40px)과 로고 세로 위치를 맞춘다. */}
+          <header className="flex h-10 items-center">
             <Wordmark />
           </header>
         </div>

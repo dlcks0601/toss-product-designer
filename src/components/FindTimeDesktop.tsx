@@ -136,7 +136,8 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
         </div>
         <div className="relative mx-auto w-full max-w-[1200px] px-6 py-4">
-          <header className="flex items-center">
+          {/* h-10 — 홈 헤더 줄과 로고 세로 위치를 맞춘다(셋업과 동일 규칙). */}
+          <header className="flex h-10 items-center">
             <Wordmark />
           </header>
         </div>
