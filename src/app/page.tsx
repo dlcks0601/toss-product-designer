@@ -210,11 +210,12 @@ function HomeScreen({
           <Reveal as="header" className="flex items-center justify-between">
             <Wordmark />
             <div className="flex items-center gap-2">
-              {/* 데스크톱 CTA — frosted sticky 헤더 소속이라 스크롤을 따라오면서 콘텐츠를 가리지 않는다. */}
+              {/* 데스크톱 CTA — frosted sticky 헤더 소속이라 스크롤을 따라오면서 콘텐츠를 가리지 않는다.
+                  규격은 toss.tech 구독하기 버튼 실측(radius 10 · 15/600 · px 12)을 한 사이즈 줄인 것. */}
               <button
                 type="button"
                 onClick={openSetup}
-                className="pressable hidden h-9 items-center rounded-lg bg-primary px-3.5 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
+                className="pressable hidden h-9 items-center rounded-[10px] bg-primary px-3 text-[14px] font-semibold text-white hover:bg-primary-pressed lg:inline-flex"
               >
                 일정 만들기
               </button>
