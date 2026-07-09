@@ -28,13 +28,14 @@ export interface ScanMomentProps {
   onDone: () => void;
 }
 
-/** 배경 블롭 — 위치·크기·색·궤도(globals의 scan-drift-*). 파스텔 4색 = 일정 종류색의 밝은 톤.
- *  크기는 뷰포트 스케일(vmax) — 네 장이 겹치며 화면 전체에 색이 차고, 가운데는 섞인 워시가 된다. */
+/** 배경 블롭 — 위치·크기·색·궤도(globals의 scan-drift-*). 하늘·라벤더·분홍·버터 파스텔 4색.
+ *  각 색이 코너 하나씩을 소유하고 이음새에서만 섞인다 — 전부 겹치면 색이 죽는다(머디 워시 금지).
+ *  가운데는 가장 밝게 남아 검정 헤드라인의 자리가 된다. */
 const BLOBS = [
-  'scan-blob-a left-[-18%] top-[-28%] h-[68vmax] w-[68vmax] bg-[#A8DCFF] opacity-50',
-  'scan-blob-b right-[-20%] top-[-18%] h-[60vmax] w-[60vmax] bg-[#CDBEFF] opacity-50',
-  'scan-blob-c bottom-[-30%] left-[4%] h-[64vmax] w-[64vmax] bg-[#B2E8CB] opacity-45',
-  'scan-blob-d bottom-[-26%] right-[-14%] h-[56vmax] w-[56vmax] bg-[#FFDFAF] opacity-40',
+  'scan-blob-a left-[-12%] top-[-18%] h-[52vmax] w-[52vmax] bg-[#A8DCFF] opacity-60',
+  'scan-blob-b right-[-10%] top-[-16%] h-[46vmax] w-[46vmax] bg-[#D3C4FF] opacity-55',
+  'scan-blob-c bottom-[-22%] left-[-12%] h-[48vmax] w-[48vmax] bg-[#FFD1DF] opacity-55',
+  'scan-blob-d bottom-[-24%] right-[-12%] h-[50vmax] w-[50vmax] bg-[#FFE9B5] opacity-55',
 ];
 
 export default function ScanMoment({ attendees, duration, onDone }: ScanMomentProps) {
@@ -67,7 +68,7 @@ export default function ScanMoment({ attendees, duration, onDone }: ScanMomentPr
         {/* 배경 — 파스텔 블롭 표류(은은하게, 각자 제 궤도로) */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
           {BLOBS.map((cls) => (
-            <span key={cls} className={`absolute rounded-full blur-[70px] ${cls}`} />
+            <span key={cls} className={`absolute rounded-full blur-[60px] ${cls}`} />
           ))}
         </div>
 
