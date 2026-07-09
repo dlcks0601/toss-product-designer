@@ -3,8 +3,10 @@
 import { useCallback, useMemo, useRef, useState, type Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { ChevronLeft, X } from 'lucide-react';
+import Aurora from './Aurora';
 import Avatar from './Avatar';
 import Chip from './Chip';
+import Wordmark from './Wordmark';
 import DecisionMoment, { decisionKey, pickAction } from './DecisionMoment';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
@@ -127,6 +129,18 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden">
+      {/* 데스크톱 헤더 — 셋업·홈과 같은 오로라·워드마크. 스텝이 바뀌어도 페이지 틀은 유지된다. */}
+      <div className="relative shrink-0">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <Aurora variant="home" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
+        </div>
+        <div className="relative mx-auto w-full max-w-[1200px] px-6 py-4">
+          <header className="flex items-center">
+            <Wordmark />
+          </header>
+        </div>
+      </div>
       <div className="mx-auto flex w-full max-w-[1200px] flex-1 flex-col overflow-hidden px-6">
         {/* 헤더 — 뒤로가기 → 셋업 */}
         <Reveal as="header" className="flex h-14 shrink-0 items-center">
