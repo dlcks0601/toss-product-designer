@@ -110,11 +110,13 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
 .scan-blob-b { animation: scan-drift-b 10s ease-in-out infinite alternate; }
 .scan-blob-c { animation: scan-drift-c 9s ease-in-out infinite alternate; }
 .scan-blob-d { animation: scan-drift-d 11s ease-in-out infinite alternate; }
+.scan-blob-e { animation: scan-drift-e 12s ease-in-out infinite alternate; }
 /* 이동량은 자기 크기 기준(%) — 블롭이 뷰포트 스케일이라 px보다 %가 몸집에 맞는 보폭. */
 @keyframes scan-drift-a { to { transform: translate(18%, 14%) scale(1.18); } }
 @keyframes scan-drift-b { to { transform: translate(-16%, 15%) scale(1.1); } }
 @keyframes scan-drift-c { to { transform: translate(20%, -12%) scale(1.14); } }
 @keyframes scan-drift-d { to { transform: translate(-18%, -14%) scale(1.2); } }
+@keyframes scan-drift-e { to { transform: translate(-10%, 8%) scale(1.12); } }
 
 .scan-halo { animation: scan-breathe 2.2s ease-in-out infinite alternate; }
 @keyframes scan-breathe {
@@ -142,6 +144,6 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
   .aurora-l1, .aurora-l2, .aurora-l3, .aurora-l4 { animation: none; }
   .reveal { animation: none; }
   .iridescent { animation: none; }
-  .scan-blob-a, .scan-blob-b, .scan-blob-c, .scan-blob-d, .scan-halo { animation: none; }
+  .scan-blob-a, .scan-blob-b, .scan-blob-c, .scan-blob-d, .scan-blob-e, .scan-halo { animation: none; }
   .scan-title-sheen { animation: none; }
 }

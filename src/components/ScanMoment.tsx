@@ -36,6 +36,8 @@ const BLOBS = [
   'scan-blob-b right-[-10%] top-[-16%] h-[46vmax] w-[46vmax] bg-[#D3C4FF] opacity-55',
   'scan-blob-c bottom-[-22%] left-[-12%] h-[48vmax] w-[48vmax] bg-[#FFD1DF] opacity-55',
   'scan-blob-d bottom-[-24%] right-[-12%] h-[50vmax] w-[50vmax] bg-[#FFE9B5] opacity-55',
+  // 가운데 — 코너 색들의 다리(연한 페리윙클). 헤드라인 가독을 지키는 가장 옅은 톤.
+  'scan-blob-e left-[18%] top-[22%] h-[55vmax] w-[55vmax] bg-[#CFE0FF] opacity-45',
 ];
 
 export default function ScanMoment({ attendees, duration, onDone }: ScanMomentProps) {
