@@ -283,7 +283,8 @@ export default function WeekCanvas({
   };
 
   return (
-    <section aria-label="주간 캔버스" className="flex h-full flex-col rounded-[20px] bg-white ring-1 ring-border/70">
+    /* 프레임 테두리 없음 — 홈 캘린더와 같은 언어. 내부 헤어라인만 구조를 만든다. */
+    <section aria-label="주간 캔버스" className="flex h-full flex-col rounded-[20px] bg-white">
       {/* 요일 헤더 */}
       <div className="flex border-b border-border/70">
         <div className="w-[52px] shrink-0" aria-hidden />

@@ -190,7 +190,8 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
         <div className="flex min-h-0 flex-1 gap-5 pb-6">
           {/* ── 좌: 조건 패널(240 고정) — 바꾸면 캔버스·레일이 동시에 다시 선다 ── */}
           <Reveal delay={140} as="aside" className="w-[240px] shrink-0 overflow-y-auto">
-            <div className="rounded-[20px] bg-white p-4 ring-1 ring-border/70">
+            {/* 카드 상자 없이 흰 페이지 위 그대로 — 셋업·홈과 같은 테두리 없는 언어. */}
+            <div>
               <p className="text-[12px] font-semibold text-text-weak">회의 길이</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {DURATION_OPTIONS.map((o) => (
@@ -280,8 +281,8 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
             </p>
           </Reveal>
 
-          {/* ── 우: 이유 카드 레일(340 고정) + 하단 CTA ── */}
-          <Reveal delay={280} as="aside" className="flex w-[340px] shrink-0 flex-col">
+          {/* ── 우: 이유 카드 레일(300 고정) + 하단 CTA — 캔버스가 주인공, 레일은 곁. ── */}
+          <Reveal delay={280} as="aside" className="flex w-[300px] shrink-0 flex-col">
             {slots.length > 0 && (
               <p className="shrink-0 pb-2 text-[13px] font-semibold text-text-weak">추천 순이에요</p>
             )}

@@ -49,9 +49,9 @@ export function summaryLine(slot: Pick<CandidateSlot, 'reasons'>, requiredCount:
   return summarizeSlot(slot.reasons, requiredCount);
 }
 
-/** tone → 칩 클래스 — positive 흰바탕 grey border / tradeoff 파랑 tint / warning warn-bg. */
+/** tone → 칩 클래스 — positive grey100 / tradeoff 파랑 tint / warning warn-bg(테두리 없는 언어). */
 export const REASON_TONE_CLASS: Record<ReasonTone, string> = {
-  positive: 'bg-white text-text-body ring-1 ring-border',
+  positive: 'bg-section text-text-body',
   tradeoff: 'bg-primary-tint text-primary',
   warning: 'bg-warn-bg text-warn-fg',
 };
@@ -61,12 +61,12 @@ export const REASON_STAGGER_MS = 40;
 
 // ── Compound 조각 ──────────────────────────────────────────────────
 
-/** 카드 프레임 — 흰 카드, 확장(=지금 보고 있는 후보)이면 파랑 링으로 살짝 든다. */
+/** 카드 프레임 — 그림자만으로 뜨는 흰 카드(테두리 없음). 확장이면 파랑 링(기능적 표시)만. */
 function Frame({ expanded, children }: { expanded?: boolean; children: ReactNode }) {
   return (
     <article
-      className={`overflow-hidden rounded-card bg-white shadow-[0_2px_12px_rgba(25,31,40,0.05)] transition-shadow ${
-        expanded ? 'ring-[1.5px] ring-primary/60' : 'ring-1 ring-border/70'
+      className={`overflow-hidden rounded-card bg-white shadow-[0_2px_12px_rgba(25,31,40,0.07)] transition-shadow ${
+        expanded ? 'ring-[1.5px] ring-primary/60' : ''
       }`}
     >
       {children}

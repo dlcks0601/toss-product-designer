@@ -75,8 +75,9 @@ export default function DecisionMoment({ suggestions, bottleneck, mode, deadline
     mode === 'empty' ? `${WINDOW_LABEL[deadline]}까지는 모두가 편한 시간이 없어요` : '가능한 시간이 전부 아쉬워요';
 
   return (
-    <Reveal as="section" className="rounded-card border border-[#FFE082] bg-warn-bg p-5">
-      <h2 className="text-[16px] font-bold leading-[1.4] tracking-[-0.01em] text-text-strong">{title}</h2>
+    /* warn 틴트만으로 선다 — 테두리 없는 언어(홈·셋업과 동일). */
+    <Reveal as="section" className="rounded-card bg-warn-bg p-4">
+      <h2 className="text-[15px] font-bold leading-[1.4] tracking-[-0.01em] text-text-strong">{title}</h2>
       {bottleneck && (
         <p className="mt-1 text-[13px] leading-[1.5] text-text-body">
           {bottleneck.name}님의 {bottleneck.eventTitle}
@@ -95,10 +96,10 @@ export default function DecisionMoment({ suggestions, bottleneck, mode, deadline
               <button
                 type="button"
                 onClick={() => onPick(s)}
-                className="pressable flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left ring-1 ring-[#FFE082]/70"
+                className="pressable flex w-full items-center gap-3 rounded-xl bg-white px-3.5 py-2.5 text-left"
               >
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold leading-[1.4] text-text-strong">{s.label}</span>
+                  <span className="block text-[13px] font-semibold leading-[1.4] text-text-strong">{s.label}</span>
                   <span className="mt-0.5 block text-[12px] leading-[1.4] text-text-weak">{s.resultSummary}</span>
                 </span>
                 <ChevronRight size={16} aria-hidden className="shrink-0 text-text-faint" />
