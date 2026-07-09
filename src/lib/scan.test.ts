@@ -1,120 +1,63 @@
 import { describe, it, expect } from 'vitest';
-import {
-  SCAN_HOLD_MS,
-  SCAN_MAX_INTERVAL_MS,
-  SCAN_MIN_INTERVAL_MS,
-  SCAN_START_MS,
-  buildScanSteps,
-  finalScanLine,
-  scanIntervalMs,
-  scanTimeline,
-} from './scan';
-import type { PersonInsights } from './types';
+import { SCAN_FINALE_MS, SCAN_STEP_MS, finalScanLine, scanSteps, scanTimeline } from './scan';
 
-const insightOf = (id: string): PersonInsights => ({
-  offsiteWeekdays: [],
-  recurring: [],
-  lunchRhythm: null,
-  headline: null,
-  scanLine: `${id}님의 일정을 확인했어요`,
-});
-const people = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `p${i}` }));
-const insightsFor = (ids: { id: string }[]) =>
-  Object.fromEntries(ids.map((a) => [a.id, insightOf(a.id)]));
-
-describe('scanIntervalMs — 인원수 → 점등 간격', () => {
-  it('6인 이하는 최대 간격 200ms(음악적 리듬)', () => {
-    expect(scanIntervalMs(1)).toBe(200);
-    expect(scanIntervalMs(6)).toBe(200);
+describe('scanSteps — 3스텝 고정 카피', () => {
+  it('스텝은 항상 3개: 읽기 → 피하기 → 고르기', () => {
+    expect(scanSteps(6).map((s) => s.title)).toEqual([
+      '캘린더 읽는 중',
+      '바쁜 시간 피하는 중',
+      '좋은 시간 고르는 중',
+    ]);
   });
 
-  it('예산(1200ms)을 인원수로 나눈다 — 8인 → 150ms', () => {
-    expect(scanIntervalMs(8)).toBe(150);
+  it('첫 스텝 설명에만 인원수가 실린다', () => {
+    const steps = scanSteps(6);
+    expect(steps[0].desc).toBe('6명의 다음 주를 펼쳐 보고 있어요');
+    expect(steps[1].desc).toBe('점심 리듬과 외근, 휴가까지 살펴요');
+    expect(steps[2].desc).toBe('모두에게 편한 순서로 줄을 세워요');
+    expect(scanSteps(3)[0].desc).toBe('3명의 다음 주를 펼쳐 보고 있어요');
   });
 
-  it('최소 120ms 아래로는 내려가지 않는다', () => {
-    expect(scanIntervalMs(10)).toBe(120);
-    expect(scanIntervalMs(20)).toBe(SCAN_MIN_INTERVAL_MS);
-  });
-
-  it('0 이하 인원은 최대 간격으로 방어', () => {
-    expect(scanIntervalMs(0)).toBe(SCAN_MAX_INTERVAL_MS);
+  it("카피 계약 — '모두를 생각한' 류의 수사를 쓰지 않는다", () => {
+    const all = scanSteps(6)
+      .flatMap((s) => [s.title, s.desc])
+      .join(' ');
+    expect(all).not.toContain('모두를 생각한');
   });
 });
 
-describe('buildScanSteps — 순서·문장·압축', () => {
-  it('6인 이하: 전원 개별 scanLine, 참석자 순서 유지', () => {
-    const cast = people(6);
-    const steps = buildScanSteps(cast, insightsFor(cast));
-    expect(steps.map((s) => s.id)).toEqual(['p0', 'p1', 'p2', 'p3', 'p4', 'p5']);
-    expect(steps.map((s) => s.line)).toEqual(cast.map((p) => `${p.id}님의 일정을 확인했어요`));
+describe('scanTimeline — 스텝 박자와 종료 시각', () => {
+  it('스텝은 1.9초 간격으로 내려간다(첫 스텝은 0)', () => {
+    expect(scanTimeline(3).stepAt).toEqual([0, SCAN_STEP_MS, SCAN_STEP_MS * 2]);
   });
 
-  it('6인 초과: 앞 5명 개별 + 나머지는 요약 한 줄로 압축(아바타 스텝 수는 전원 유지)', () => {
-    const cast = people(8);
-    const steps = buildScanSteps(cast, insightsFor(cast));
-    expect(steps).toHaveLength(8);
-    expect(steps.slice(0, 5).map((s) => s.line)).toEqual(
-      ['p0', 'p1', 'p2', 'p3', 'p4'].map((id) => `${id}님의 일정을 확인했어요`),
-    );
-    expect(steps.slice(5).map((s) => s.line)).toEqual(
-      Array(3).fill('나머지 3명의 일정도 확인했어요'),
-    );
+  it('마무리 문장은 마지막 스텝이 끝나는 순간, onDone은 그 한 박자 뒤', () => {
+    const t = scanTimeline(3);
+    expect(t.finaleAt).toBe(SCAN_STEP_MS * 3);
+    expect(t.doneAt).toBe(SCAN_STEP_MS * 3 + SCAN_FINALE_MS);
   });
 
-  it('경계 6인은 압축하지 않는다', () => {
-    const cast = people(6);
-    const steps = buildScanSteps(cast, insightsFor(cast));
-    expect(steps[5].line).toBe('p5님의 일정을 확인했어요');
+  it('3스텝 기준 총 7.0초 — 컨셉 모먼트의 허용 창(6~8초) 안', () => {
+    const t = scanTimeline(3);
+    expect(t.doneAt).toBe(7000);
+    expect(t.doneAt).toBeGreaterThanOrEqual(6000);
+    expect(t.doneAt).toBeLessThanOrEqual(8000);
   });
 
-  it('insights에 없는 id는 빈 문장으로 방어(크래시 없음)', () => {
-    const steps = buildScanSteps([{ id: 'ghost' }], {});
-    expect(steps).toEqual([{ id: 'ghost', line: '' }]);
+  it('0스텝 방어 — 즉시 마무리 비트로', () => {
+    const t = scanTimeline(0);
+    expect(t.stepAt).toEqual([]);
+    expect(t.finaleAt).toBe(0);
+    expect(t.doneAt).toBe(SCAN_FINALE_MS);
   });
 });
 
-describe('finalScanLine — 회의 길이 반영', () => {
-  it('60분(기본 여정) → 바인딩 문장 그대로', () => {
+describe('finalScanLine — 회의 길이에 맞춘 마무리 문장', () => {
+  it('60분(기본 여정) → 1시간', () => {
     expect(finalScanLine(60)).toBe('모두 가능한 1시간을 찾았어요');
   });
   it('30분 / 90분도 길이에 맞는 문장', () => {
     expect(finalScanLine(30)).toBe('모두 가능한 30분을 찾았어요');
     expect(finalScanLine(90)).toBe('모두 가능한 1시간 30분을 찾았어요');
-  });
-});
-
-describe('scanTimeline — 전체 안무', () => {
-  it('기본 캐스트 6인: 점등 120·320·…·1120, 마무리 1320, 완료 1770(1.2~1.8s 창 안)', () => {
-    const t = scanTimeline(6);
-    expect(t.intervalMs).toBe(200);
-    expect(t.lightAt).toEqual([120, 320, 520, 720, 920, 1120]);
-    expect(t.finaleAt).toBe(1320);
-    expect(t.doneAt).toBe(1770);
-    expect(t.doneAt).toBeGreaterThanOrEqual(1200);
-    expect(t.doneAt).toBeLessThanOrEqual(1800);
-  });
-
-  it('점등 시각은 단조 증가하고 마무리는 마지막 점등에서 한 박자 뒤', () => {
-    for (const n of [2, 6, 8, 12]) {
-      const t = scanTimeline(n);
-      for (let i = 1; i < t.lightAt.length; i += 1) {
-        expect(t.lightAt[i] - t.lightAt[i - 1]).toBe(t.intervalMs);
-      }
-      expect(t.finaleAt).toBe(t.lightAt[n - 1] + t.intervalMs);
-      expect(t.doneAt).toBe(t.finaleAt + SCAN_HOLD_MS);
-    }
-  });
-
-  it('인원이 많아도 점등 총량은 예산 근처를 유지한다(간격 압축, 최소 120ms)', () => {
-    const t = scanTimeline(10);
-    expect(t.intervalMs).toBe(120);
-    expect(t.finaleAt - SCAN_START_MS).toBe(10 * 120); // = 예산(1200ms) 그대로
-  });
-
-  it('0인 방어 — 점등 없이 정착 후 바로 마무리', () => {
-    const t = scanTimeline(0);
-    expect(t.lightAt).toEqual([]);
-    expect(t.finaleAt).toBe(SCAN_START_MS);
   });
 });

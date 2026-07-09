@@ -268,11 +268,10 @@ function HomeScreen({
 
 /**
  * '시간 찾아보기' 착지 화면. `!scanPlayed`면 스캔 모먼트를 먼저 재생하고(뒤 콘텐츠는
- * 렌더하지 않는다 — 빈 배경 위 카드 하나), onDone에서 PLAY_SCAN → 추천 화면 리빌.
+ * 렌더하지 않는다 — 라이트 풀블리드 무대), onDone에서 PLAY_SCAN → 추천 화면 리빌.
  * scanPlayed=true면 즉시 콘텐츠 — 조건 변경·재진입 어느 경로로도 스캔은 재등장하지 않는다.
  * reduced-motion: 연출 전체 생략 — 즉시 PLAY_SCAN + aria-live polite 1회 공지.
- * 후보 파생(useCandidates)은 여기서 한 번만 — 모바일(lg 미만)·데스크톱(lg 이상)이 공유하고,
- * 스캔 문장(scanLine)도 같은 attendees·insights 실출력을 쓴다(하드코딩 금지 계약).
+ * 후보 파생(useCandidates)은 여기서 한 번만 — 모바일(lg 미만)·데스크톱(lg 이상)이 공유한다.
  */
 function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<Action> }) {
   const reduced = !!useReducedMotion();
@@ -292,15 +291,12 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
   return (
     <main className="min-h-dvh bg-bg">
       {scanning ? (
-        /* 무대 배치 — 모바일: 풀스크린 다크(카드가 곧 화면), 데스크톱: 뷰포트 세로 중앙의 카드 */
-        <div className="flex min-h-dvh items-center justify-center lg:px-4">
-          <ScanMoment
-            attendees={candidates.attendees}
-            insights={candidates.insights}
-            duration={state.duration}
-            onDone={() => dispatch({ type: 'PLAY_SCAN' })}
-          />
-        </div>
+        /* 라이트 풀블리드 무대 — ScanMoment가 뷰포트 전체를 소유한다(모바일·PC 동일 문법). */
+        <ScanMoment
+          attendees={candidates.attendees}
+          duration={state.duration}
+          onDone={() => dispatch({ type: 'PLAY_SCAN' })}
+        />
       ) : isDesktop ? (
         <FindTimeDesktop state={state} dispatch={dispatch} candidates={candidates} />
       ) : (

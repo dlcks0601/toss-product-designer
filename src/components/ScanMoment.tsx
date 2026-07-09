@@ -2,21 +2,20 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import Aurora from './Aurora';
-import Avatar from './Avatar';
 import Reveal from './Reveal';
-import { buildScanSteps, finalScanLine, scanTimeline } from '../lib/scan';
-import type { Person, PersonInsights } from '../lib/types';
+import { SCAN_STEP_MS, finalScanLine, scanSteps, scanTimeline } from '../lib/scan';
+import type { Person } from '../lib/types';
 
 /**
- * 스캔 모먼트 — '시간 찾아보기' 직후 딱 1회(~1.2초대). 시스템이 참석자들의 캘린더를
- * 실제로 읽는 과정을 보여준다. 장식이 아니라 설명이다: "추천은 사람들의 사정을 읽은 결과".
+ * 스캔 모먼트 — '시간 찾아보기' 직후 딱 1회(~7초). 해외송금 진행 화면의 문법으로:
+ * 라이트 무대 + 세로 3스텝 타임라인. "지금 일하는 자리만 빛이 산다."
  *
- * 무대: 다크 카드(#191F28, r20) 위 오로라 'scan'을 저투명 오버레이로 —
- * 지능의 순간에만 허용되는 딥 컨텍스트. 시퀀스는 scan.ts 타임라인이 소유한다:
- * 타이틀 고정 → 아바타 순차 점등(opacity .25→1 + 흰 글로우 링) → 점등과 동기화된
- * scanLine 크로스페이드(전부 insights 실출력 — 하드코딩 금지) → 진행 바(3px, 파랑
- * 그라데이션, 박자 동기) → 마무리 문장(흰색 semibold) → HOLD 후 onDone.
+ * - 활성 도트: 작은 파란 점 + 옅은 헤일로가 숨 쉰다(회전·플레어·구면 음영 금지 — 평평한 빛만).
+ * - 활성 타이틀: 저대비 시머 그라데이션이 왼→오로 흐른다(같은 글자 이중 레이어 크로스페이드).
+ * - 레일: 설명 자리를 상시 확보해 길이가 절대 변하지 않고, 지나간 길은 파랑 필이
+ *   스텝 박자(1.9s)에 맞춰 차오른다 — 빛이 같은 길이를 타고 내려간다.
+ * - 배경: 종류색 파스텔 블롭 4장이 각자 궤도로 표류(수렴 없음) — 검정 헤드라인을 해치지 않는 밝기.
+ * - 마무리: 헤드라인이 '모두 가능한 N을 찾았어요'로 크로스페이드, 한 박자 뒤 onDone.
  *
  * 재생 1회 보장(scanPlayed)과 reduced-motion 생략은 부모(find 화면)가 게이트한다 —
  * 여기 도달하면 항상 끝까지 재생하고, 언마운트 시 타이머를 전부 정리한다.
@@ -24,100 +23,163 @@ import type { Person, PersonInsights } from '../lib/types';
 
 export interface ScanMomentProps {
   attendees: Person[];
-  insights: Record<string, PersonInsights>;
   /** 회의 길이 — 마무리 문장('모두 가능한 1시간을 찾았어요')의 길이 표현 */
   duration: 30 | 60 | 90;
   onDone: () => void;
 }
 
-export default function ScanMoment({ attendees, insights, duration, onDone }: ScanMomentProps) {
-  const steps = useMemo(() => buildScanSteps(attendees, insights), [attendees, insights]);
+/** 배경 블롭 — 위치·색·궤도(globals의 scan-drift-*). 파스텔 4색 = 일정 종류색의 밝은 톤. */
+const BLOBS = [
+  'scan-blob-a left-[-80px] top-[-110px] bg-[#A8DCFF] opacity-55',
+  'scan-blob-b right-[-90px] top-[-70px] bg-[#CDBEFF] opacity-55',
+  'scan-blob-c bottom-[-170px] left-[28%] bg-[#B2E8CB] opacity-55',
+  'scan-blob-d bottom-[-190px] right-[16%] bg-[#FFDFAF] opacity-45',
+];
+
+export default function ScanMoment({ attendees, duration, onDone }: ScanMomentProps) {
+  const steps = useMemo(() => scanSteps(attendees.length), [attendees.length]);
   const timeline = useMemo(() => scanTimeline(steps.length), [steps.length]);
-  /** 점등된 아바타 수(0..N) — 문장·진행 바가 같은 값에서 파생된다 */
-  const [lit, setLit] = useState(0);
-  /** 마무리 문장 표시 중 */
-  const [finale, setFinale] = useState(false);
+  /** 진행 위상 — 활성 스텝 인덱스(0..N-1), N이면 마무리 비트. */
+  const [phase, setPhase] = useState(0);
   // onDone은 dispatch 클로저 — 최신 참조만 유지하고 타이머는 마운트 1회만 건다.
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
   useEffect(() => {
     const timers = [
-      ...timeline.lightAt.map((at, i) => window.setTimeout(() => setLit(i + 1), at)),
-      window.setTimeout(() => setFinale(true), timeline.finaleAt),
+      // 첫 스텝(0ms)은 초기 상태 — 이후 스텝 전환만 타이머로.
+      ...timeline.stepAt.slice(1).map((at, i) => window.setTimeout(() => setPhase(i + 1), at)),
+      window.setTimeout(() => setPhase(steps.length), timeline.finaleAt),
       window.setTimeout(() => onDoneRef.current(), timeline.doneAt),
     ];
     return () => timers.forEach((t) => clearTimeout(t));
-  }, [timeline]);
+  }, [timeline, steps.length]);
 
-  const line = finale ? finalScanLine(duration) : lit > 0 ? steps[lit - 1].line : '';
-  const progress = steps.length === 0 ? 1 : (finale ? steps.length : lit) / steps.length;
+  const finale = phase >= steps.length;
 
   return (
-    <Reveal className="w-full lg:flex lg:justify-center">
-      {/* 모바일: 화면 전체가 무대(풀블리드 다크, 콘텐츠 세로 중앙). 데스크톱: 기존 다크 카드. */}
+    <Reveal className="w-full">
       <section
-        aria-label={`${attendees.length}명의 다음 주를 읽고 있어요`}
-        className="relative flex min-h-dvh w-full flex-col justify-center overflow-hidden bg-[#191F28] px-6 py-7 lg:min-h-0 lg:w-full lg:max-w-[560px] lg:rounded-[20px] lg:px-8 lg:py-9"
+        aria-label={`${attendees.length}명의 다음 주를 읽는 중`}
+        className="relative flex min-h-dvh w-full overflow-hidden bg-bg"
       >
-        {/* 오로라 'scan' — 다크 카드 위 저투명 오버레이(딥 컨텍스트, 은은하게) */}
-        <div aria-hidden className="absolute inset-0 opacity-40">
-          <Aurora variant="scan" />
+        {/* 배경 — 파스텔 블롭 표류(은은하게, 각자 제 궤도로) */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          {BLOBS.map((cls) => (
+            <span
+              key={cls}
+              className={`absolute h-[320px] w-[320px] rounded-full blur-[54px] ${cls}`}
+            />
+          ))}
         </div>
 
-        <div className="relative">
-          <h2 className="text-[17px] font-semibold tracking-[-0.01em] text-white">
-            {attendees.length}명의 다음 주를 읽고 있어요
-          </h2>
+        <div className="relative mx-auto flex w-full max-w-[420px] flex-col justify-center px-6 py-16">
+          <p className="text-[13px] font-semibold text-text-weak">
+            {attendees.length}명의 다음 주를 읽는 중
+          </p>
 
-          {/* 아바타 행 — 순차 점등: opacity .25→1 + 흰 글로우 링 */}
-          <div className="mt-5 flex flex-wrap gap-2.5">
-            {attendees.map((p, i) => (
-              <span
-                key={p.id}
-                className="inline-flex rounded-full transition-[opacity,box-shadow] duration-300"
-                style={{
-                  transitionTimingFunction: 'var(--bezier-expo)',
-                  opacity: lit > i ? 1 : 0.25,
-                  boxShadow:
-                    lit > i
-                      ? '0 0 0 2px rgba(255,255,255,.85), 0 2px 14px rgba(255,255,255,.35)'
-                      : '0 0 0 0 rgba(255,255,255,0)',
-                }}
-              >
-                <Avatar person={p} size={28} />
-              </span>
-            ))}
-          </div>
-
-          {/* 문장 자리 — 점등 동기 크로스페이드. 마무리 문장만 흰색 semibold.
-              나가는 문장(120ms)은 점등 간격(≥120ms)보다 먼저 끝난다 — 겹침·적체 방지. */}
-          <div className="relative mt-4 h-5">
+          {/* 헤드라인 — 마무리에 '찾았어요'로 크로스페이드(자리 고정) */}
+          <div className="relative mt-1.5 h-[34px]">
             <AnimatePresence initial={false}>
-              <motion.p
-                key={finale ? 'finale' : lit}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, transition: { duration: 0.12 } }}
-                transition={{ duration: 0.22 }}
-                className={`absolute inset-0 truncate leading-5 ${
-                  finale ? 'text-[13px] font-semibold text-white' : 'text-[12.5px] text-[#D1D6DB]'
-                }`}
+              <motion.h2
+                key={finale ? 'found' : 'finding'}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                className="absolute inset-0 truncate text-[24px] font-bold leading-[34px] tracking-[-0.02em] text-text-strong"
               >
-                {line}
-              </motion.p>
+                {finale ? finalScanLine(duration) : '좋은 시간을 찾고 있어요'}
+              </motion.h2>
             </AnimatePresence>
           </div>
 
-          {/* 진행 바 — 3px 파랑 그라데이션, 점등 박자와 동기(width 트랜지션) */}
-          <div className="mt-5 h-[3px] overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[#3182F6] to-[#50D5FF]"
-              style={{
-                width: `${progress * 100}%`,
-                transition: `width ${timeline.intervalMs}ms var(--bezier-out)`,
-              }}
-            />
+          {/* 세로 스텝 타임라인 — 레일 길이 불변, 빛만 내려간다 */}
+          <div className="mt-10">
+            {steps.map((s, i) => {
+              const active = phase === i;
+              const done = phase > i;
+              const last = i === steps.length - 1;
+              return (
+                <div key={s.title} className="grid grid-cols-[22px_1fr] gap-x-4">
+                  <div className="flex flex-col items-center">
+                    {/* 도트 3태 — 대기 회색 점 / 활성 파란 점+헤일로 / 완료 파란 점 */}
+                    <div className="relative h-[22px] w-[22px] shrink-0">
+                      <span
+                        aria-hidden
+                        className={`absolute inset-[7px] rounded-full bg-border transition-opacity duration-300 ${
+                          active || done ? 'opacity-0' : 'opacity-100'
+                        }`}
+                      />
+                      <span
+                        aria-hidden
+                        className={`absolute inset-0 transition-opacity duration-300 ${
+                          active ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
+                        <span
+                          className="scan-halo absolute -inset-[7px] rounded-full"
+                          style={{
+                            background:
+                              'radial-gradient(circle, rgba(49,130,246,.28), rgba(49,130,246,.10) 55%, transparent 72%)',
+                          }}
+                        />
+                        <span className="absolute inset-[6px] rounded-full bg-primary" />
+                      </span>
+                      <span
+                        aria-hidden
+                        className={`absolute inset-[7px] rounded-full bg-primary transition-[opacity,transform] duration-300 ${
+                          done ? 'scale-100 opacity-100' : 'scale-50 opacity-0'
+                        }`}
+                      />
+                    </div>
+                    {/* 레일 — 활성되는 순간부터 스텝 박자에 맞춰 파랑 필이 차오른다 */}
+                    {!last && (
+                      <div className="relative my-[5px] min-h-[18px] w-[3px] flex-1 overflow-hidden rounded-full bg-section">
+                        <span
+                          aria-hidden
+                          className="absolute inset-0 origin-top rounded-full bg-gradient-to-b from-[#4593FC] to-[#AECFFF]"
+                          style={{
+                            transform: 'scaleY(0)',
+                            animation:
+                              phase >= i ? `scan-fill ${SCAN_STEP_MS}ms linear forwards` : 'none',
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className={last ? '' : 'pb-6'}>
+                    {/* 타이틀 이중 레이어 — 베이스(회색 상태들) 위에 시머 그라데이션이 활성 구간만 켜진다 */}
+                    <p className="relative mt-px text-[15.5px] font-bold leading-[1.4]">
+                      <span
+                        className={`transition-colors duration-300 ${
+                          active ? 'text-transparent' : done ? 'text-text-weak' : 'text-text-faint'
+                        }`}
+                      >
+                        {s.title}
+                      </span>
+                      <span
+                        aria-hidden
+                        className={`scan-title-sheen absolute inset-0 transition-opacity duration-300 ${
+                          active ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
+                        {s.title}
+                      </span>
+                    </p>
+                    {/* 설명 — 자리는 상시 확보(레일 길이 불변), 투명도로만 등장·퇴장 */}
+                    <p
+                      className={`mt-[5px] text-[13px] leading-[1.5] text-[#7291C9] transition-opacity duration-300 ${
+                        active ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    >
+                      {s.desc}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

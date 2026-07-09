@@ -104,8 +104,43 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
   to { background-position: -250% 50%; }
 }
 
+/* ── 스캔 모먼트 — 라이트 무대. 파스텔 블롭 표류(수렴 없음) + 활성 도트 헤일로 숨쉬기 +
+   타이틀 시머(왼→오, 저대비 밴드) + 레일 필 차오름. 재생 게이트는 find 화면이 소유. ── */
+.scan-blob-a { animation: scan-drift-a 8s ease-in-out infinite alternate; }
+.scan-blob-b { animation: scan-drift-b 10s ease-in-out infinite alternate; }
+.scan-blob-c { animation: scan-drift-c 9s ease-in-out infinite alternate; }
+.scan-blob-d { animation: scan-drift-d 11s ease-in-out infinite alternate; }
+@keyframes scan-drift-a { to { transform: translate(150px, 90px) scale(1.2); } }
+@keyframes scan-drift-b { to { transform: translate(-130px, 110px) scale(1.12); } }
+@keyframes scan-drift-c { to { transform: translate(160px, -70px) scale(1.15); } }
+@keyframes scan-drift-d { to { transform: translate(-150px, -90px) scale(1.22); } }
+
+.scan-halo { animation: scan-breathe 2.2s ease-in-out infinite alternate; }
+@keyframes scan-breathe {
+  from { transform: scale(0.85); opacity: 0.6; }
+  to { transform: scale(1.1); opacity: 1; }
+}
+
+/* 시머 — 눈 아프지 않게: 베이스와 밴드의 명도 차를 두 단계로 억제(#3E74CB↔#6392DC). */
+.scan-title-sheen {
+  background-image: linear-gradient(90deg, #3e74cb 25%, #4c82d2 42%, #6392dc 50%, #4c82d2 58%, #3e74cb 75%);
+  background-size: 250% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: scan-sheen 2.4s linear infinite;
+}
+@keyframes scan-sheen {
+  from { background-position: 100% 0; }
+  to { background-position: 0% 0; }
+}
+
+@keyframes scan-fill { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
 @media (prefers-reduced-motion: reduce) {
   .aurora-l1, .aurora-l2, .aurora-l3, .aurora-l4 { animation: none; }
   .reveal { animation: none; }
   .iridescent { animation: none; }
+  .scan-blob-a, .scan-blob-b, .scan-blob-c, .scan-blob-d, .scan-halo { animation: none; }
+  .scan-title-sheen { animation: none; }
 }
