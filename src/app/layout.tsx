@@ -7,10 +7,10 @@ const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'toss calendar — 모두를 생각한 시간',
+  title: 'toss calendar — 알아서 맞춰주는 회사 캘린더',
   description: '동료들의 상황을 읽고, 모두가 괜찮은 시간을 찾아드려요',
   openGraph: {
-    title: 'toss calendar — 모두를 생각한 시간',
+    title: 'toss calendar — 알아서 맞춰주는 회사 캘린더',
     description: '동료들의 상황을 읽고, 모두가 괜찮은 시간을 찾아드려요',
     siteName: 'toss calendar',
     locale: 'ko_KR',

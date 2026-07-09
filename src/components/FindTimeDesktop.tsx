@@ -160,7 +160,7 @@ export default function FindTimeDesktop({ state, dispatch, candidates }: FindTim
         <Reveal delay={70} className="flex shrink-0 items-end justify-between pb-4 pt-1">
           <div>
             <h1 className="text-[24px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong">
-              모두를 생각한 {DURATION_LABEL[state.duration]}이에요
+              모두 가능한 {DURATION_LABEL[state.duration]}이에요
             </h1>
             <p className="mt-1 text-[13px] leading-[1.5] text-text-weak">
               {DEADLINE_LABEL[state.deadline]} · 필수 {requiredCount}명 · 선택 {optionalCount}명 · 후보 {slots.length}개

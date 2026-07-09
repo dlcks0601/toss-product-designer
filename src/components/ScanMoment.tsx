@@ -25,7 +25,7 @@ import type { Person, PersonInsights } from '../lib/types';
 export interface ScanMomentProps {
   attendees: Person[];
   insights: Record<string, PersonInsights>;
-  /** 회의 길이 — 마무리 문장('모두를 생각한 1시간을 찾았어요')의 길이 표현 */
+  /** 회의 길이 — 마무리 문장('모두 가능한 1시간을 찾았어요')의 길이 표현 */
   duration: 30 | 60 | 90;
   onDone: () => void;
 }

@@ -76,11 +76,11 @@ describe('buildScanSteps — 순서·문장·압축', () => {
 
 describe('finalScanLine — 회의 길이 반영', () => {
   it('60분(기본 여정) → 바인딩 문장 그대로', () => {
-    expect(finalScanLine(60)).toBe('모두를 생각한 1시간을 찾았어요');
+    expect(finalScanLine(60)).toBe('모두 가능한 1시간을 찾았어요');
   });
   it('30분 / 90분도 길이에 맞는 문장', () => {
-    expect(finalScanLine(30)).toBe('모두를 생각한 30분을 찾았어요');
-    expect(finalScanLine(90)).toBe('모두를 생각한 1시간 30분을 찾았어요');
+    expect(finalScanLine(30)).toBe('모두 가능한 30분을 찾았어요');
+    expect(finalScanLine(90)).toBe('모두 가능한 1시간 30분을 찾았어요');
   });
 });
 

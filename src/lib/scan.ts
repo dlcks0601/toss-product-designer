@@ -58,7 +58,7 @@ export function buildScanSteps(
 /** 마무리 문장 — 회의 길이에 맞춘다(기본 여정 60분 = '1시간'). 세 라벨 모두 받침 ㄴ이라 '을' 고정. */
 export function finalScanLine(duration: 30 | 60 | 90): string {
   const label = duration === 30 ? '30분' : duration === 60 ? '1시간' : '1시간 30분';
-  return `모두를 생각한 ${label}을 찾았어요`;
+  return `모두 가능한 ${label}을 찾았어요`;
 }
 
 export interface ScanTimeline {
