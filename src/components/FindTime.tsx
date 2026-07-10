@@ -164,7 +164,10 @@ function AttendeeLine({ attendees }: { attendees: Attendee[] }) {
         <span className="flex pl-1">
           {shown.map((a) => (
             <span key={a.id} className="relative -ml-1.5 first:ml-0">
-              <span className="block rounded-full" style={{ boxShadow: `0 0 0 2px ${personColor(a.id)}` }}>
+              <span
+                className="flex h-7 w-7 items-center justify-center rounded-full"
+                style={{ boxShadow: `0 0 0 2px ${personColor(a.id)}` }}
+              >
                 <Avatar person={a} size={28} />
               </span>
               {a.attendanceType === 'required' && (
@@ -757,7 +760,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                 <AttendeeLine attendees={attendees} />
               </Reveal>
 
-              <Reveal delay={300} className="pt-7 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-6">
+              <Reveal delay={300} className="pt-7 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-0">
                 {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
                   <div className="mt-5">
