@@ -3,7 +3,6 @@
 import type { Dispatch } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Check } from 'lucide-react';
-import Aurora from './Aurora';
 import Reveal from './Reveal';
 import Wordmark from './Wordmark';
 import { activeMitigations, adjustedRange, type Mitigations } from './ConfirmStep';
@@ -15,7 +14,7 @@ import type { Attendee, CandidateSlot, Room } from '../lib/types';
 
 /**
  * 완료 — 이 제품의 유일한 감정적 순간. "시간만 잡은 게 아니라 사람을 챙겼다"를 말한다.
- * 밝고 따뜻하게: Aurora 'done'(복숭아가 앞으로) + 체크 팝(52px 제자리 스프링 {500,18})
+ * 밝고 따뜻하게: 파스텔 블롭 무대(복숭아가 앞으로) + 체크 팝(52px 제자리 스프링 {500,18})
  * + 이리데슨트 타이틀(clip-text, DOM 텍스트 유지 — globals.css .iridescent).
  *
  * '함께 챙긴 것'은 선택 슬롯의 reasons/partials/완화 선택에서만 파생한다(하드코딩 금지) —
@@ -68,6 +67,16 @@ export function placeLabel(
 /** 체크 팝 — 제자리 스프링(오버슈트가 기쁨의 목소리). */
 const POP_SPRING = { type: 'spring' as const, stiffness: 500, damping: 18 };
 
+/** 축하 무대 블롭 — 스캔 모먼트와 같은 표류 문법(scan-drift 궤도 재사용), 팔레트만 따뜻하게.
+ *  복숭아·버터가 코너를 잡고(축하의 온도), 페리윙클·하늘이 다리를 놓는다.
+ *  가운데 위(체크·타이틀 자리)는 가장 옅게 — 이리데슨트 타이틀의 가독을 지킨다. */
+const DONE_BLOBS = [
+  'scan-blob-a left-[-14%] top-[-34%] h-[44vmax] w-[44vmax] bg-[#FFD9C4] opacity-60',
+  'scan-blob-b right-[-12%] top-[-30%] h-[40vmax] w-[40vmax] bg-[#FFE9B5] opacity-55',
+  'scan-blob-c left-[26%] top-[6%] h-[42vmax] w-[42vmax] bg-[#CFE0FF] opacity-45',
+  'scan-blob-d right-[20%] top-[34%] h-[34vmax] w-[34vmax] bg-[#A8DCFF] opacity-40',
+];
+
 export interface DoneStepProps {
   state: AppState;
   dispatch: Dispatch<Action>;
@@ -85,9 +94,12 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-bg">
-      {/* 오로라 — 상단만. 아래는 흰빛으로 가라앉혀 카드가 단단히 선다. */}
+      {/* 축하 무대 — 스캔 모먼트와 같은 파스텔 블롭 표류 문법, 팔레트만 따뜻하게(복숭아가 앞으로).
+          상단만 물들이고 아래는 흰빛으로 가라앉혀 카드가 단단히 선다. */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[46dvh] overflow-hidden">
-        <Aurora variant="done" />
+        {DONE_BLOBS.map((cls) => (
+          <span key={cls} className={`absolute rounded-full blur-[60px] ${cls}`} />
+        ))}
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white" />
       </div>
 
