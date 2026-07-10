@@ -6,7 +6,6 @@ import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
 import FrostedBar from './FrostedBar';
-import { KIND_STYLE } from './HomeCalendar';
 import Reveal from './Reveal';
 import Wordmark from './Wordmark';
 import { decisionKey, pickAction } from '../lib/decision';
@@ -36,6 +35,17 @@ import type { Attendee, CandidateSlot, EventKind } from '../lib/types';
 // ── 표시 상수 ──────────────────────────────────────────────────────
 
 const WEEKDAY_SHORT = ['월', '화', '수', '목', '금', '토', '일'] as const;
+
+/** 사람색 — 이 화면의 색은 종류가 아니라 사람이다("누가 언제 바쁜가").
+ *  아바타 링과 타임라인 블록이 같은 색을 쓴다(자연 범례). 해시 배정 — 결정적. */
+const PERSON_PALETTE = ['#5C8DF6', '#54B99A', '#F08FA4', '#E8A23D', '#8B7CF6', '#4FC3E8', '#E8875C', '#7BA7E8'] as const;
+function personColor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+  return PERSON_PALETTE[Math.abs(h) % PERSON_PALETTE.length];
+}
+/** 병합 점심(여러 사람 공동) — 누구의 색도 아니라 중립 회색. */
+const MERGED_COLOR = '#9AA6B4';
 
 /** '수 15일' — 카드·CTA의 짧은 날짜 표기. */
 function fmtDayShort(iso: string): string {
@@ -154,7 +164,7 @@ function AttendeeLine({ attendees }: { attendees: Attendee[] }) {
         <span className="flex pl-1">
           {shown.map((a) => (
             <span key={a.id} className="relative -ml-1.5 first:ml-0">
-              <span className="block rounded-full ring-2 ring-white">
+              <span className="block rounded-full" style={{ boxShadow: `0 0 0 2px ${personColor(a.id)}` }}>
                 <Avatar person={a} size={28} />
               </span>
               {a.attendanceType === 'required' && (
@@ -184,6 +194,7 @@ function AttendeeLine({ attendees }: { attendees: Attendee[] }) {
           {attendees.map((a) => (
             <div key={a.id} className="flex items-center gap-2.5 py-1.5">
               <Avatar person={a} size={24} />
+              <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: personColor(a.id) }} />
               <span className="text-[14px] font-medium text-text-strong">{a.name}</span>
               {a.isOrganizer && <span className="text-[11px] text-text-weak">나 · 주최자</span>}
               <span
@@ -293,17 +304,20 @@ interface TimelineItem {
   title: string;
   kind: EventKind;
   owner: string | null;
+  /** 블록 색 — 사람색(병합 점심은 중립). */
+  color: string;
 }
 
 /** 그날 팀의 일정 — 점심은 겹침 사슬로 병합('점심 · N명'), 나머지는 주인 이름을 단다. */
 export function timelineItems(attendees: Attendee[], day: string): TimelineItem[] {
   const items: TimelineItem[] = [];
-  const lunches: { start: number; end: number; owner: string }[] = [];
+  const lunches: { start: number; end: number; owner: string; color: string }[] = [];
   for (const a of attendees) {
+    const color = personColor(a.id);
     for (const e of a.events) {
       if (e.day !== day) continue;
-      if (e.kind === 'lunch') lunches.push({ start: e.start, end: e.end, owner: a.name });
-      else items.push({ key: `${a.id}-${e.id}`, start: e.start, end: e.end, title: e.title, kind: e.kind, owner: a.name });
+      if (e.kind === 'lunch') lunches.push({ start: e.start, end: e.end, owner: a.name, color });
+      else items.push({ key: `${a.id}-${e.id}`, start: e.start, end: e.end, title: e.title, kind: e.kind, owner: a.name, color });
     }
   }
   lunches.sort((x, y) => x.start - y.start || x.end - y.end);
@@ -313,11 +327,11 @@ export function timelineItems(attendees: Attendee[], day: string): TimelineItem[
     if (cluster.length === 0) return;
     if (cluster.length === 1) {
       const l = cluster[0];
-      items.push({ key: `lunch-${l.owner}-${l.start}`, start: l.start, end: l.end, title: '점심', kind: 'lunch', owner: l.owner });
+      items.push({ key: `lunch-${l.owner}-${l.start}`, start: l.start, end: l.end, title: '점심', kind: 'lunch', owner: l.owner, color: l.color });
     } else {
       const start = Math.min(...cluster.map((l) => l.start));
       const end = Math.max(...cluster.map((l) => l.end));
-      items.push({ key: `lunch-merged-${start}`, start, end, title: `점심 · ${cluster.length}명`, kind: 'lunch', owner: null });
+      items.push({ key: `lunch-merged-${start}`, start, end, title: `점심 · ${cluster.length}명`, kind: 'lunch', owner: null, color: MERGED_COLOR });
     }
     cluster = [];
   };
@@ -358,6 +372,7 @@ function OverlapTimeline({
   attendees,
   day,
   slot,
+  meetingTitle,
   ghosts,
   onPick,
   reduced,
@@ -365,6 +380,8 @@ function OverlapTimeline({
   attendees: Attendee[];
   day: string;
   slot: CandidateSlot | null;
+  /** 선택 자리에 앉을 회의 제목 — '여기로 잡을게요' 같은 선언 대신 실물이 앉는다. */
+  meetingTitle: string;
   /** 같은 날의 선택 안 된 후보 — 점선 고스트로 앉아 있다(홈 응답대기 고스트 문법). */
   ghosts: CandidateSlot[];
   onPick: (slot: CandidateSlot) => void;
@@ -393,11 +410,11 @@ function OverlapTimeline({
         {items.map((item) => {
           const h = Math.max(y(item.end) - y(item.start), 12);
           return (
-            /* 텍스트 없이 색으로만 — 홈 카드 파스텔의 반투명(뒤가 비쳐 겹침이 읽힌다). 궁금하면 호버(툴팁). */
+            /* 텍스트 없이 색으로만 — 사람색 반투명(뒤가 비쳐 겹침이 읽힌다). 궁금하면 호버(툴팁). */
             <div
               key={item.key}
               className="group absolute rounded-[10px]"
-              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: `${KIND_STYLE[item.kind].bg}B3` }}
+              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: `${item.color}59` }}
             >
               <span className="pointer-events-none absolute -top-7 left-1 z-20 hidden whitespace-nowrap rounded-lg bg-[#333D4B] px-2 py-1 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(25,31,40,0.25)] group-hover:block">
                 {item.title}
@@ -432,7 +449,7 @@ function OverlapTimeline({
             <p className="text-[11px] font-bold leading-[1.3]">
               {fmtTime(slot.start)} – {fmtTime(slot.end)}
             </p>
-            <p className="text-[9.5px] font-medium leading-[1.3] opacity-85">여기로 잡을게요</p>
+            <p className="truncate text-[9.5px] font-medium leading-[1.3] opacity-85">{meetingTitle}</p>
           </motion.div>
         )}
       </div>
@@ -765,6 +782,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                         attendees={attendees}
                         day={active.day}
                         slot={active}
+                        meetingTitle={state.title.trim() || '새 회의'}
                         ghosts={(allWarning ? warnings : goodish)
                           .filter((s) => s.day === active.day && s.id !== active.id)
                           .slice(0, 4)}
