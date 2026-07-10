@@ -369,7 +369,7 @@ export function withLanes(items: TimelineItem[]): (TimelineItem & { lane: number
 
 const TL_START = 540; // 9:00
 const TL_END = 1080; // 18:00
-const TL_PX_PER_MIN = 0.95;
+const TL_PX_PER_MIN = 1.2;
 
 function OverlapTimeline({
   attendees,
