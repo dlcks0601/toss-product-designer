@@ -787,10 +787,10 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                 <AttendeeLine attendees={attendees} />
               </Reveal>
 
-              <Reveal delay={300} className="pt-7 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-6">
+              <Reveal delay={300} className="lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-6">
                 {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
-                  <div className="mt-6 lg:mt-0">
+                  <div>
                     <button
                       type="button"
                       onClick={() => setTimelineOpen((o) => !o)}
