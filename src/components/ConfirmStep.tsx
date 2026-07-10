@@ -3,10 +3,12 @@
 import type { Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronLeft, Video } from 'lucide-react';
+import Aurora from './Aurora';
 import FrostedBar from './FrostedBar';
 import Badge from './Badge';
 import ReasonCard from './ReasonCard';
 import Reveal from './Reveal';
+import Wordmark from './Wordmark';
 import { useCandidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
 import { ROOMS } from '../data/world';
@@ -238,6 +240,19 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
 
   return (
     <main className="min-h-dvh bg-bg pb-44">
+      {/* 데스크톱 헤더 — 홈·셋업·찾기와 같은 오로라·워드마크 틀(스텝이 바뀌어도 유지). */}
+      <div className="relative hidden lg:block">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <Aurora variant="home" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
+        </div>
+        <div className="relative mx-auto max-w-[1200px] px-6 py-4">
+          <header className="flex h-10 items-center">
+            <Wordmark />
+          </header>
+        </div>
+      </div>
+
       {/* 헤더 — 뒤로가기 → find. 상시 frost(전 화면 공통 문법). */}
       <FrostedBar innerClassName="mx-auto w-full max-w-[560px] px-4">
         <Reveal as="header" className="-mx-1 flex h-14 items-center">

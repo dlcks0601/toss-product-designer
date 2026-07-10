@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Check } from 'lucide-react';
 import Aurora from './Aurora';
 import Reveal from './Reveal';
+import Wordmark from './Wordmark';
 import { activeMitigations, adjustedRange, type Mitigations } from './ConfirmStep';
 import { useCandidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
@@ -88,6 +89,15 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[46dvh] overflow-hidden">
         <Aurora variant="done" />
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white" />
+      </div>
+
+      {/* 데스크톱 헤더 — 여정 전체의 틀. 축하 무대(오로라 done)는 그대로 두고 워드마크만 얹는다. */}
+      <div className="absolute inset-x-0 top-0 z-10 hidden lg:block">
+        <div className="mx-auto max-w-[1200px] px-6 py-4">
+          <header className="flex h-10 items-center">
+            <Wordmark />
+          </header>
+        </div>
       </div>
 
       <div className="relative mx-auto flex w-full max-w-[560px] flex-col items-center px-4 pb-16 pt-[10dvh]">
