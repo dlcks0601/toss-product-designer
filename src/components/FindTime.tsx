@@ -255,11 +255,16 @@ function AttendeeLine({ attendees, desktop }: { attendees: Attendee[]; desktop: 
             </span>
           )}
         </span>
-        <ChevronDown
-          size={15}
-          aria-hidden
-          className={`ml-auto shrink-0 text-text-faint transition-transform duration-200 ${desktop && open ? 'rotate-180' : ''}`}
-        />
+        {desktop ? (
+          <ChevronDown
+            size={15}
+            aria-hidden
+            className={`ml-auto shrink-0 text-text-faint transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          />
+        ) : (
+          /* 시트를 여는 행 — 펼침(⌄)이 아니라 층 이동(›)의 어포던스. */
+          <ChevronRight size={15} aria-hidden className="ml-auto shrink-0 text-text-faint" />
+        )}
       </button>
       {desktop && open && rows}
       <MobileSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={`참석자 ${attendees.length}명`}>
@@ -853,7 +858,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                       className="pressable flex min-h-[48px] w-full items-center justify-between rounded-xl py-3 text-[14px] font-semibold text-text-strong lg:hidden"
                     >
                       {fmtDayKorean(active.day)} 모두의 일정
-                      <ChevronDown size={15} aria-hidden className="text-text-faint" />
+                      <ChevronRight size={15} aria-hidden className="text-text-faint" />
                     </button>
                     <MobileSheet
                       open={timelineOpen}
