@@ -150,7 +150,7 @@ export default function PickerField({
       {/* 모바일 — '시간 선택하기' 바텀시트, 체크 행(토스 셀렉트 문법). */}
       <MobileSheet open={open && !desktop} onClose={close} title={`${ariaLabel} 선택하기`}>
         <div ref={open && !desktop ? listRef : undefined} className="pb-2">
-          {/* 토스 시트 캐스케이드 — 행이 위에서부터 하나씩 쌓인다(30ms 스태거, 12행까지). */}
+          {/* 토스 시트 캐스케이드 — 행이 위에서부터 한 장씩 쌓인다(60ms 스태거 — 순차가 눈에 보이는 박자, 12행까지). */}
           {options.map((o, i) => {
             const isSel = o.value === value;
             return (
@@ -160,7 +160,7 @@ export default function PickerField({
                 data-selected={isSel}
                 initial={reduced ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i, 12) * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ delay: Math.min(i, 12) * 0.06, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => select(o.value)}
                 aria-pressed={isSel}
                 className="pressable flex min-h-[52px] w-full items-center justify-between py-2 text-left"
