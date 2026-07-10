@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState, type Dispatch, type ReactNode } from 'react';
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
 import FrostedBar from './FrostedBar';
@@ -310,33 +310,34 @@ function SlotRow({
   onSelect: () => void;
 }) {
   return (
+    /* 토스 선택 행 문법(주소 선택과 동일) — 배경 없이, 오른쪽 체크가 선택을 말한다. */
     <button
       type="button"
       onClick={onSelect}
       aria-pressed={selected}
-      className={`pressable flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors ${
-        selected ? 'bg-primary-tint shadow-[inset_0_0_0_1.5px_#9CC5FB]' : 'bg-[#F7F8FA] hover:bg-section'
-      }`}
+      className="pressable flex w-full items-center gap-3 rounded-2xl px-1 py-3 text-left transition-colors hover:bg-section/50"
     >
       <span className="min-w-0 flex-1">
-        <span
-          className={`block text-[15px] font-bold tracking-[-0.01em] ${
-            selected ? 'text-primary-pressed' : 'text-text-strong'
-          }`}
-        >
-          {fmtDayLabel(slot.day)} {fmtTime(slot.start)}
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-[15px] font-bold tracking-[-0.01em] text-text-strong">
+            {fmtDayLabel(slot.day)} {fmtTime(slot.start)}
+          </span>
+          {badge}
         </span>
         <span className="mt-0.5 block truncate text-[12px] leading-[1.5] text-text-weak">{cardReason(slot)}</span>
       </span>
-      {badge}
+      <Check
+        size={22}
+        strokeWidth={3}
+        aria-hidden
+        className={`shrink-0 transition-colors ${selected ? 'text-primary' : 'text-[#D6DBE0]'}`}
+      />
     </button>
   );
 }
 
 const BADGE_REC = (
-  <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-primary shadow-[0_1px_4px_rgba(25,31,40,0.08)]">
-    추천
-  </span>
+  <span className="shrink-0 rounded-lg bg-primary-tint px-2 py-1 text-[11px] font-bold text-primary">추천</span>
 );
 const BADGE_PARTIAL = (
   <span className="shrink-0 rounded-lg bg-[#F1ECFE] px-2 py-1 text-[11px] font-bold text-[#7C4DFF]">부분</span>
