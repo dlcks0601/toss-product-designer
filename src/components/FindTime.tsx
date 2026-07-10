@@ -414,7 +414,9 @@ function OverlapTimeline({
       <div className="absolute inset-y-0 left-11 right-0">
         {items.map((item) => {
           const h = Math.max(y(item.end) - y(item.start), 12);
-          const laneW = 100 / laneCount;
+          // 모든 레인이 같은 폭(W) — 시작점만 균등 분배해 첫 레인은 왼끝, 마지막 레인은 오른끝에 닿는다.
+          const W = Math.min(100, (100 / laneCount) * 1.35);
+          const left = laneCount > 1 ? (item.lane * (100 - W)) / (laneCount - 1) : 0;
           return (
             /* 텍스트 없이 색으로만 — 사람색 반투명(뒤가 비쳐 겹침이 읽힌다). 궁금하면 호버(툴팁). */
             <div
@@ -423,8 +425,8 @@ function OverlapTimeline({
               style={{
                 top: y(item.start),
                 height: h,
-                left: `${item.lane * laneW}%`,
-                width: `${Math.min(laneW * 1.35, 100 - item.lane * laneW)}%`,
+                left: `${left}%`,
+                width: `${W}%`,
                 backgroundColor: `${item.color}59`,
               }}
             >
