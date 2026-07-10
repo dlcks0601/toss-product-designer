@@ -18,31 +18,32 @@
  * 장면 계약의 근거는 world.test.ts 의 불변식이다.
  */
 import type { Attendee, CalendarEvent, EventKind, Person, Room, SlotReason } from '../lib/types';
+import { addDaysISO } from '../lib/time';
+import { mondayOf } from '../lib/weeks';
+import { ANCHOR_DATE } from '../lib/window';
 
 export const ME_ID = 'ichan';
 
 /** 데모 기본 6인 — 조율 화면에 상시 등장하는 각본의 주연들. */
 export const CORE_CAST: string[] = ['ichan', 'junho', 'seoyeon', 'minsu', 'haneul', 'sehun'];
 
-// ── 날짜 상수 ──────────────────────────────────────────────
-// 현재 주(홈 캘린더에 보이는 주)
-const W0_MON = '2026-07-06';
-const W0_TUE = '2026-07-07';
-const W0_WED = '2026-07-08';
-const W0_THU = '2026-07-09';
-const W0_FRI = '2026-07-10';
-// 다음 주(next-week)
-const W1_MON = '2026-07-13';
-const W1_TUE = '2026-07-14';
-const W1_WED = '2026-07-15';
-const W1_THU = '2026-07-16';
-const W1_FRI = '2026-07-17';
-// 그 다음 주(flexible)
-const W2_MON = '2026-07-20';
-const W2_TUE = '2026-07-21';
-const W2_WED = '2026-07-22';
-const W2_THU = '2026-07-23';
-const W2_FRI = '2026-07-24';
+// ── 날짜 상수 — 앵커(오늘) 상대 계산. 라이브 앵커를 따라 세계 전체가 움직인다. ──
+// 안무는 전부 '주차(W0·W1·W2) × 요일' 상대 구조라, 여기만 앵커를 따라가면 씬이 보존된다.
+const W0_MON = mondayOf(ANCHOR_DATE); // 현재 주(홈 캘린더에 보이는 주)
+const W0_TUE = addDaysISO(W0_MON, 1);
+const W0_WED = addDaysISO(W0_MON, 2);
+const W0_THU = addDaysISO(W0_MON, 3);
+const W0_FRI = addDaysISO(W0_MON, 4);
+const W1_MON = addDaysISO(W0_MON, 7); // 다음 주(next-week)
+const W1_TUE = addDaysISO(W0_MON, 8);
+const W1_WED = addDaysISO(W0_MON, 9);
+const W1_THU = addDaysISO(W0_MON, 10);
+const W1_FRI = addDaysISO(W0_MON, 11);
+const W2_MON = addDaysISO(W0_MON, 14); // 그 다음 주(flexible)
+const W2_TUE = addDaysISO(W0_MON, 15);
+const W2_WED = addDaysISO(W0_MON, 16);
+const W2_THU = addDaysISO(W0_MON, 17);
+const W2_FRI = addDaysISO(W0_MON, 18);
 
 /** 이벤트 팩토리 — 결정적 id. */
 /** 회의실 풀 — 명시 room이 없는 미팅에 id 해시로 결정적 배정(Math.random 금지 계약). */

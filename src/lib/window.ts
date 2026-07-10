@@ -1,8 +1,24 @@
 import type { DeadlineKind } from './types';
 import { addDaysISO, isBusinessDay, weekdayIndex } from './time';
 
-/** 데모 고정 앵커 — 2026-07-07 (화). 모든 기한 창은 이 날 "이후" 영업일만 담는다. */
-export const ANCHOR_DATE = '2026-07-07';
+/**
+ * 앵커(오늘) — 라이브. 심사자가 언제 열어도 '오늘'이 진짜 오늘이어야 한다(사용자 계약 변경:
+ * 앵커 해석에 한해 실시간 시계 허용 — 그 아래 세계·엔진은 여전히 앵커 상대 결정적).
+ * KST 고정 계산 — 서버/클라이언트가 같은 날짜를 보게 해 하이드레이션 불일치를 막는다.
+ * 주말이면 다음 월요일로 넘긴다(영업일 세계). 테스트는 NEXT_PUBLIC_ANCHOR로
+ * 고정 앵커(2026-07-07 화)를 주입해 요일 안무 계약을 그대로 검증한다.
+ */
+function resolveAnchor(): string {
+  const fixed = process.env.NEXT_PUBLIC_ANCHOR;
+  if (fixed) return fixed;
+  const kst = new Date(Date.now() + 9 * 3600_000);
+  const iso = kst.toISOString().slice(0, 10);
+  const wd = weekdayIndex(iso); // 0=월 … 5=토, 6=일
+  if (wd === 5) return addDaysISO(iso, 2);
+  if (wd === 6) return addDaysISO(iso, 1);
+  return iso;
+}
+export const ANCHOR_DATE = resolveAnchor();
 
 /** 각 기한이 앵커 주의 금요일에서 몇 주 뒤까지 뻗는지. */
 const WEEKS_AHEAD: Record<DeadlineKind, number> = {
