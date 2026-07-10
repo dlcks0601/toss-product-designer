@@ -98,3 +98,30 @@ describe('computeCandidates — 조건 변화', () => {
     }
   });
 });
+
+describe('computeCandidates — 참석 완전성 > 편의 보너스 (심각도 계층 정렬)', () => {
+  // 실사용 재현(2026-07-10): 준호(선택)가 온전히 참석 가능한 수 9:00(good)이,
+  // 점심 전 보너스로 점수가 부풀려진 "준호 뒤 30분만" 슬롯(tradeoff)에 밀려 있었다.
+  const compute = () =>
+    computeCandidates({
+      attendeeIds: ['ichan', 'junho', 'seoyeon'],
+      required: { ichan: true, junho: false, seoyeon: true },
+      duration: 60,
+      deadline: 'next-week',
+      allowPartialRequiredId: null,
+    });
+
+  it('good 슬롯이 고점수 tradeoff보다 항상 먼저다', () => {
+    const { slots } = compute();
+    const firstTradeoff = slots.findIndex((s) => s.severity === 'tradeoff');
+    const lastGood = slots.map((s) => s.severity).lastIndexOf('good');
+    expect(slots[0].severity).toBe('good');
+    expect(lastGood).toBeLessThan(firstTradeoff);
+  });
+
+  it('부분(+7) > 불참(-4) 계약은 tradeoff 계층 안에서 산다 — 준호 부분 슬롯이 계층 선두', () => {
+    const { slots } = compute();
+    const tradeoffs = slots.filter((s) => s.severity === 'tradeoff');
+    expect(tradeoffs[0]?.partials.some((p) => p.attendeeId === 'junho')).toBe(true);
+  });
+});

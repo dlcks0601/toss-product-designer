@@ -86,7 +86,12 @@ export function rankSlots(args: {
     }
   }
 
+  // 참석 완전성 > 편의 보너스 — 모두 온전한(good) 슬롯은 점심 전 같은 리듬 보너스로
+  // 부풀려진 tradeoff에 절대 밀리지 않는다(2026-07-10, "왜 부분 참석이 1위냐" 수정).
+  // 같은 계층 안에서는 점수 — 부분(+7) > 불참(-4) 계약은 tradeoff 계층 내부에서 그대로 산다.
+  const tier = { good: 0, tradeoff: 1, warning: 2 } as const;
   slots.sort((x, y) => {
+    if (tier[x.severity] !== tier[y.severity]) return tier[x.severity] - tier[y.severity];
     if (y.score !== x.score) return y.score - x.score;
     if (x.day !== y.day) return x.day < y.day ? -1 : 1;
     return x.start - y.start;
