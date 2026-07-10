@@ -460,10 +460,11 @@ function OverlapTimeline({
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 30 }}
             className="absolute inset-x-0 z-10 rounded-[10px] bg-primary px-2.5 py-1.5 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
           >
-            <p className="text-[11px] font-bold leading-[1.3]">
+            {/* 홈 카드와 같은 순서 — 제목이 먼저, 시간이 아래(단일 문법). */}
+            <p className="truncate text-[11px] font-bold leading-[1.3]">{meetingTitle}</p>
+            <p className="text-[9.5px] font-medium leading-[1.3] opacity-85">
               {fmtTime(slot.start)} – {fmtTime(slot.end)}
             </p>
-            <p className="truncate text-[9.5px] font-medium leading-[1.3] opacity-85">{meetingTitle}</p>
           </motion.div>
         )}
       </div>
