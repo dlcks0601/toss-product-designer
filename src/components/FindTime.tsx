@@ -763,7 +763,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
               <Reveal delay={300} className="pt-7 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-0">
                 {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
-                  <div className="mt-5">
+                  <div>
                     <button
                       type="button"
                       onClick={() => setTimelineOpen((o) => !o)}
@@ -778,9 +778,6 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                       />
                     </button>
                     <div className={`${timelineOpen ? 'block' : 'hidden'} pt-1 lg:block`}>
-                      <p className="hidden pb-3 text-[12px] font-semibold text-text-weak lg:block">
-                        {fmtDayKorean(active.day)} 모두의 일정
-                      </p>
                       <OverlapTimeline
                         attendees={attendees}
                         day={active.day}
