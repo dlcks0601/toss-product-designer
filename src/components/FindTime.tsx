@@ -393,11 +393,11 @@ function OverlapTimeline({
         {items.map((item) => {
           const h = Math.max(y(item.end) - y(item.start), 12);
           return (
-            /* 텍스트 없이 색으로만 — 홈 카드 파스텔 + 흰 링(겹침의 층). 궁금하면 호버(툴팁). */
+            /* 텍스트 없이 색으로만 — 홈 카드 파스텔의 반투명(뒤가 비쳐 겹침이 읽힌다). 궁금하면 호버(툴팁). */
             <div
               key={item.key}
-              className="group absolute rounded-[10px] ring-[1.5px] ring-white"
-              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: KIND_STYLE[item.kind].bg }}
+              className="group absolute rounded-[10px]"
+              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: `${KIND_STYLE[item.kind].bg}B3` }}
             >
               <span className="pointer-events-none absolute -top-7 left-1 z-20 hidden whitespace-nowrap rounded-lg bg-[#333D4B] px-2 py-1 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(25,31,40,0.25)] group-hover:block">
                 {item.title}
