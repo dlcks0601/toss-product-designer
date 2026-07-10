@@ -404,7 +404,7 @@ function OverlapTimeline({
           <span
             key={h}
             aria-hidden
-            className="absolute left-0 w-8 -translate-y-2 text-right text-[10px] leading-4 text-text-faint"
+            className="absolute left-0 w-8 -translate-y-2 text-left text-[10px] leading-4 text-text-faint"
             style={{ top: y(h) }}
           >
             {hour <= 12 ? `${hour}시` : `${hour - 12}시`}
