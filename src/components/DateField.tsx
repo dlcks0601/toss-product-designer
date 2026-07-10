@@ -2,16 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { ChevronDown } from 'lucide-react';
+import { Check, ChevronDown } from 'lucide-react';
 import { buildMonthCells } from './HomeCalendar';
+import MobileSheet from './MobileSheet';
+import { useIsDesktop } from '../app-state/useIsDesktop';
 import { fmtDayKorean } from '../lib/time';
 
 /**
- * 날짜 필드 — 리스트가 아니라 달력 그리드에서 고른다(홈 월간 피커와 같은 문법).
- * 모바일·데스크톱 모두 필드 아래 팝오버 — 날짜는 필드 곁에서 고르는 게 맥락에 맞고
- * (토스 메뉴 원칙: 누른 자리 가까이), 바텀시트는 여정을 끊는 과한 전환이라 쓰지 않는다.
- * 팝오버 폭 = 필드 폭(시간 피커와 같은 규칙), 셀 44px. 모바일은 공간이 모자라면
- * 페이지가 딱 그만큼 부드럽게 따라 내려온다(동행 스크롤 — PC는 스플릿이라 불필요).
+ * 날짜 필드 — PC는 필드 아래 달력 그리드 팝오버(홈 월간 피커 문법),
+ * 모바일은 '날짜 선택하기' 바텀시트 + 체크 행(토스 셀렉트 실물 문법, 2026-07-10 확정).
+ * 시트는 공용 MobileSheet — 그랩바 + 아래 스와이프 닫기 계약을 그대로 따른다.
  */
 
 const WEEKDAY_HEADER = ['일', '월', '화', '수', '목', '금', '토'] as const;
@@ -32,12 +32,9 @@ export default function DateField({
   ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const desktop = useIsDesktop();
   const reduced = !!useReducedMotion();
   const rootRef = useRef<HTMLDivElement>(null);
-  // 동적 스페이서 — 팝오버가 열릴 때만 페이지 하단에 임시 공간을 만들고, 닫히면 회수한다.
-  // (상시 하단 패딩은 평소 화면에 불필요한 스크롤을 만든다.)
-  const spacerRef = useRef<HTMLDivElement | null>(null);
-  const scrolledByRef = useRef(0);
   const selectableSet = new Set(selectable);
 
   // 바깥 탭/클릭 + ESC 닫기 — 스페이서 회수까지 close()로.
@@ -60,50 +57,9 @@ export default function DateField({
     };
   }, [open]);
 
-  /** 닫기 — 열 때 내려간 만큼 부드럽게 원위치하고 스페이서를 회수한다. */
-  const close = () => {
-    setOpen(false);
-    const sp = spacerRef.current;
-    if (sp) {
-      const back = scrolledByRef.current;
-      spacerRef.current = null;
-      scrolledByRef.current = 0;
-      if (back > 0) window.scrollBy({ top: -back, behavior: reduced ? 'auto' : 'smooth' });
-      window.setTimeout(() => sp.remove(), 400);
-    }
-  };
-
-  /** 항상 아래로 열고, 공간이 모자라면 딱 그만큼 임시 공간을 만들어 따라 내려간다.
-   *  동행 스크롤은 모바일 전용 — PC는 반반 스플릿이라 필드 아래가 늘 넉넉해서 페이지가
-   *  움직일 이유가 없다(움직이면 오히려 제어감이 깨진다). */
-  const toggleOpen = () => {
-    if (open) {
-      close();
-      return;
-    }
-    const r = rootRef.current?.getBoundingClientRect();
-    const mobile = !window.matchMedia('(min-width: 1024px)').matches;
-    if (r && mobile) {
-      // 패널 높이 — 홈 월간 피커 규격(~400), 모바일도 동일(폭만 필드 정합).
-      const panelH = 400;
-      // 여백 24px + 하단 고정 CTA(~96px) 위까지 — 패널이 바닥/CTA에 붙지 않게.
-      const below = window.innerHeight - r.bottom - 6 - 24 - 96;
-      const need = panelH - below;
-      if (need > 0) {
-        const sp = document.createElement('div');
-        sp.style.height = `${need + 8}px`;
-        sp.setAttribute('aria-hidden', 'true');
-        document.body.appendChild(sp);
-        spacerRef.current = sp;
-        scrolledByRef.current = need;
-        window.scrollBy({ top: need, behavior: reduced ? 'auto' : 'smooth' });
-      }
-    }
-    setOpen(true);
-  };
-
-  // 언마운트 시 스페이서 정리
-  useEffect(() => () => spacerRef.current?.remove(), []);
+  const close = () => setOpen(false);
+  /** PC = 필드 아래 팝오버, 모바일 = 바텀시트(토스 셀렉트 문법). */
+  const toggleOpen = () => setOpen((o) => !o);
 
   const pick = (day: string) => {
     onChange(day);
@@ -129,7 +85,7 @@ export default function DateField({
       </button>
 
       <AnimatePresence>
-        {open && (
+        {open && desktop && (
           <motion.div
             key="popover"
             role="dialog"
@@ -183,6 +139,37 @@ export default function DateField({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 모바일 — '날짜 선택하기' 바텀시트, 체크 행(토스 셀렉트 문법). */}
+      <MobileSheet open={open && !desktop} onClose={close} title="날짜 선택하기">
+        <div className="pb-2">
+          {/* 토스 시트 캐스케이드 — 행이 위에서부터 하나씩 쌓인다(30ms 스태거, 12행까지). */}
+          {selectable.map((day, i) => {
+            const isSel = day === value;
+            return (
+              <motion.button
+                key={day}
+                type="button"
+                initial={reduced ? false : { opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i, 12) * 0.03, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                onClick={() => pick(day)}
+                aria-pressed={isSel}
+                className="pressable flex min-h-[52px] w-full items-center gap-2 py-2 text-left"
+              >
+                <span className="text-[16px] font-medium text-text-strong">{fmtDayKorean(day)}</span>
+                {dotted?.has(day) && <span aria-hidden className="h-1 w-1 rounded-full bg-primary/60" />}
+                <Check
+                  size={22}
+                  strokeWidth={3}
+                  aria-hidden
+                  className={`ml-auto shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
+                />
+              </motion.button>
+            );
+          })}
+        </div>
+      </MobileSheet>
     </div>
   );
 }
