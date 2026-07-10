@@ -541,9 +541,15 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
   const [selectedId, setSelectedId] = useState<string | null>(state.selectedSlotId);
   const [dayFilter, setDayFilter] = useState<string | null>(null);
   const listShown = useMemo(() => {
-    if (!dayFilter) return baseList;
-    return (allWarning ? warnings : goodish).filter((s) => s.day === dayFilter).slice(0, 4);
-  }, [dayFilter, baseList, goodish, warnings, allWarning]);
+    const base = !dayFilter
+      ? baseList
+      : (allWarning ? warnings : goodish).filter((s) => s.day === dayFilter).slice(0, 4);
+    // 계약: 선택한 시간은 언제나 리스트에 체크로 보인다 — 타임라인 고스트·더보기 칩으로
+    // 추천 밖 슬롯을 골라도, 시트를 내리면 그 시간이 맨 위 행으로 서 있어야 한다.
+    const sel = selectedId ? slots.find((s) => s.id === selectedId) : null;
+    if (sel && !base.some((b) => b.id === sel.id)) return [sel, ...base];
+    return base;
+  }, [dayFilter, baseList, goodish, warnings, allWarning, selectedId, slots]);
   const active = useMemo(
     () => slots.find((s) => s.id === selectedId) ?? listShown[0] ?? baseList[0] ?? null,
     [slots, selectedId, listShown, baseList],
@@ -716,12 +722,13 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                   {dayFilter ? `${fmtDayKorean(dayFilter)}의 시간` : allWarning ? '그나마 나은 순이에요' : '추천 순이에요'}
                 </p>
                 <div className="mt-2.5 space-y-2">
-                  {listShown.map((slot, i) => (
+                  {listShown.map((slot) => (
                     <SlotRow
                       key={slot.id}
                       slot={slot}
                       selected={active?.id === slot.id}
-                      badge={badgeOf(slot, !dayFilter && !allWarning && i === 0)}
+                      /* 1위 배지는 진짜 추천 1위에게 — 선택 주입 행이 밀어내도 뺏지 않는다. */
+                      badge={badgeOf(slot, !dayFilter && !allWarning && slot.id === recommended[0]?.id)}
                       onSelect={() => select(slot)}
                     />
                   ))}
