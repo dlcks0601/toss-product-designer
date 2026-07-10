@@ -336,12 +336,12 @@ const haneul: Person = {
 };
 
 /**
- * 오세훈 — BE(선택). lunchRhythm 13:00~14:00(자율 점심 60분) + 촘촘한 일정 → 화 14:00 시작 = after-lunch 발동.
+ * 백세훈 — BE(선택). lunchRhythm 13:00~14:00(자율 점심 60분) + 촘촘한 일정 → 화 14:00 시작 = after-lunch 발동.
  * S2 소재. 다른 후보 슬롯에선 바빠서 불참, 화 14:00 만 세훈이 온전히 참석(after-lunch 경고).
  * 점심 종료 840 → after-lunch 창 [840, 870) 에 화 14:00(840) 시작이 정확히 걸린다.
  */
 const sehun: Person = {
-  id: 'sehun', name: '오세훈', role: 'Backend Engineer', faceId: 'sehun',
+  id: 'sehun', name: '백세훈', role: 'Backend Engineer', faceId: 'sehun',
   workHours: { start: 540, end: 1080 },
   events: [
     // ── 현재 주 ──
