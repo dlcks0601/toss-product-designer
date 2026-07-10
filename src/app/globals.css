@@ -37,6 +37,9 @@ body { font-family: 'Toss Product Sans', -apple-system, BlinkMacSystemFont, sans
 /* 프레스 스쿼시 — 전 버튼·칩 공용 */
 .pressable { transition: transform 320ms var(--bezier-standard), background-color 320ms var(--bezier-standard); }
 .pressable:active { transform: scale(0.96); transition-duration: 120ms; }
+/* 포커스 — 마우스 클릭 뒤 남는 UA 기본 링 제거, 키보드 포커스만 의도된 링으로. */
+.pressable:focus { outline: none; }
+.pressable:focus-visible { outline: 2px solid rgba(49, 130, 246, 0.45); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .pressable, .pressable:active { transform: none; } }
 
 /* 스쿼클 — 연속 곡률 코너(iOS·피그마 corner smoothing 문법). 점진적 향상:
