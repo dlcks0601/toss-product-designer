@@ -391,6 +391,8 @@ function OverlapTimeline({
   reduced: boolean;
 }) {
   const items = useMemo(() => withLanes(timelineItems(attendees, day)), [attendees, day]);
+  // 그날 쓰인 레인 수만큼 전체 폭을 나눠 갖는다(35% 겹침) — 오른쪽 끝까지 딱 맞게.
+  const laneCount = Math.max(...items.map((i) => i.lane), 0) + 1;
   const y = (minute: number) => (Math.min(Math.max(minute, TL_START), TL_END) - TL_START) * TL_PX_PER_MIN;
 
   return (
@@ -412,12 +414,19 @@ function OverlapTimeline({
       <div className="absolute inset-y-0 left-11 right-0">
         {items.map((item) => {
           const h = Math.max(y(item.end) - y(item.start), 12);
+          const laneW = 100 / laneCount;
           return (
             /* 텍스트 없이 색으로만 — 사람색 반투명(뒤가 비쳐 겹침이 읽힌다). 궁금하면 호버(툴팁). */
             <div
               key={item.key}
               className="group absolute rounded-[10px]"
-              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: `${item.color}59` }}
+              style={{
+                top: y(item.start),
+                height: h,
+                left: `${item.lane * laneW}%`,
+                width: `${Math.min(laneW * 1.35, 100 - item.lane * laneW)}%`,
+                backgroundColor: `${item.color}59`,
+              }}
             >
               <span className="pointer-events-none absolute -top-7 left-1 z-20 hidden whitespace-nowrap rounded-lg bg-[#333D4B] px-2 py-1 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(25,31,40,0.25)] group-hover:block">
                 {item.title}
@@ -433,7 +442,7 @@ function OverlapTimeline({
             type="button"
             aria-label={`${fmtTime(g.start)} 후보 선택`}
             onClick={() => onPick(g)}
-            className="group/ghost absolute left-0 right-[24%] z-[5] rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-2.5 py-1 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
+            className="group/ghost absolute inset-x-0 z-[5] rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-2.5 py-1 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
             style={{ top: y(g.start), height: Math.max(y(g.end) - y(g.start), 20) }}
           >
             <span className="text-[10px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
@@ -447,7 +456,7 @@ function OverlapTimeline({
             initial={false}
             animate={{ top: y(slot.start), height: Math.max(y(slot.end) - y(slot.start), 20) }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 30 }}
-            className="absolute left-0 right-[24%] z-10 rounded-[10px] bg-primary px-2.5 py-1.5 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
+            className="absolute inset-x-0 z-10 rounded-[10px] bg-primary px-2.5 py-1.5 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
           >
             <p className="text-[11px] font-bold leading-[1.3]">
               {fmtTime(slot.start)} – {fmtTime(slot.end)}
