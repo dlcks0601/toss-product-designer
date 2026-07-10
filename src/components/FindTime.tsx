@@ -6,6 +6,7 @@ import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
 import FrostedBar from './FrostedBar';
+import { KIND_STYLE } from './HomeCalendar';
 import Reveal from './Reveal';
 import Wordmark from './Wordmark';
 import { decisionKey, pickAction } from '../lib/decision';
@@ -33,15 +34,6 @@ import type { Attendee, CandidateSlot, EventKind } from '../lib/types';
  */
 
 // ── 표시 상수 ──────────────────────────────────────────────────────
-
-/** 겹침 타임라인의 종류색 — 홈 카드 색의 반투명 버전(겹침이 자연스럽게 섞이는 톤). */
-const OVERLAY_STYLE: Record<EventKind, { bg: string; text: string }> = {
-  meeting: { bg: 'rgba(0,153,255,.13)', text: '#0080E6' },
-  focus: { bg: 'rgba(18,161,80,.13)', text: '#12A150' },
-  lunch: { bg: 'rgba(255,149,0,.15)', text: '#E08300' },
-  offsite: { bg: 'rgba(240,68,82,.11)', text: '#E23C4E' },
-  personal: { bg: 'rgba(124,77,255,.11)', text: '#7C4DFF' },
-};
 
 const WEEKDAY_SHORT = ['월', '화', '수', '목', '금', '토', '일'] as const;
 
@@ -366,11 +358,16 @@ function OverlapTimeline({
   attendees,
   day,
   slot,
+  ghosts,
+  onPick,
   reduced,
 }: {
   attendees: Attendee[];
   day: string;
   slot: CandidateSlot | null;
+  /** 같은 날의 선택 안 된 후보 — 점선 고스트로 앉아 있다(홈 응답대기 고스트 문법). */
+  ghosts: CandidateSlot[];
+  onPick: (slot: CandidateSlot) => void;
   reduced: boolean;
 }) {
   const items = useMemo(() => withLanes(timelineItems(attendees, day)), [attendees, day]);
@@ -378,27 +375,29 @@ function OverlapTimeline({
 
   return (
     <div className="relative" style={{ height: (TL_END - TL_START) * TL_PX_PER_MIN }}>
-      {/* 시간선 — 홈 캘린더와 같은 헤어라인 문법 */}
+      {/* 줄 없이 시간 라벨만 — 홈 캘린더처럼 공기 위에 카드가 뜬다. */}
       {Array.from({ length: (TL_END - TL_START) / 60 + 1 }, (_, i) => TL_START + i * 60).map((h) => {
         const hour = h / 60;
         return (
-          <div key={h} aria-hidden className="absolute inset-x-0 border-t border-border/40" style={{ top: y(h) }}>
-            <span className="absolute -top-2 left-0 w-8 text-right text-[10px] leading-4 text-text-faint">
-              {hour <= 12 ? `${hour}시` : `${hour - 12}시`}
-            </span>
-          </div>
+          <span
+            key={h}
+            aria-hidden
+            className="absolute left-0 w-8 -translate-y-2 text-right text-[10px] leading-4 text-text-faint"
+            style={{ top: y(h) }}
+          >
+            {hour <= 12 ? `${hour}시` : `${hour - 12}시`}
+          </span>
         );
       })}
       <div className="absolute inset-y-0 left-11 right-0">
         {items.map((item) => {
-          const c = OVERLAY_STYLE[item.kind];
           const h = Math.max(y(item.end) - y(item.start), 12);
           return (
-            /* 텍스트 없이 색으로만 — 겹침은 분위기로 읽힌다. 궁금하면 호버(툴팁). */
+            /* 텍스트 없이 색으로만 — 홈 카드 파스텔 + 흰 링(겹침의 층). 궁금하면 호버(툴팁). */
             <div
               key={item.key}
-              className="group absolute rounded-[8px]"
-              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: c.bg }}
+              className="group absolute rounded-[10px] ring-[1.5px] ring-white"
+              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: KIND_STYLE[item.kind].bg }}
             >
               <span className="pointer-events-none absolute -top-7 left-1 z-20 hidden whitespace-nowrap rounded-lg bg-[#333D4B] px-2 py-1 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(25,31,40,0.25)] group-hover:block">
                 {item.title}
@@ -407,6 +406,21 @@ function OverlapTimeline({
             </div>
           );
         })}
+        {/* 고스트 후보 — 점선으로 앉아 있다가 호버하면 파랗게 차오른다(홈 고스트와 같은 어휘). 탭 = 선택. */}
+        {ghosts.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            aria-label={`${fmtTime(g.start)} 후보 선택`}
+            onClick={() => onPick(g)}
+            className="group/ghost absolute left-0 right-[24%] z-[5] rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-2.5 py-1 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
+            style={{ top: y(g.start), height: Math.max(y(g.end) - y(g.start), 20) }}
+          >
+            <span className="text-[10px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
+              {fmtTime(g.start)}
+            </span>
+          </button>
+        ))}
         {/* 선택된 추천 — 빈틈에 앉은 솔리드 블루. 선택이 바뀌면 스프링으로 이동한다. */}
         {slot && (
           <motion.div
@@ -740,13 +754,20 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                         className={`transition-transform duration-200 ${timelineOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
-                    <div
-                      className={`${timelineOpen ? 'block' : 'hidden'} rounded-2xl bg-[#F9FAFB] p-4 pt-3 lg:block`}
-                    >
-                      <p className="hidden pb-2 text-[12px] font-semibold text-text-weak lg:block">
+                    <div className={`${timelineOpen ? 'block' : 'hidden'} pt-1 lg:block`}>
+                      <p className="hidden pb-3 text-[12px] font-semibold text-text-weak lg:block">
                         {fmtDayKorean(active.day)} 모두의 일정
                       </p>
-                      <OverlapTimeline attendees={attendees} day={active.day} slot={active} reduced={reduced} />
+                      <OverlapTimeline
+                        attendees={attendees}
+                        day={active.day}
+                        slot={active}
+                        ghosts={(allWarning ? warnings : goodish)
+                          .filter((s) => s.day === active.day && s.id !== active.id)
+                          .slice(0, 4)}
+                        onPick={select}
+                        reduced={reduced}
+                      />
                     </div>
                   </div>
                 )}
