@@ -444,14 +444,14 @@ function OverlapTimeline({
             type="button"
             aria-label={`${fmtTime(g.start)} 후보 선택`}
             onClick={() => onPick(g)}
-            className="group/ghost absolute inset-x-0 z-[5] rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-2.5 py-1 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
+            className="group/ghost absolute inset-x-0 z-[5] rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-3.5 py-1.5 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
             style={{ top: y(g.start), height: Math.max(y(g.end) - y(g.start), 20) }}
           >
             {/* 솔리드 카드와 같은 순서 — 제목 먼저, 시간 아래. */}
-            <span className="block truncate text-[10px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
+            <span className="block truncate text-[13px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
               {meetingTitle}
             </span>
-            <span className="block text-[9px] font-medium text-primary/60 transition-colors group-hover/ghost:text-white/85">
+            <span className="block text-[11px] font-medium text-primary/60 transition-colors group-hover/ghost:text-white/85">
               {fmtTime(g.start)} – {fmtTime(g.end)}
             </span>
           </button>
@@ -462,11 +462,11 @@ function OverlapTimeline({
             initial={false}
             animate={{ top: y(slot.start), height: Math.max(y(slot.end) - y(slot.start), 20) }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 30 }}
-            className="absolute inset-x-0 z-10 rounded-[10px] bg-primary px-2.5 py-1.5 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
+            className="absolute inset-x-0 z-10 rounded-[10px] bg-primary px-3.5 py-2 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
           >
             {/* 홈 카드와 같은 순서 — 제목이 먼저, 시간이 아래(단일 문법). */}
-            <p className="truncate text-[11px] font-bold leading-[1.3]">{meetingTitle}</p>
-            <p className="text-[9.5px] font-medium leading-[1.3] opacity-85">
+            <p className="truncate text-[14px] font-bold leading-[1.35]">{meetingTitle}</p>
+            <p className="mt-0.5 text-[11.5px] font-medium leading-[1.35] opacity-85">
               {fmtTime(slot.start)} – {fmtTime(slot.end)}
             </p>
           </motion.div>
