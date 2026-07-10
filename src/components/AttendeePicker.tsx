@@ -52,7 +52,6 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
   const [query, setQuery] = useState('');
   const [peekId, setPeekId] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
   // 모바일 시트 드래그 — 그랩바·헤더에서 시작(dragListener=false). 리스트 스크롤과 충돌하지 않는다.
   const dragControls = useDragControls();
   const startDrag = (e: React.PointerEvent) => {
@@ -72,12 +71,13 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
   );
   const confirm = confirmLabel(selectedNames);
 
-  // 바디 스크롤 잠금 + 열릴 때 검색 포커스, 닫힐 때 이전 포커스 복원.
+  // 바디 스크롤 잠금 + 닫힐 때 이전 포커스 복원.
+  // 검색 자동 포커스는 하지 않는다 — 주 동선은 리스트에서 고르기(검색은 보조)이고,
+  // 모바일은 키보드가 시트를 덮는다. 키보드 사용자는 Tab 한 번이면 검색에 닿는다.
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     const prevFocus = document.activeElement as HTMLElement | null;
     document.body.style.overflow = 'hidden';
-    searchRef.current?.focus();
     return () => {
       document.body.style.overflow = prevOverflow;
       prevFocus?.focus?.();
@@ -183,7 +183,6 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
           <div className="flex h-11 items-center gap-2.5 rounded-xl bg-section px-3.5">
             <Search size={16} className="shrink-0 text-text-weak" aria-hidden />
             <input
-              ref={searchRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="이름이나 역할로 검색"
