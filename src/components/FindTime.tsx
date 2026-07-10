@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useMemo, useState, type Dispatch, type ReactNode } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
@@ -158,6 +158,12 @@ function MobileSheet({
   children: ReactNode;
 }) {
   const reduced = !!useReducedMotion();
+  // 시트 계약: 그랩바·타이틀에서 끌어 아래로 스와이프하면 닫힌다(AttendeePicker와 동일 문법).
+  // dragListener=false — 본문 스크롤과 충돌하지 않게 그랩 영역에서만 드래그를 시작한다.
+  const dragControls = useDragControls();
+  const startDrag = (e: React.PointerEvent) => {
+    if (!reduced) dragControls.start(e);
+  };
   return (
     <AnimatePresence>
       {open && (
@@ -173,18 +179,31 @@ function MobileSheet({
           <motion.div
             role="dialog"
             aria-label={title}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-[24px] bg-white px-5 lg:hidden"
-            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+            drag={reduced ? false : 'y'}
+            dragListener={false}
+            dragControls={dragControls}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.9 }}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 100 || info.velocity.y > 600) onClose();
+            }}
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-[24px] bg-white lg:hidden"
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 32 }}
           >
-            <div className="sticky top-0 z-10 bg-white pb-2 pt-3">
+            {/* 그랩바 + 타이틀 — 여기서 끌어서 닫는다. */}
+            <div className="touch-none px-5 pb-2 pt-3" onPointerDown={startDrag}>
               <div aria-hidden className="mx-auto h-1 w-9 rounded-full bg-border" />
               <p className="pt-5 text-[18px] font-bold tracking-[-0.01em] text-text-strong">{title}</p>
             </div>
-            {children}
+            <div
+              className="min-h-0 flex-1 overflow-y-auto px-5"
+              style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+            >
+              {children}
+            </div>
           </motion.div>
         </>
       )}
