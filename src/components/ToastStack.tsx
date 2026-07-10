@@ -59,12 +59,49 @@ export interface ToastStackProps {
 export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
   const desktop = useIsDesktop();
   const reduced = !!useReducedMotion();
-  const visible = visibleToasts(toasts);
+  // 의미 분리(2026-07-10 합의): 밖에서 온 소식 = 알림 문법(모바일 상단 배너/PC 우하단 카드),
+  // 내 행동의 확인(transient) = 피드백 문법 — 하단 다크 토스트(토스 '복사했어요' 실물).
+  const visible = visibleToasts(toasts.filter((t) => !t.transient));
+  const feedback = visibleToasts(toasts.filter((t) => t.transient));
   const count = visible.length;
   // 등장 시작점 — 데스크톱은 아래에서 위로, 모바일은 위에서 드롭
   const enterY = desktop ? 28 : -28;
 
   return (
+    <>
+    {/* 피드백 다크 토스트 — 모바일: 고정 CTA 위 / PC: 하단 중앙. 알림 센터와 무관한 조용한 확인. */}
+    <div
+      aria-live="polite"
+      className={
+        desktop
+          ? 'fixed bottom-6 left-1/2 z-[60] flex w-max -translate-x-1/2 flex-col items-center gap-2'
+          : 'fixed inset-x-4 bottom-[84px] z-[60] mx-auto flex max-w-[480px] flex-col items-stretch gap-2'
+      }
+    >
+      <AnimatePresence>
+        {feedback.map((toast) => (
+          <motion.div
+            key={toast.id}
+            role="status"
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
+            transition={reduced ? { duration: 0.15 } : { type: 'spring', stiffness: 350, damping: 30 }}
+            onClick={() => onDismiss(toast.id)}
+            className="cursor-pointer select-none"
+          >
+            <div className="flex items-center gap-2.5 rounded-[14px] bg-[#191F28]/[.92] px-4 py-3 shadow-[0_12px_32px_rgba(25,31,40,0.24)] backdrop-blur-[6px]">
+              <span aria-hidden className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full bg-primary text-white">
+                <Check size={12} strokeWidth={3} />
+              </span>
+              <p className="min-w-0 text-[14px] font-semibold leading-[1.4] text-white">{toast.text}</p>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
+
+    {/* 알림 토스트 — 밖에서 온 소식(응답·초대), 소멸 후 알림 센터로. */}
     <div
       aria-live="polite"
       className={
@@ -99,5 +136,6 @@ export default function ToastStack({ toasts, onDismiss }: ToastStackProps) {
         })}
       </AnimatePresence>
     </div>
+    </>
   );
 }
