@@ -2,7 +2,7 @@
 
 import type { Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
-import { Check, ChevronLeft, Video } from 'lucide-react';
+import { ChevronLeft, Video } from 'lucide-react';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
 import FrostedBar from './FrostedBar';
@@ -164,19 +164,26 @@ function PlaceRow({
       type="button"
       aria-pressed={selected}
       onClick={onSelect}
-      className={`pressable flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left transition-shadow ${
+      className={`pressable flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left transition-colors ${
         selected ? 'bg-primary-tint shadow-[inset_0_0_0_1.5px_#9CC5FB]' : 'bg-[#F7F8FA] hover:bg-section'
       }`}
     >
       {remote && <Video size={18} aria-hidden className="shrink-0 text-text-weak" />}
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-1.5">
-          <span className="truncate text-[14px] font-semibold text-text-strong">{title}</span>
-          {recommended && <Badge tone="rec">추천</Badge>}
+        <span
+          className={`block truncate text-[15px] font-bold tracking-[-0.01em] ${
+            selected ? 'text-primary-pressed' : 'text-text-strong'
+          }`}
+        >
+          {title}
         </span>
-        <span className="mt-0.5 block truncate text-[12px] text-text-weak">{sub}</span>
+        <span className="mt-0.5 block truncate text-[12px] leading-[1.5] text-text-weak">{sub}</span>
       </span>
-      {selected && <Check size={17} strokeWidth={2.6} aria-hidden className="shrink-0 text-primary" />}
+      {recommended && (
+        <span className="shrink-0 rounded-lg bg-white px-2 py-1 text-[11px] font-bold text-primary shadow-[0_1px_4px_rgba(25,31,40,0.08)]">
+          추천
+        </span>
+      )}
     </button>
   );
 }
