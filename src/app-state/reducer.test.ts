@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { reducer, initialState, isMeeting, toUrl, fromUrl } from './reducer';
 import type { AppState } from './reducer';
-import { DEFAULT_CAST, INCOMING_INVITE, ME_ID } from '../data/world';
+import { INCOMING_INVITE, ME_ID } from '../data/world';
 
 describe('initialState', () => {
   it('홈 스텝 · 주최자 1인 · 회의 모드 아님 · 기본 길이 60 · 기한 다음 주까지', () => {
@@ -148,13 +148,6 @@ describe('confirmedSlotId — "확정됨" CTA는 confirmedAt이 아니라 슬롯
     expect(reselectedSame.confirmedSlotId).toBeNull();
   });
 
-  it('PREFILL_CAST는 confirmedSlotId를 비운다', () => {
-    const confirmed = reducer({ ...initialState(), selectedSlotId: 'slot-1' }, { type: 'CONFIRM' });
-    const next = reducer(confirmed, { type: 'PREFILL_CAST' });
-    expect(next.selectedSlotId).toBeNull();
-    expect(next.confirmedSlotId).toBeNull();
-  });
-
   it('RESET은 confirmedSlotId를 초기화한다', () => {
     const confirmed = reducer({ ...initialState(), selectedSlotId: 'slot-1' }, { type: 'CONFIRM' });
     const next = reducer(confirmed, { type: 'RESET' });
@@ -287,25 +280,6 @@ describe('ADD_MY_EVENT — 혼자 경로의 개인 일정 저장', () => {
     const saved = reducer(initialState(), { type: 'ADD_MY_EVENT', event });
     const next = reducer(saved, { type: 'HYDRATE', patch: fromUrl('p=junho.r&s=setup') });
     expect(next.myEvents).toEqual([event]);
-  });
-});
-
-describe('PREFILL_CAST — 웰컴/할 일 카드 공용 6인 프리필', () => {
-  it('기본 캐스트 6인으로 채우고(필수 4 + 선택 2) 셋업 스텝으로 이동한다', () => {
-    const s = reducer(initialState(), { type: 'PREFILL_CAST' });
-    expect(s.attendeeIds).toEqual([...DEFAULT_CAST.requiredIds, ...DEFAULT_CAST.optionalIds]);
-    expect(s.attendeeIds[0]).toBe(ME_ID); // 주최자 맨 앞
-    for (const id of DEFAULT_CAST.requiredIds) expect(s.required[id]).toBe(true);
-    for (const id of DEFAULT_CAST.optionalIds) expect(s.required[id]).toBe(false);
-    expect(s.step).toBe('setup');
-    expect(isMeeting(s)).toBe(true);
-  });
-
-  it('참석자 구성을 통째로 바꾸므로 이전 선택을 무효화한다', () => {
-    const messy: AppState = { ...initialState(), selectedSlotId: 'slot-1', allowPartialRequiredId: 'junho' };
-    const s = reducer(messy, { type: 'PREFILL_CAST' });
-    expect(s.selectedSlotId).toBeNull();
-    expect(s.allowPartialRequiredId).toBeNull();
   });
 });
 

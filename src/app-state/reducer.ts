@@ -18,7 +18,7 @@
 import type { CalendarEvent, DeadlineKind } from '../lib/types';
 import { parseState, serializeState } from '../lib/urlState';
 import type { UrlAttendee } from '../lib/urlState';
-import { DEFAULT_CAST, INCOMING_INVITE, ME_ID } from '../data/world';
+import { INCOMING_INVITE, ME_ID } from '../data/world';
 
 export type Step = 'home' | 'setup' | 'find' | 'confirm' | 'done' | 'invite' | 'notifications';
 
@@ -61,7 +61,6 @@ export type Action =
   | { type: 'SELECT_SLOT'; slotId: string | null }
   | { type: 'ALLOW_PARTIAL'; id: string | null }
   | { type: 'SET_ROOM'; roomId: string | 'remote' | null }
-  | { type: 'PREFILL_CAST' }
   | { type: 'HYDRATE'; patch: Partial<AppState> }
   | { type: 'PLAY_SCAN' }
   | { type: 'TOGGLE_MITIGATION'; key: keyof AppState['mitigations'] }
@@ -162,21 +161,6 @@ export function reducer(s: AppState, a: Action): AppState {
 
     case 'SET_ROOM':
       return { ...s, roomId: a.roomId };
-
-    case 'PREFILL_CAST': {
-      // 할 일 카드 공용 프리필 — 기본 6인(필수 4 + 선택 2)으로 셋업을 시작한다.
-      // 참석자 구성을 통째로 바꾸므로 이전 선택은 무효.
-      const required: Record<string, boolean> = {};
-      for (const id of DEFAULT_CAST.requiredIds) required[id] = true;
-      for (const id of DEFAULT_CAST.optionalIds) required[id] = false;
-      return {
-        ...applyAndInvalidateSelection(s, {
-          attendeeIds: [...DEFAULT_CAST.requiredIds, ...DEFAULT_CAST.optionalIds],
-          required,
-        }),
-        step: 'setup',
-      };
-    }
 
     case 'HYDRATE': {
       // 마운트 시 1회 — fromUrl(location.search)의 부분 패치를 안전하게 병합한다.

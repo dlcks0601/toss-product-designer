@@ -196,7 +196,12 @@ function HomeScreen({
   onOpenNotifications: () => void;
   responseBadges: ResponseBadges | null;
 }) {
-  const openSetup = () => dispatch({ type: 'SET_STEP', step: 'setup' });
+  const openSetup = () => {
+    // 확정을 마친 여정 뒤의 '일정 만들기'는 새 출발 — 이전 조율 조건을 비운다(myEvents 보존).
+    // done을 우회해 홈에 온 경로(미리보기→홈 등)까지 커버한다. 미확정 여정의 재진입은 그대로 이어진다.
+    if (state.confirmedAt) dispatch({ type: 'RESET' });
+    dispatch({ type: 'SET_STEP', step: 'setup' });
+  };
   const openInvite = () => dispatch({ type: 'SET_STEP', step: 'invite' });
   const headerVeil = useScrollProgress();
   // 응답을 마친 초대는 캘린더의 고스트가 소멸한다(수락이면 myEvents의 실제 회의 블록으로 대체).

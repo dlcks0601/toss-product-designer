@@ -166,7 +166,8 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
         <Reveal delay={330} className="w-full space-y-2 pt-7">
           <button
             type="button"
-            onClick={() => dispatch({ type: 'SET_STEP', step: 'home' })}
+            /* 여정의 끝 — RESET으로 홈 복귀(조율 조건 초기화, myEvents 보존). 다음 '일정 만들기'가 새 출발이 된다. */
+            onClick={() => dispatch({ type: 'RESET' })}
             className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
           >
             내 캘린더에서 보기
