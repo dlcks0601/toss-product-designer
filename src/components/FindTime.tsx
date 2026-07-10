@@ -12,7 +12,7 @@ import { decisionKey, pickAction } from '../lib/decision';
 import { DEADLINE_LABEL, DURATION_LABEL, WINDOW_LABEL } from '../lib/labels';
 import { josa } from '../lib/reasons';
 import { addDaysISO, fmtDayKorean, fmtTime, weekdayIndex } from '../lib/time';
-import { weekLabel, weekMondays } from '../lib/weeks';
+import { weekMondays } from '../lib/weeks';
 import type { Candidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
 import type { RelaxationSuggestion } from '../lib/relaxation';
@@ -94,16 +94,14 @@ function WeekStrip({
   const mondays = weekMondays(windowDays);
   const inWindow = new Set(windowDays);
   return (
-    <div className="grid grid-cols-[44px_repeat(5,1fr)] gap-y-2">
-      <span aria-hidden />
+    <div className="grid grid-cols-5 gap-y-2">
       {WEEKDAY_SHORT.slice(0, 5).map((w) => (
         <span key={w} className="pb-0.5 text-center text-[12px] text-text-faint">
           {w}
         </span>
       ))}
-      {mondays.map((monday, wi) => (
+      {mondays.map((monday) => (
         <Fragment key={monday}>
-          <span className="flex items-center text-[11px] font-medium text-text-faint">{weekLabel(wi)}</span>
           {[0, 1, 2, 3, 4].map((i) => {
             const day = addDaysISO(monday, i);
             const tone = dayTone.get(day);
@@ -627,7 +625,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                   selectedDay={active?.day ?? null}
                   onPick={pickDay}
                 />
-                <p className="mt-3.5 flex items-center justify-center gap-1.5 text-[12px] text-text-weak lg:justify-start lg:pl-[44px]">
+                <p className="mt-3.5 flex items-center justify-center gap-1.5 text-[12px] text-text-weak lg:justify-start lg:pl-1">
                   <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${allWarning ? 'bg-warn-fg' : 'bg-primary'}`} />
                   {allWarning ? '아쉬운 대로 가능한 날이에요' : '추천이 있는 날이에요 — 눌러서 둘러보세요'}
                 </p>
