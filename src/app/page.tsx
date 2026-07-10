@@ -48,6 +48,13 @@ export default function Page() {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
   const { list, toasts, unreadCount, push, seed, dismiss, markAllRead } = useNotifications();
 
+  // 라이브 앵커 하이드레이션 가드 — 날짜 세계(ANCHOR_DATE)는 모듈 로드 시점에 굳는데,
+  // 서버(빌드/부팅 시점)와 클라이언트(지금)의 '오늘'이 자정을 사이에 두고 갈라지면
+  // 서버 HTML과 클라이언트 렌더가 어긋나 하이드레이션이 깨진다(딥링크가 홈으로 튕김).
+  // 데모라 SEO가 필요 없으니 날짜 세계는 클라이언트에서만 그린다 — 서버는 빈 무대만.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   // 마운트 시 1회 — 주소창의 딥링크 상태를 흡수한다. (아래 동기화 effect보다 먼저
   // 선언되어 있어 초기 상태가 주소창을 덮어쓰기 전에 원본 쿼리를 읽는다.)
   useEffect(() => {
@@ -145,6 +152,9 @@ export default function Page() {
     };
     push(note);
   };
+
+  // 서버 렌더·첫 하이드레이션 프레임 — 날짜가 없는 빈 무대(위 가드 참조).
+  if (!mounted) return <main className="min-h-dvh bg-bg" />;
 
   return (
     <>
