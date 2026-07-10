@@ -34,4 +34,4 @@ export interface PersonInsights {
   scanLine: string;                                           // 스캔 모먼트 문장
 }
 export type NotificationKind = 'response' | 'invite' | 'confirmed';
-export interface AppNotification { id: string; kind: NotificationKind; personId?: string; text: string; at: number; } // at = 도착 시각(epoch ms) — 알림 센터 상대시간의 근거
+export interface AppNotification { id: string; kind: NotificationKind; personId?: string; text: string; at: number; transient?: boolean; } // at = 도착 시각(epoch ms) — 알림 센터 상대시간의 근거. transient = 자기 행동 피드백: 토스트로만 살고 알림 센터·배지에 안 남는다.

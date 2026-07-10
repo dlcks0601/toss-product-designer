@@ -119,6 +119,16 @@ export default function Page() {
     return people.length > 0 ? { eventId: confirmedEvent.id, people } : null;
   }, [state.myEvents, toasts, list]);
 
+  // ── 혼자 일정 저장 피드백 — 홈 복귀가 무음이 되지 않게. transient: 알림 센터엔 안 남는다 ──
+  const notifySaved = () =>
+    push({
+      id: `my-event-saved-${Date.now()}`,
+      kind: 'response',
+      text: '캘린더에 자리 잡았어요',
+      at: Date.now(),
+      transient: true,
+    });
+
   // ── 여정 B 응답 — RESPOND_INVITE + 알림 센터 적립(1회 가드) ──
   const respondInvite = (response: 'accepted' | 'difficult') => {
     if (state.inviteResponded !== null) return; // reducer도 no-op이지만 알림 중복 방지
@@ -148,7 +158,7 @@ export default function Page() {
           responseBadges={responseBadges}
         />
       ) : state.step === 'setup' ? (
-        <SetupForm state={state} dispatch={dispatch} />
+        <SetupForm state={state} dispatch={dispatch} onSaved={notifySaved} />
       ) : state.step === 'find' ? (
         <FindScreen state={state} dispatch={dispatch} />
       ) : state.step === 'confirm' ? (

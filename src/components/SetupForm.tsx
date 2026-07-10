@@ -278,9 +278,11 @@ function AttendeeRow({
 export interface SetupFormProps {
   state: AppState;
   dispatch: Dispatch<Action>;
+  /** 혼자 일정 저장 직후 — 홈 복귀가 무음이 되지 않게 토스트 피드백을 배선한다(page.tsx). */
+  onSaved?: () => void;
 }
 
-export default function SetupForm({ state, dispatch }: SetupFormProps) {
+export default function SetupForm({ state, dispatch, onSaved }: SetupFormProps) {
   const meeting = isMeeting(state);
   const reduced = !!useReducedMotion();
   // 피커가 열려 있는 동안은 열던 순간의 폼 모습을 유지한다 — 참석자 토글은 라이브지만,
@@ -324,6 +326,7 @@ export default function SetupForm({ state, dispatch }: SetupFormProps) {
         kind,
       },
     });
+    onSaved?.();
   };
   const toggleAttendee = (id: string) => dispatch({ type: 'TOGGLE_ATTENDEE', id });
 

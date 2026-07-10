@@ -54,7 +54,8 @@ export function createNotificationStore(): NotificationStore {
     timers.delete(id);
     if (!item) return;
     toasts = toasts.filter((t) => t.id !== id);
-    list = [item, ...list];
+    // transient(자기 행동 피드백)는 알림 센터에 남기지 않는다 — 알림은 밖에서 온 소식만.
+    if (!item.transient) list = [item, ...list];
     notify();
   };
 
@@ -68,7 +69,7 @@ export function createNotificationStore(): NotificationStore {
 
     push(n) {
       toasts = [...toasts, n];
-      unreadCount += 1;
+      if (!n.transient) unreadCount += 1;
       const timer = setTimeout(() => moveToList(n.id), TOAST_LIFETIME_MS);
       timers.set(n.id, timer);
       notify();
