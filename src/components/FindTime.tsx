@@ -795,7 +795,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                       type="button"
                       onClick={() => setTimelineOpen((o) => !o)}
                       aria-expanded={timelineOpen}
-                      className="pressable flex w-full items-center justify-between rounded-xl py-2 text-[13px] font-medium text-text-weak lg:hidden"
+                      className="pressable flex min-h-[48px] w-full items-center justify-between rounded-xl py-3 text-[14px] font-semibold text-text-strong lg:hidden"
                     >
                       {fmtDayKorean(active.day)} 모두의 일정 {timelineOpen ? '접기' : '보기'}
                       <ChevronDown
