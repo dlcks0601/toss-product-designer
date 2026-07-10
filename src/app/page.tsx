@@ -59,6 +59,11 @@ export default function Page() {
     history.replaceState(null, '', `?${toUrl(state)}`);
   }, [state]);
 
+  // 스텝 전환 시 스크롤 최상단 — 한 페이지 스텝 머신이라 이전 화면의 스크롤이 남는다.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [state.step]);
+
   // ── 받은 초대 적립 — 마운트 시 1회, 알림 센터의 안 읽은 항목으로(토스트 아님) ──
   // 초대는 "이 세션이 시작되기 전에 이미 도착해 있던" 사실이라 transient 토스트가 아니라
   // seed로 곧장 list에 심는다. StrictMode 이중 호출은 ref로 가드(응답 각본 가드와 같은 결).
