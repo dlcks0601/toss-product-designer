@@ -404,7 +404,7 @@ function OverlapTimeline({
           <span
             key={h}
             aria-hidden
-            className="absolute left-0 w-8 -translate-y-2 text-center text-[10px] leading-4 text-text-faint"
+            className="absolute left-0 w-8 -translate-y-2 text-right text-[10px] leading-4 text-text-faint"
             style={{ top: y(h) }}
           >
             {hour <= 12 ? `${hour}시` : `${hour - 12}시`}
@@ -790,7 +790,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
               <Reveal delay={300} className="pt-7 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-0">
                 {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
-                  <div>
+                  <div className="mt-6 lg:mt-0">
                     <button
                       type="button"
                       onClick={() => setTimelineOpen((o) => !o)}
@@ -804,7 +804,11 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                         className={`transition-transform duration-200 ${timelineOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
-                    <div className={`${timelineOpen ? 'block' : 'hidden'} pt-1 lg:block`}>
+                    <div className={`${timelineOpen ? 'block' : 'hidden'} pt-4 lg:block lg:pt-0`}>
+                      {/* PC 라벨 — 그림 위에 어느 날인지 한 줄(간격은 아래 pb로만). */}
+                      <p className="hidden pb-4 text-[13px] font-semibold text-text-weak lg:block">
+                        {fmtDayKorean(active.day)} 모두의 일정
+                      </p>
                       <OverlapTimeline
                         attendees={attendees}
                         day={active.day}
