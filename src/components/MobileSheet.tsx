@@ -46,10 +46,19 @@ export default function MobileSheet({
               if (info.offset.y > 100 || info.velocity.y > 600) onClose();
             }}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-[24px] bg-white lg:hidden"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 32 }}
+            initial={{ y: '100%', opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: '100%', opacity: 0 }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : {
+                    /* 토스 실측(프레임 분석): 시트 전체가 반투명으로 ~170ms에 떠오르고 살짝 정착.
+                       행별 스태거 없음 — 순차감은 슬라이드 자체가 만든다. */
+                    y: { type: 'spring', stiffness: 480, damping: 40 },
+                    opacity: { duration: 0.18, ease: 'easeOut' },
+                  }
+            }
           >
             {/* 그랩바 + 타이틀 — 여기서 끌어서 닫는다. */}
             <div className="touch-none px-5 pb-2 pt-3" onPointerDown={startDrag}>

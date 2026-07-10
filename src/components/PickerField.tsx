@@ -151,16 +151,13 @@ export default function PickerField({
       <MobileSheet open={open && !desktop} onClose={close} title={`${ariaLabel} 선택하기`}>
         <div ref={open && !desktop ? listRef : undefined} className="pb-2">
           {/* 토스 시트 캐스케이드 — 토스 월 선택 시트 재현 — 행마다 스프링(400/28, 미세 오버슈트)으로 16px 떠오르며 50ms 간격으로 쌓인다. */}
-          {options.map((o, i) => {
+          {options.map((o) => {
             const isSel = o.value === value;
             return (
-              <motion.button
+              <button
                 key={o.value}
                 type="button"
                 data-selected={isSel}
-                initial={reduced ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i, 12) * 0.05, type: 'spring', stiffness: 400, damping: 28, mass: 0.8 }}
                 onClick={() => select(o.value)}
                 aria-pressed={isSel}
                 className="pressable flex min-h-[52px] w-full items-center justify-between py-2 text-left"
@@ -172,7 +169,7 @@ export default function PickerField({
                   aria-hidden
                   className={`shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
                 />
-              </motion.button>
+              </button>
             );
           })}
         </div>

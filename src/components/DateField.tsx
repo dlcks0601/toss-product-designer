@@ -144,15 +144,12 @@ export default function DateField({
       <MobileSheet open={open && !desktop} onClose={close} title="날짜 선택하기">
         <div className="pb-2">
           {/* 토스 시트 캐스케이드 — 토스 월 선택 시트 재현 — 행마다 스프링(400/28, 미세 오버슈트)으로 16px 떠오르며 50ms 간격으로 쌓인다. */}
-          {selectable.map((day, i) => {
+          {selectable.map((day) => {
             const isSel = day === value;
             return (
-              <motion.button
+              <button
                 key={day}
                 type="button"
-                initial={reduced ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i, 12) * 0.05, type: 'spring', stiffness: 400, damping: 28, mass: 0.8 }}
                 onClick={() => pick(day)}
                 aria-pressed={isSel}
                 className="pressable flex min-h-[52px] w-full items-center gap-2 py-2 text-left"
@@ -165,7 +162,7 @@ export default function DateField({
                   aria-hidden
                   className={`ml-auto shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
                 />
-              </motion.button>
+              </button>
             );
           })}
         </div>
