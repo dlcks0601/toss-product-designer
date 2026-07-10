@@ -67,14 +67,15 @@ export function placeLabel(
 /** 체크 팝 — 제자리 스프링(오버슈트가 기쁨의 목소리). */
 const POP_SPRING = { type: 'spring' as const, stiffness: 500, damping: 18 };
 
-/** 축하 무대 블롭 — 스캔 모먼트와 같은 표류 문법(scan-drift 궤도 재사용), 팔레트만 따뜻하게.
- *  복숭아·버터가 코너를 잡고(축하의 온도), 페리윙클·하늘이 다리를 놓는다.
- *  가운데 위(체크·타이틀 자리)는 가장 옅게 — 이리데슨트 타이틀의 가독을 지킨다. */
+/** 축하 무대 블롭 — 스캔 모먼트와 같은 화면 전체 문법(코너 소유 + 중앙 다리, scan-drift 궤도 재사용).
+ *  팔레트만 따뜻하게: 복숭아·버터가 위 코너(축하의 온도), 하늘·분홍이 아래 코너.
+ *  중앙은 크림빛으로 가장 옅게 — 타이틀·버튼·카드의 가독 무대. */
 const DONE_BLOBS = [
-  'scan-blob-a left-[-14%] top-[-34%] h-[44vmax] w-[44vmax] bg-[#FFD9C4] opacity-60',
-  'scan-blob-b right-[-12%] top-[-30%] h-[40vmax] w-[40vmax] bg-[#FFE9B5] opacity-55',
-  'scan-blob-c left-[26%] top-[6%] h-[42vmax] w-[42vmax] bg-[#CFE0FF] opacity-45',
-  'scan-blob-d right-[20%] top-[34%] h-[34vmax] w-[34vmax] bg-[#A8DCFF] opacity-40',
+  'scan-blob-a left-[-12%] top-[-18%] h-[52vmax] w-[52vmax] bg-[#FFD9C4] opacity-60',
+  'scan-blob-b right-[-10%] top-[-16%] h-[46vmax] w-[46vmax] bg-[#FFE9B5] opacity-55',
+  'scan-blob-c bottom-[-22%] left-[-12%] h-[48vmax] w-[48vmax] bg-[#A8DCFF] opacity-50',
+  'scan-blob-d bottom-[-24%] right-[-12%] h-[50vmax] w-[50vmax] bg-[#FFD1DF] opacity-50',
+  'scan-blob-e left-[18%] top-[22%] h-[55vmax] w-[55vmax] bg-[#FFF3E4] opacity-50',
 ];
 
 export interface DoneStepProps {
@@ -94,13 +95,11 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
 
   return (
     <main className="relative min-h-dvh overflow-hidden bg-bg">
-      {/* 축하 무대 — 스캔 모먼트와 같은 파스텔 블롭 표류 문법, 팔레트만 따뜻하게(복숭아가 앞으로).
-          상단만 물들이고 아래는 흰빛으로 가라앉혀 카드가 단단히 선다. */}
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[46dvh] overflow-hidden">
+      {/* 축하 무대 — 다 잡힌 순간이니 화면 전체가 물든다(스캔 모먼트와 같은 무대, 따뜻한 팔레트). */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         {DONE_BLOBS.map((cls) => (
           <span key={cls} className={`absolute rounded-full blur-[60px] ${cls}`} />
         ))}
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent to-white" />
       </div>
 
       {/* 데스크톱 헤더 — 여정 전체의 틀. 축하 무대(오로라 done)는 그대로 두고 워드마크만 얹는다. */}
