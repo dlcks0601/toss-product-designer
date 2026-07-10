@@ -423,8 +423,8 @@ function OverlapTimeline({
               key={item.key}
               className="group absolute rounded-[10px]"
               style={{
-                top: y(item.start) + 1,
-                height: Math.max(h - 3, 10),
+                top: y(item.start) + 2,
+                height: Math.max(h - 5, 10),
                 left: `${left}%`,
                 width: `${W}%`,
                 backgroundColor: `${item.color}59`,
@@ -445,7 +445,7 @@ function OverlapTimeline({
             aria-label={`${fmtTime(g.start)} 후보 선택`}
             onClick={() => onPick(g)}
             className="group/ghost absolute inset-x-0 z-[5] flex flex-col items-start justify-start rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-3.5 py-2 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
-            style={{ top: y(g.start) + 1, height: Math.max(y(g.end) - y(g.start) - 3, 20) }}
+            style={{ top: y(g.start) + 2, height: Math.max(y(g.end) - y(g.start) - 5, 20) }}
           >
             {/* 솔리드 카드와 같은 순서 — 제목 먼저, 시간 아래. */}
             <span className="block truncate text-[13px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
@@ -460,7 +460,7 @@ function OverlapTimeline({
         {slot && (
           <motion.div
             initial={false}
-            animate={{ top: y(slot.start) + 1, height: Math.max(y(slot.end) - y(slot.start) - 3, 20) }}
+            animate={{ top: y(slot.start) + 2, height: Math.max(y(slot.end) - y(slot.start) - 5, 20) }}
             transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 30 }}
             className="absolute inset-x-0 z-10 rounded-[10px] bg-primary px-3.5 py-2 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
           >
