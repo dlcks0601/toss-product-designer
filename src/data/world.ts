@@ -635,7 +635,9 @@ export const INCOMING_INVITE: {
 } = {
   fromId: 'minsu',
   title: '디자인 시스템 리뷰',
-  day: W0_THU, // 시리즈의 첫 회차 — 응답 화면의 대표 날짜
+  // 응답 화면의 대표 날짜 = 앵커 이후 첫 회차 — 라이브 앵커가 금요일이면 이번 주 목(과거)을
+  // 건너뛰고 다음 목으로. 받은 초대가 지난 날짜로 보이면 세계가 깨진다.
+  day: [W0_THU, W1_THU, W2_THU].find((d) => d >= ANCHOR_DATE) ?? W2_THU,
   days: [W0_THU, W1_THU, W2_THU], // 매주 목 14:00~15:00 반복 초대 — 모든 주에 고스트가 산다
   start: 840,
   end: 900,

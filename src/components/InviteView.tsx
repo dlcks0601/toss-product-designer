@@ -3,9 +3,11 @@
 import { useState, type Dispatch } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronLeft, Eye } from 'lucide-react';
+import Aurora from './Aurora';
 import FrostedBar from './FrostedBar';
 import Avatar from './Avatar';
 import Reveal from './Reveal';
+import Wordmark from './Wordmark';
 import { REASON_TONE_CLASS, REASON_STAGGER_MS } from './ReasonCard';
 import { activeMitigations, adjustedRange, fmtDuration } from './ConfirmStep';
 import { useCandidates } from '../app-state/useCandidates';
@@ -192,7 +194,7 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
           <button
             type="button"
             onClick={goHome}
-            className="pressable inline-flex h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-text-body ring-1 ring-border"
+            className="pressable inline-flex h-11 items-center rounded-full bg-section px-5 text-[14px] font-semibold text-text-body transition-colors hover:bg-[#EEF1F4]"
           >
             홈으로
           </button>
@@ -213,6 +215,19 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
 
   return (
     <main className="min-h-dvh bg-bg pb-16">
+      {/* 데스크톱 헤더 — 홈·셋업·확정과 같은 오로라·워드마크 틀(스텝이 바뀌어도 유지). */}
+      <div className="relative hidden lg:block">
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <Aurora variant="home" />
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-white" />
+        </div>
+        <div className="relative mx-auto max-w-[1200px] px-6 py-4">
+          <header className="flex h-10 items-center">
+            <Wordmark />
+          </header>
+        </div>
+      </div>
+
       {/* 헤더 — ← 은 home 고정(binding 1). 상시 frost(전 화면 공통 문법). */}
       <FrostedBar innerClassName="mx-auto w-full max-w-[560px] px-4">
         <Reveal as="header" className="-mx-1 flex h-14 items-center">
@@ -327,11 +342,12 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
               >
                 참석할게요
               </button>
+              {/* 보조 = 회색 면 — 테두리 버튼은 토스 어휘에 없다(완료 화면과 같은 계약). */}
               <button
                 type="button"
                 disabled={isPreview}
                 onClick={() => setAsking(true)}
-                className="pressable h-[54px] w-full rounded-2xl bg-white text-[16px] font-semibold text-text-body ring-1 ring-border disabled:bg-section disabled:text-text-faint disabled:ring-0"
+                className="pressable h-[54px] w-full rounded-2xl bg-section text-[16px] font-semibold text-text-body transition-colors hover:bg-[#EEF1F4] disabled:text-text-faint"
               >
                 어려워요
               </button>
