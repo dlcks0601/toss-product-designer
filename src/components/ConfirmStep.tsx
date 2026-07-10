@@ -126,19 +126,13 @@ function MitigationToggle({
         <span className="block text-[14px] font-semibold leading-[1.4] text-text-strong">{label}</span>
         <span className="mt-0.5 block text-[12px] leading-[1.4] text-text-weak">{sub}</span>
       </span>
-      {/* 스위치 — transform·색만 애니메이션(컴포지터 전용) */}
-      <span
+      {/* 맨 체크 — 위 장소 행들과 같은 선택 어휘(켬 파랑 / 끔 연회색). */}
+      <Check
+        size={22}
+        strokeWidth={3}
         aria-hidden
-        className={`relative h-[26px] w-[44px] shrink-0 rounded-full transition-colors duration-300 ${
-          checked ? 'bg-primary' : 'bg-border'
-        }`}
-      >
-        <span
-          className={`absolute left-0 top-[3px] h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(25,31,40,0.2)] transition-transform duration-300 ${
-            checked ? 'translate-x-[21px]' : 'translate-x-[3px]'
-          }`}
-        />
-      </span>
+        className={`shrink-0 transition-colors ${checked ? 'text-primary' : 'text-[#D6DBE0]'}`}
+      />
     </button>
   );
 }
