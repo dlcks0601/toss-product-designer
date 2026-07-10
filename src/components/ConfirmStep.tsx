@@ -272,61 +272,50 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
         {/* 타이틀 + 서브 */}
         <Reveal delay={70} className="pt-2 lg:pt-0">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong lg:text-[24px]">
-            이렇게 잡을까요?
+            어디서 할까요?
           </h1>
           <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">
-            {state.title.trim() || '회의'} · {fmtDuration(adj.end - adj.start)} · {attendees.length}명
+            {fmtDayKorean(slot.day)} {fmtRange(adj.start, adj.end)} · {state.title.trim() || '회의'} · {attendees.length}명
           </p>
         </Reveal>
 
-        {/* 선택 슬롯 요약 — 시간 + 긴장 라인 재노출(확정 직전 정직함) */}
-        <Reveal delay={140} className="pt-4">
-          <section className="rounded-card bg-[#F7F8FA] p-4">
-            <p className="text-[12px] font-medium text-text-weak">{fmtDayKorean(slot.day)}</p>
-            {/* 완화 토글이 시간을 옮기면 이 줄이 그 자리에서 갱신된다 */}
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.p
-                key={`${adj.start}-${adj.end}`}
-                initial={reduced ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={reduced ? undefined : { opacity: 0, transition: { duration: 0.12 } }}
-                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                className="mt-0.5 text-[20px] font-bold tracking-[-0.01em] text-text-strong"
-              >
-                {fmtRange(adj.start, adj.end)}
-              </motion.p>
-            </AnimatePresence>
-            {/* 참석자 — 체크 아바타(✓=필수), 시간 찾기와 같은 어휘 */}
-            <div className="mt-3 flex">
-              {attendees.slice(0, 8).map((a) => (
-                <span key={a.id} className="relative -ml-1.5 first:ml-0">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-white">
-                    <Avatar person={a} size={28} />
-                  </span>
-                  {a.attendanceType === 'required' && (
-                    <span
-                      aria-hidden
-                      className="absolute -bottom-0.5 -right-0.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#12A150] text-[7px] font-black text-white ring-2 ring-white"
-                    >
-                      ✓
-                    </span>
-                  )}
-                </span>
-              ))}
-              {attendees.length > 8 && (
-                <span className="-ml-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-text-weak ring-2 ring-white">
-                  +{attendees.length - 8}
-                </span>
-              )}
-            </div>
-            {tension.length > 0 && (
-              <div className="mt-3">
-                <ReasonCard.Reasons reasons={tension} animated={!reduced} />
-              </div>
-            )}
-          </section>
+        {/* 회의 장소 — 자동 선택 없음, 추천 Badge만. 시간이 바뀌면 목록이 FLIP으로 다시 선다. */}
+        <Reveal delay={140} className="pt-5">
+          <LayoutGroup>
+            <ul className="space-y-2">
+              <AnimatePresence initial={false} mode="popLayout">
+                {rooms.map((room) => (
+                  <motion.li
+                    key={room.id}
+                    layout={reduced ? false : 'position'}
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
+                    transition={POSITION_SPRING}
+                  >
+                    <PlaceRow
+                      title={room.name}
+                      sub={`정원 ${room.capacity}명 · ${room.floorNote}`}
+                      selected={chosen === room.id}
+                      recommended={recommendedId === room.id}
+                      onSelect={() => dispatch({ type: 'SET_ROOM', roomId: room.id })}
+                    />
+                  </motion.li>
+                ))}
+                <motion.li key="remote" layout={reduced ? false : 'position'} transition={POSITION_SPRING}>
+                  <PlaceRow
+                    remote
+                    title="화상으로 진행"
+                    sub={offsiteName ? `${offsiteName}님 외근 대비 링크 포함` : '어디서든 참여할 수 있어요'}
+                    selected={chosen === 'remote'}
+                    recommended={rooms.length === 0}
+                    onSelect={() => dispatch({ type: 'SET_ROOM', roomId: 'remote' })}
+                  />
+                </motion.li>
+              </AnimatePresence>
+            </ul>
+          </LayoutGroup>
         </Reveal>
-
         {/* 모두를 위한 조정 — 이 슬롯이 실제로 가진 긴장에만 반응한다 */}
         {hasMitigationSection && (
           <Reveal delay={210} className="pt-6">
@@ -369,44 +358,41 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
           </Reveal>
         )}
 
-        {/* 회의 장소 — 자동 선택 없음, 추천 Badge만. 시간이 바뀌면 목록이 FLIP으로 다시 선다. */}
+        {/* 함께하는 사람들 — 아바타(✓=필수)와 배려 카피. 시간은 서브라인이 말한다. */}
         <Reveal delay={hasMitigationSection ? 280 : 210} className="pt-6">
-          <p className="text-[14px] font-semibold text-text-strong">어디서 할까요?</p>
-          <LayoutGroup>
-            <ul className="mt-2.5 space-y-2">
-              <AnimatePresence initial={false} mode="popLayout">
-                {rooms.map((room) => (
-                  <motion.li
-                    key={room.id}
-                    layout={reduced ? false : 'position'}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98, transition: { duration: 0.18 } }}
-                    transition={POSITION_SPRING}
-                  >
-                    <PlaceRow
-                      title={room.name}
-                      sub={`정원 ${room.capacity}명 · ${room.floorNote}`}
-                      selected={chosen === room.id}
-                      recommended={recommendedId === room.id}
-                      onSelect={() => dispatch({ type: 'SET_ROOM', roomId: room.id })}
-                    />
-                  </motion.li>
-                ))}
-                <motion.li key="remote" layout={reduced ? false : 'position'} transition={POSITION_SPRING}>
-                  <PlaceRow
-                    remote
-                    title="화상으로 진행"
-                    sub={offsiteName ? `${offsiteName}님 외근 대비 링크 포함` : '어디서든 참여할 수 있어요'}
-                    selected={chosen === 'remote'}
-                    recommended={rooms.length === 0}
-                    onSelect={() => dispatch({ type: 'SET_ROOM', roomId: 'remote' })}
-                  />
-                </motion.li>
-              </AnimatePresence>
-            </ul>
-          </LayoutGroup>
+          <p className="text-[14px] font-semibold text-text-strong">함께하는 사람들</p>
+          <section className="mt-2.5 rounded-card bg-[#F7F8FA] p-4">
+            {/* 참석자 — 체크 아바타(✓=필수), 시간 찾기와 같은 어휘 */}
+            <div className="flex">
+              {attendees.slice(0, 8).map((a) => (
+                <span key={a.id} className="relative -ml-1.5 first:ml-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-white">
+                    <Avatar person={a} size={28} />
+                  </span>
+                  {a.attendanceType === 'required' && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 -right-0.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#12A150] text-[7px] font-black text-white ring-2 ring-white"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </span>
+              ))}
+              {attendees.length > 8 && (
+                <span className="-ml-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-text-weak ring-2 ring-white">
+                  +{attendees.length - 8}
+                </span>
+              )}
+            </div>
+            {tension.length > 0 && (
+              <div className="mt-3">
+                <ReasonCard.Reasons reasons={tension} animated={!reduced} />
+              </div>
+            )}
+          </section>
         </Reveal>
+
       </div>
 
       {/* 하단 고정 CTA — 장소를 골라야 산다(회의는 어딘가에서 열린다) */}
