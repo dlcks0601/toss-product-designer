@@ -394,17 +394,18 @@ function OverlapTimeline({
       <div className="absolute inset-y-0 left-11 right-0">
         {items.map((item) => {
           const c = OVERLAY_STYLE[item.kind];
-          const h = Math.max(y(item.end) - y(item.start), 15);
+          const h = Math.max(y(item.end) - y(item.start), 12);
           return (
+            /* 텍스트 없이 색으로만 — 겹침은 분위기로 읽힌다. 궁금하면 호버(툴팁). */
             <div
               key={item.key}
-              className="absolute overflow-hidden rounded-[9px] px-2 py-1"
-              style={{ top: y(item.start), height: h, left: `${item.lane * 18}%`, width: '42%', backgroundColor: c.bg, color: c.text }}
+              className="group absolute rounded-[8px]"
+              style={{ top: y(item.start), height: h, left: `${item.lane * 15}%`, width: '32%', backgroundColor: c.bg }}
             >
-              <p className="truncate text-[10px] font-bold leading-[1.3]">{item.title}</p>
-              {item.owner && h >= 28 && (
-                <p className="truncate text-[9px] font-medium leading-[1.3] opacity-75">{item.owner}</p>
-              )}
+              <span className="pointer-events-none absolute -top-7 left-1 z-20 hidden whitespace-nowrap rounded-lg bg-[#333D4B] px-2 py-1 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(25,31,40,0.25)] group-hover:block">
+                {item.title}
+                {item.owner ? ` · ${item.owner}` : ''}
+              </span>
             </div>
           );
         })}
@@ -453,10 +454,10 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
   // 달력 — 후보 있는 날의 톤(좋음이 아쉬움을 덮는다)
   const dayTone = useMemo(() => {
     const m = new Map<string, 'ok' | 'warn'>();
-    for (const s of warnings) m.set(s.day, 'warn');
-    for (const s of goodish) m.set(s.day, 'ok');
+    if (allWarning) for (const s of warnings) m.set(s.day, 'warn');
+    else for (const s of goodish) m.set(s.day, 'ok'); // 클릭 안 되는 날은 표시도 없다
     return m;
-  }, [goodish, warnings]);
+  }, [goodish, warnings, allWarning]);
 
   // ── 선택 — 1위가 미리 골라져 있다(백지 선택 금지) ──
   const [selectedId, setSelectedId] = useState<string | null>(state.selectedSlotId);
@@ -505,9 +506,10 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
     for (const s of rest) byDay.set(s.day, [...(byDay.get(s.day) ?? []), s]);
     return [...byDay.entries()];
   }, [goodish, recommended]);
+  // 아쉬운 후보는 전부-아쉬움 상태에서만 센다 — 좋은 답이 있으면 더 보기도 좋은 시간만(단순함).
   const moreCount = allWarning
     ? Math.max(warnings.length - baseList.length, 0)
-    : goodish.length - recommended.length + warnings.length;
+    : goodish.length - recommended.length;
 
   // ── 헤드라인 — 상태 선언 ──
   const partialTarget = state.allowPartialRequiredId
@@ -617,7 +619,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
             </div>
           ) : (
             /* ── 상태 A·B·D — 좌 달력·참석자 / 우 추천·타임라인·CTA ── */
-            <div className="lg:grid lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-x-14">
+            <div className="lg:grid lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_1fr] lg:gap-x-14">
               <Reveal delay={140} className="pt-6 lg:col-start-1 lg:row-start-1">
                 <WeekStrip
                   windowDays={windowDays}
@@ -625,6 +627,10 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                   selectedDay={active?.day ?? null}
                   onPick={pickDay}
                 />
+                <p className="mt-3.5 flex items-center justify-center gap-1.5 text-[12px] text-text-weak lg:justify-start lg:pl-[44px]">
+                  <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${allWarning ? 'bg-warn-fg' : 'bg-primary'}`} />
+                  {allWarning ? '아쉬운 대로 가능한 날이에요' : '추천이 있는 날이에요 — 눌러서 둘러보세요'}
+                </p>
               </Reveal>
 
               <Reveal delay={210} className="pt-7 lg:col-start-1 lg:row-start-2">
@@ -694,20 +700,17 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                           </div>
                         </div>
                       ))}
-                    {(allWarning ? warnings.slice(3, 7) : warnings.slice(0, 4)).length > 0 && (
-                      <div>
-                        <p className="text-[12px] font-semibold text-warn-fg">조금 아쉬운 시간</p>
-                        <div className="mt-1.5 space-y-1.5">
-                          {(allWarning ? warnings.slice(3, 7) : warnings.slice(0, 4)).map((slot) => (
-                            <SlotRow
-                              key={slot.id}
-                              slot={slot}
-                              selected={active?.id === slot.id}
-                              badge={BADGE_WARN}
-                              onSelect={() => select(slot)}
-                            />
-                          ))}
-                        </div>
+                    {allWarning && warnings.slice(3, 7).length > 0 && (
+                      <div className="space-y-1.5">
+                        {warnings.slice(3, 7).map((slot) => (
+                          <SlotRow
+                            key={slot.id}
+                            slot={slot}
+                            selected={active?.id === slot.id}
+                            badge={BADGE_WARN}
+                            onSelect={() => select(slot)}
+                          />
+                        ))}
                       </div>
                     )}
                   </div>
@@ -732,7 +735,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                       aria-expanded={timelineOpen}
                       className="pressable flex w-full items-center justify-between rounded-xl py-2 text-[13px] font-medium text-text-weak lg:hidden"
                     >
-                      {fmtDayKorean(active.day)} 팀 캘린더 {timelineOpen ? '접기' : '보기'}
+                      {fmtDayKorean(active.day)} 모두의 일정 {timelineOpen ? '접기' : '보기'}
                       <ChevronDown
                         size={14}
                         aria-hidden
@@ -743,7 +746,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                       className={`${timelineOpen ? 'block' : 'hidden'} rounded-2xl bg-[#F9FAFB] p-4 pt-3 lg:block`}
                     >
                       <p className="hidden pb-2 text-[12px] font-semibold text-text-weak lg:block">
-                        {fmtDayKorean(active.day)} 팀 캘린더
+                        {fmtDayKorean(active.day)} 모두의 일정
                       </p>
                       <OverlapTimeline attendees={attendees} day={active.day} slot={active} reduced={reduced} />
                     </div>
