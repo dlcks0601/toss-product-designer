@@ -12,6 +12,7 @@ import { decisionKey, pickAction } from '../lib/decision';
 import { DEADLINE_LABEL, DURATION_LABEL, WINDOW_LABEL } from '../lib/labels';
 import { josa } from '../lib/reasons';
 import { addDaysISO, fmtDayKorean, fmtTime, weekdayIndex } from '../lib/time';
+import { ANCHOR_DATE } from '../lib/window';
 import { weekMondays } from '../lib/weeks';
 import { useIsDesktop } from '../app-state/useIsDesktop';
 import type { Candidates } from '../app-state/useCandidates';
@@ -48,9 +49,12 @@ function personColor(id: string): string {
 /** 병합 점심(여러 사람 공동) — 누구의 색도 아니라 중립 회색. */
 const MERGED_COLOR = '#9AA6B4';
 
-/** '수 15일' — 카드·CTA의 짧은 날짜 표기. */
-function fmtDayShort(iso: string): string {
-  return `${WEEKDAY_SHORT[weekdayIndex(iso)]} ${Number(iso.slice(8, 10))}일`;
+/** 토스 날짜 화법 — 가까운 날은 상대 표현(오늘·내일), 그 밖은 '7월 13일 (월)' 풀 포맷. */
+function fmtDayLabel(iso: string): string {
+  const diff = Math.round((Date.parse(iso) - Date.parse(ANCHOR_DATE)) / 86400000);
+  if (diff === 0) return '오늘';
+  if (diff === 1) return '내일';
+  return fmtDayKorean(iso);
 }
 
 // ── 표시 셀렉션(순수) ──────────────────────────────────────────────
@@ -320,7 +324,7 @@ function SlotRow({
             selected ? 'text-primary-pressed' : 'text-text-strong'
           }`}
         >
-          {fmtDayShort(slot.day)} {fmtTime(slot.start)}
+          {fmtDayLabel(slot.day)} {fmtTime(slot.start)}
         </span>
         <span className="mt-0.5 block truncate text-[12px] leading-[1.5] text-text-weak">{cardReason(slot)}</span>
       </span>
@@ -695,7 +699,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
       onClick={confirm}
       className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
     >
-      {fmtDayShort(active.day)} {fmtTime(active.start)}로 할게요
+      {fmtDayLabel(active.day)} {fmtTime(active.start)}에 잡을게요
     </button>
   );
 
