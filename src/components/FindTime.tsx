@@ -447,8 +447,12 @@ function OverlapTimeline({
             className="group/ghost absolute inset-x-0 z-[5] rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-2.5 py-1 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
             style={{ top: y(g.start), height: Math.max(y(g.end) - y(g.start), 20) }}
           >
-            <span className="text-[10px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
-              {fmtTime(g.start)}
+            {/* 솔리드 카드와 같은 순서 — 제목 먼저, 시간 아래. */}
+            <span className="block truncate text-[10px] font-bold text-primary/80 transition-colors group-hover/ghost:text-white">
+              {meetingTitle}
+            </span>
+            <span className="block text-[9px] font-medium text-primary/60 transition-colors group-hover/ghost:text-white/85">
+              {fmtTime(g.start)} – {fmtTime(g.end)}
             </span>
           </button>
         ))}
