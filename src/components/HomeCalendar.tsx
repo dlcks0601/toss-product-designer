@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Avatar from './Avatar';
 import type { CalendarEvent, EventKind, Person } from '../lib/types';
-import { addDaysISO, fmtRange } from '../lib/time';
+import { addDaysISO, fmtRange, weekdayIndex } from '../lib/time';
+import { ANCHOR_DATE } from '../lib/window';
+import { mondayOf } from '../lib/weeks';
 
 /**
  * 홈 캘린더 — 내(이찬) 주간 일정 + 캘린더 안에 살고 있는 받은 초대(고스트 이벤트).
  *
  * 데스크톱(lg+): 월~금 5열 × 9~19시 주간 그리드. 모바일: 요일 칩 + 하루 목록.
- * 주 이동은 7/6 주 ~ 7/20 주(3주, 데이터가 있는 범위)에서 클램프. 드래그 없음 — 보기 전용.
- * 오늘(7/7 화)은 요일 라벨 밑 파란 점으로만 은은하게 표시한다.
+ * 주 이동은 앵커 주(W0)~W2(3주, 데이터가 있는 범위)에서 클램프. 드래그 없음 — 보기 전용.
+ * 오늘(라이브 앵커)은 요일 라벨 밑 파란 점으로만 은은하게 표시한다.
  *
  * responseBadges: 확정 회의 블록에 얹는 응답 아바타 미니 스택 — 응답 토스트가
  * 도착할 때마다(page.tsx가 people을 늘려 내려준다) 한 명씩 팝으로 채워진다.
@@ -20,10 +22,10 @@ import { addDaysISO, fmtRange } from '../lib/time';
 
 // ── 주(週) 헬퍼 — 순수 함수(HomeCalendar.test.ts가 계약) ──────────────
 
-/** 데모 세계의 오늘(앵커) — 2026-07-07 화. */
-export const TODAY = '2026-07-07';
-/** 홈에서 볼 수 있는 첫 주의 월요일. */
-export const FIRST_MONDAY = '2026-07-06';
+/** 데모 세계의 오늘 — 라이브 앵커(테스트는 NEXT_PUBLIC_ANCHOR로 고정). */
+export const TODAY = ANCHOR_DATE;
+/** 홈에서 볼 수 있는 첫 주의 월요일 — 앵커 주(W0). */
+export const FIRST_MONDAY = mondayOf(ANCHOR_DATE);
 /** 이벤트가 존재하는 주 수(7/6~7/24). */
 export const WEEK_COUNT = 3;
 /** 그리드 세로 프레임 — 9시~19시. */
@@ -41,12 +43,19 @@ export function weekDays(weekIndex: number): string[] {
   return [0, 1, 2, 3, 4].map((i) => addDaysISO(monday, i));
 }
 
-/** 월간 피커 그리드 — 2026년 7월(일요일 시작), 앞뒤 달 채움 포함 35칸. */
+/** 앵커가 속한 달 — '2026-07' 접두어와 '7월' 라벨의 단일 소스. */
+export const ANCHOR_MONTH = TODAY.slice(0, 7);
+export const ANCHOR_MONTH_LABEL = `${Number(TODAY.slice(5, 7))}월`;
+
+/** 월간 피커 그리드 — 앵커의 달(일요일 시작), 앞뒤 달 채움 포함. 달 길이에 맞는 정확한 주 수. */
 export function buildMonthCells(): { day: string; inMonth: boolean }[] {
-  // 7/1(수) 기준 일요일 시작 → 6/28(일)부터 35일.
-  return Array.from({ length: 35 }, (_, i) => {
-    const day = addDaysISO('2026-06-28', i);
-    return { day, inMonth: day.startsWith('2026-07') };
+  const first = `${ANCHOR_MONTH}-01`;
+  const offset = (weekdayIndex(first) + 1) % 7; // 일요일 시작 그리드에서 1일 앞의 채움 칸 수
+  const daysInMonth = new Date(Date.UTC(Number(TODAY.slice(0, 4)), Number(TODAY.slice(5, 7)), 0)).getUTCDate();
+  const start = addDaysISO(first, -offset);
+  return Array.from({ length: Math.ceil((offset + daysInMonth) / 7) * 7 }, (_, i) => {
+    const day = addDaysISO(start, i);
+    return { day, inMonth: day.startsWith(ANCHOR_MONTH) };
   });
 }
 
@@ -88,14 +97,6 @@ export const KIND_STYLE: Record<EventKind, KindStyle> = {
   // 외근 — 패턴 없이 민무늬 분홍(색으로만 말한다).
   offsite: { bg: '#FEF0F1', border: '#F3DBDB', title: '#F04452', sub: '#EE99A0' },
 };
-
-export function kindBoxStyle(kind: EventKind): CSSProperties {
-  const st = KIND_STYLE[kind];
-  return {
-    backgroundColor: st.bg,
-    borderColor: st.border,
-  };
-}
 
 /** 이벤트별 표시 스타일 — 색은 곧 종류다. 셋업의 종류 칩과 같은 어휘(KIND_STYLE 단일 소스).
  *  (과거의 내부/외부 미팅 라임 구분은 종류 어휘에 없는 색이라 폐기 — 회의는 전부 azure.) */
@@ -349,7 +350,7 @@ export default function HomeCalendar({ events, invite, onOpenInvite, responseBad
                 <motion.div
                   key="month-picker"
                   role="dialog"
-                  aria-label="2026년 7월"
+                  aria-label={`${Number(TODAY.slice(0, 4))}년 ${ANCHOR_MONTH_LABEL}`}
                   initial={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
                   animate={reduced ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
                   exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}

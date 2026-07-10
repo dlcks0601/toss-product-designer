@@ -206,7 +206,7 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
           <button
             type="button"
             onClick={() => dispatch({ type: 'SET_STEP', step: 'find' })}
-            className="pressable inline-flex h-11 items-center rounded-full bg-white px-5 text-[14px] font-semibold text-text-body ring-1 ring-border"
+            className="pressable inline-flex h-11 items-center rounded-full bg-section px-5 text-[14px] font-semibold text-text-body transition-colors hover:bg-[#EEF1F4]"
           >
             시간 다시 찾기
           </button>

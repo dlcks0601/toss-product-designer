@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import Reveal from './Reveal';
+import Wordmark from './Wordmark';
 import { SCAN_STEP_MS, finalScanLine, scanSteps, scanTimeline } from '../lib/scan';
 import type { Person } from '../lib/types';
 
@@ -72,6 +73,15 @@ export default function ScanMoment({ attendees, duration, onDone }: ScanMomentPr
           {BLOBS.map((cls) => (
             <span key={cls} className={`absolute rounded-full blur-[60px] ${cls}`} />
           ))}
+        </div>
+
+        {/* 데스크톱 헤더 — 여정 전체의 틀. 무대 위에 워드마크만 얹는다(완료 화면과 같은 문법). */}
+        <div className="absolute inset-x-0 top-0 z-10 hidden lg:block">
+          <div className="mx-auto max-w-[1200px] px-6 py-4">
+            <header className="flex h-10 items-center">
+              <Wordmark />
+            </header>
+          </div>
         </div>
 
         <div className="relative mx-auto flex w-full max-w-[420px] flex-col justify-center px-6 py-16">
