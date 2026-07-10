@@ -13,6 +13,7 @@ import { DEADLINE_LABEL, DURATION_LABEL, WINDOW_LABEL } from '../lib/labels';
 import { josa } from '../lib/reasons';
 import { addDaysISO, fmtDayKorean, fmtTime, weekdayIndex } from '../lib/time';
 import { weekMondays } from '../lib/weeks';
+import { useIsDesktop } from '../app-state/useIsDesktop';
 import type { Candidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
 import type { RelaxationSuggestion } from '../lib/relaxation';
@@ -144,19 +145,87 @@ function WeekStrip({
   );
 }
 
-/** 참석자 한 줄 — 체크 아바타(✓=필수), 탭하면 보기 전용 펼침. 조건 변경은 여기서 못 한다. */
-function AttendeeLine({ attendees }: { attendees: Attendee[] }) {
-  const [open, setOpen] = useState(false);
+/** 모바일 바텀시트 — 딤 + 그랩바 + 스프링. 아코디언 대신 토스의 시트 문법. */
+function MobileSheet({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: ReactNode;
+}) {
+  const reduced = !!useReducedMotion();
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/40 lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduced ? 0 : 0.2 }}
+            onClick={onClose}
+          />
+          <motion.div
+            role="dialog"
+            aria-label={title}
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[85dvh] overflow-y-auto rounded-t-[24px] bg-white px-5 lg:hidden"
+            style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 32 }}
+          >
+            <div className="sticky top-0 z-10 bg-white pb-2 pt-3">
+              <div aria-hidden className="mx-auto h-1 w-9 rounded-full bg-border" />
+              <p className="pt-5 text-[18px] font-bold tracking-[-0.01em] text-text-strong">{title}</p>
+            </div>
+            {children}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/** 참석자 한 줄 — 체크 아바타(✓=필수). PC는 인라인 펼침, 모바일은 바텀시트(보기 전용). */
+function AttendeeLine({ attendees, desktop }: { attendees: Attendee[]; desktop: boolean }) {
+  const [open, setOpen] = useState(false); // PC 인라인 펼침
+  const [sheetOpen, setSheetOpen] = useState(false); // 모바일 시트
   const MAX = 7;
   const shown = attendees.slice(0, MAX);
   const extra = attendees.length - shown.length;
+  const rows = (
+    <div className="mt-1">
+      {attendees.map((a) => (
+        <div key={a.id} className="flex min-h-[52px] items-center gap-3 py-1.5">
+          <Avatar person={a} size={32} />
+          <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: personColor(a.id) }} />
+          <span className="text-[15px] font-medium text-text-strong">{a.name}</span>
+          {a.isOrganizer && <span className="text-[12px] text-text-weak">나 · 주최자</span>}
+          {/* 셋업과 같은 필 문법 — 보기 전용(여기선 조건을 바꾸지 않는다) */}
+          <span
+            className={`ml-auto rounded-full px-2.5 py-1.5 text-[12px] font-semibold ${
+              a.attendanceType === 'required' ? 'bg-primary-tint text-primary' : 'bg-section text-text-weak'
+            }`}
+          >
+            {a.attendanceType === 'required' ? '꼭 참석' : '선택'}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
   return (
     <div>
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2.5 py-1 text-left"
+        onClick={() => (desktop ? setOpen((o) => !o) : setSheetOpen(true))}
+        aria-expanded={desktop ? open : sheetOpen}
+        className="flex min-h-[48px] w-full items-center gap-2.5 py-2 text-left"
       >
         <span className="text-[14px] font-semibold text-text-strong">
           참석자 <span className="text-primary">{attendees.length}명</span>
@@ -189,28 +258,13 @@ function AttendeeLine({ attendees }: { attendees: Attendee[] }) {
         <ChevronDown
           size={15}
           aria-hidden
-          className={`ml-auto shrink-0 text-text-faint transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`ml-auto shrink-0 text-text-faint transition-transform duration-200 ${desktop && open ? 'rotate-180' : ''}`}
         />
       </button>
-      {open && (
-        <div className="mt-1.5">
-          {attendees.map((a) => (
-            <div key={a.id} className="flex items-center gap-2.5 py-1.5">
-              <Avatar person={a} size={24} />
-              <span aria-hidden className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: personColor(a.id) }} />
-              <span className="text-[14px] font-medium text-text-strong">{a.name}</span>
-              {a.isOrganizer && <span className="text-[11px] text-text-weak">나 · 주최자</span>}
-              <span
-                className={`ml-auto text-[12px] font-semibold ${
-                  a.attendanceType === 'required' ? 'text-primary' : 'text-text-faint'
-                }`}
-              >
-                {a.attendanceType === 'required' ? '꼭 참석' : '선택'}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
+      {desktop && open && rows}
+      <MobileSheet open={sheetOpen} onClose={() => setSheetOpen(false)} title={`참석자 ${attendees.length}명`}>
+        {rows}
+      </MobileSheet>
     </div>
   );
 }
@@ -497,6 +551,7 @@ export interface FindTimeProps {
 
 export default function FindTime({ state, dispatch, candidates }: FindTimeProps) {
   const reduced = !!useReducedMotion();
+  const desktop = useIsDesktop();
   const { attendees, windowDays, slots, suggestions, bottleneck } = candidates;
 
   const requiredCount = attendees.filter((a) => a.attendanceType === 'required').length;
@@ -673,7 +728,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                 )}
               </Reveal>
               <Reveal delay={240} className="pt-8">
-                <AttendeeLine attendees={attendees} />
+                <AttendeeLine attendees={attendees} desktop={desktop} />
               </Reveal>
             </div>
           ) : (
@@ -784,30 +839,45 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
               </Reveal>
 
               <Reveal delay={250} className="pt-8 lg:col-start-1 lg:row-start-3">
-                <AttendeeLine attendees={attendees} />
+                <AttendeeLine attendees={attendees} desktop={desktop} />
               </Reveal>
 
               <Reveal delay={300} className="lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-6">
                 {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
                   <div>
+                    {/* 모바일 — 행을 탭하면 바텀시트(아코디언 대신 토스 시트 문법). */}
                     <button
                       type="button"
-                      onClick={() => setTimelineOpen((o) => !o)}
-                      aria-expanded={timelineOpen}
+                      onClick={() => setTimelineOpen(true)}
                       className="pressable flex min-h-[48px] w-full items-center justify-between rounded-xl py-3 text-[14px] font-semibold text-text-strong lg:hidden"
                     >
-                      {fmtDayKorean(active.day)} 모두의 일정 {timelineOpen ? '접기' : '보기'}
-                      <ChevronDown
-                        size={14}
-                        aria-hidden
-                        className={`transition-transform duration-200 ${timelineOpen ? 'rotate-180' : ''}`}
-                      />
+                      {fmtDayKorean(active.day)} 모두의 일정
+                      <ChevronDown size={15} aria-hidden className="text-text-faint" />
                     </button>
-                    <div className={`${timelineOpen ? 'block' : 'hidden'} pt-4 lg:block lg:pt-0`}>
-                      {/* PC 라벨 — 그림 위에 어느 날인지 한 줄(간격은 아래 pb로만). */}
-                      {/* 좌측 요일 헤더와 같은 선상·같은 타이포 — 두 기둥의 머리가 나란하다. */}
-                      <p className="hidden pb-6 text-[12px] leading-4 text-text-faint lg:block">
+                    <MobileSheet
+                      open={timelineOpen}
+                      onClose={() => setTimelineOpen(false)}
+                      title={`${fmtDayKorean(active.day)} 모두의 일정`}
+                    >
+                      <div className="pb-2 pt-4">
+                        <OverlapTimeline
+                          attendees={attendees}
+                          day={active.day}
+                          slot={active}
+                          meetingTitle={state.title.trim() || '새 회의'}
+                          ghosts={(allWarning ? warnings : goodish)
+                            .filter((s) => s.day === active.day && s.id !== active.id)
+                            .slice(0, 4)}
+                          onPick={select}
+                          reduced={reduced}
+                        />
+                      </div>
+                    </MobileSheet>
+
+                    {/* PC — 상시 노출(우측 전용 무대). */}
+                    <div className="hidden lg:block">
+                      <p className="pb-6 text-[12px] leading-4 text-text-faint">
                         {fmtDayKorean(active.day)} 모두의 일정
                       </p>
                       <OverlapTimeline
