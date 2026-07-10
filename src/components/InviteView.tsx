@@ -1,19 +1,21 @@
 'use client';
 
-import { useState, type Dispatch } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { useEffect, useRef, useState, type Dispatch } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronLeft, Eye } from 'lucide-react';
 import Aurora from './Aurora';
 import FrostedBar from './FrostedBar';
 import Avatar from './Avatar';
+import MobileSheet, { SheetCascade } from './MobileSheet';
 import Reveal from './Reveal';
 import Wordmark from './Wordmark';
+import { useIsDesktop } from '../app-state/useIsDesktop';
 import { REASON_TONE_CLASS, REASON_STAGGER_MS } from './ReasonCard';
 import { activeMitigations, adjustedRange, fmtDuration } from './ConfirmStep';
 import { useCandidates } from '../app-state/useCandidates';
 import type { Action, AppState } from '../app-state/reducer';
 import { INCOMING_INVITE, ORG } from '../data/world';
-import { fmtRange, weekdayIndex } from '../lib/time';
+import { fmtDayKorean, fmtRange } from '../lib/time';
 import type { Minutes } from '../lib/time';
 import type { Attendee, CandidateSlot, SlotReason } from '../lib/types';
 
@@ -37,12 +39,9 @@ export function givenName(name: string): string {
   return name.length >= 3 ? name.slice(1) : name;
 }
 
-const WEEKDAY_SHORT = ['월', '화', '수', '목', '금', '토', '일'] as const;
-
-/** '목 7월 9일 오후 2:00–3:00' — 초대 카드의 시각 한 줄. */
+/** '7월 16일 (목) 오후 2:00–3:00' — 초대 카드의 시각 한 줄(앱 공통 날짜 문법). */
 export function inviteWhenLabel(day: string, start: Minutes, end: Minutes): string {
-  const [, month, date] = day.split('-').map(Number);
-  return `${WEEKDAY_SHORT[weekdayIndex(day)]} ${month}월 ${date}일 ${fmtRange(start, end)}`;
+  return `${fmtDayKorean(day)} ${fmtRange(start, end)}`;
 }
 
 /** 초대 뷰가 그리는 데이터 한 벌 — incoming/preview가 이 모양으로 수렴한다(데이터 소스 전환). */
@@ -66,8 +65,8 @@ export function incomingInviteModel(): InviteModel {
     fromId: INCOMING_INVITE.fromId,
     headline: `${givenName(from.name)}님이 회원님 포함 ${INCOMING_INVITE.attendeeCount}명과 잡은 ${duration}`,
     title: INCOMING_INVITE.title,
-    // 반복 초대 — 첫 회차 날짜 앞에 '매주', 뒤에 주최자가 정한 회의실.
-    whenLabel: `매주 ${inviteWhenLabel(INCOMING_INVITE.day, INCOMING_INVITE.start, INCOMING_INVITE.end)} · ${INCOMING_INVITE.room}`,
+    // 날짜 뒤에 주최자가 정한 회의실 — 반복 표현('매주')은 이 제품의 어휘에 없다.
+    whenLabel: `${inviteWhenLabel(INCOMING_INVITE.day, INCOMING_INVITE.start, INCOMING_INVITE.end)} · ${INCOMING_INVITE.room}`,
     reasons: INCOMING_INVITE.reasonsForMe,
     highlightIndex: 0,
   };
@@ -160,8 +159,30 @@ export interface InviteViewProps {
 
 export default function InviteView({ mode, state, dispatch, onRespond }: InviteViewProps) {
   const reduced = !!useReducedMotion();
+  const desktop = useIsDesktop();
   const candidates = useCandidates(state);
-  const [asking, setAsking] = useState(false); // 어려워요 → 사유 칩 노출
+  const [asking, setAsking] = useState(false); // 어려워요 → 사유(PC 팝오버 / 모바일 시트)
+  const askRef = useRef<HTMLDivElement>(null);
+
+  // 팝오버 바깥 탭/ESC 닫기 — 피커 필드들과 같은 계약(시트는 딤·스와이프가 담당).
+  useEffect(() => {
+    if (!asking) return;
+    const onDown = (e: PointerEvent) => {
+      if (askRef.current && !askRef.current.contains(e.target as Node)) setAsking(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        setAsking(false);
+      }
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [asking]);
 
   const goHome = () => dispatch({ type: 'SET_STEP', step: 'home' });
 
@@ -210,6 +231,7 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
 
   const respond = (response: 'accepted' | 'difficult') => {
     if (isPreview || responded !== null) return;
+    setAsking(false);
     onRespond?.(response);
   };
 
@@ -280,20 +302,20 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
         {/* 응답 영역 */}
         <Reveal delay={210} className="pt-7">
           {responded !== null ? (
-            // 응답 완료 — 카드 상태 전환 '민수님에게 전달했어요 ✓'
-            <section className="rounded-card bg-white p-5 text-center shadow-[0_2px_16px_rgba(25,31,40,0.06)] ring-1 ring-border/70">
+            // 응답 완료 — 완료 화면과 같은 열린 무대(박스 없이 숨 쉬는 상태 전환).
+            <section className="pt-3 text-center">
               <motion.span
                 initial={reduced ? false : { scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={POP_SPRING}
-                className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-primary"
+                className="mx-auto flex h-[52px] w-[52px] items-center justify-center rounded-full bg-primary shadow-[0_8px_24px_rgba(49,130,246,0.35)]"
               >
-                <Check size={22} strokeWidth={3} aria-hidden className="text-white" />
+                <Check size={28} strokeWidth={3} aria-hidden className="text-white" />
               </motion.span>
-              <p className="pt-3 text-[16px] font-bold tracking-[-0.01em] text-text-strong">
+              <p className="pt-4 text-[20px] font-bold leading-[1.3] tracking-[-0.01em] text-text-strong">
                 {fromGiven}님에게 전달했어요
               </p>
-              <p className="mt-1 text-[13px] leading-[1.5] text-text-weak">
+              <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">
                 {responded === 'accepted'
                   ? '내 캘린더에 일정이 자리 잡았어요'
                   : '어려운 사정도 배려예요 — 사유를 함께 전했어요'}
@@ -301,34 +323,9 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
               <button
                 type="button"
                 onClick={goHome}
-                className="pressable mt-4 h-[48px] w-full rounded-2xl bg-primary-tint text-[15px] font-semibold text-primary transition-colors hover:bg-[#dcecfe]"
+                className="pressable mt-6 h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
               >
                 내 캘린더에서 보기
-              </button>
-            </section>
-          ) : asking && !isPreview ? (
-            // 어려워요 → 사유 칩 4개, 1회 선택이 곧 전송(재조율 없음)
-            <section>
-              <p className="text-[14px] font-semibold text-text-strong">어떤 사정인지 살짝 알려주시겠어요?</p>
-              <p className="mt-1 text-[12px] text-text-weak">{fromGiven}님에게 사유와 함께 전달돼요</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {DIFFICULT_REASONS.map((label) => (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => respond('difficult')}
-                    className="pressable inline-flex h-10 items-center rounded-full bg-section px-4 text-[14px] font-medium text-text-body transition-colors hover:bg-border/70"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setAsking(false)}
-                className="pressable mt-4 text-[13px] font-medium text-text-weak underline-offset-2 hover:underline"
-              >
-                돌아가기
               </button>
             </section>
           ) : (
@@ -342,15 +339,71 @@ export default function InviteView({ mode, state, dispatch, onRespond }: InviteV
               >
                 참석할게요
               </button>
-              {/* 보조 = 회색 면 — 테두리 버튼은 토스 어휘에 없다(완료 화면과 같은 계약). */}
-              <button
-                type="button"
-                disabled={isPreview}
-                onClick={() => setAsking(true)}
-                className="pressable h-[54px] w-full rounded-2xl bg-section text-[16px] font-semibold text-text-body transition-colors hover:bg-[#EEF1F4] disabled:text-text-faint"
-              >
-                어려워요
-              </button>
+              {/* 보조 = 회색 면 — 테두리 버튼은 토스 어휘에 없다(완료 화면과 같은 계약).
+                  사유 입력은 앱의 선택 문법 그대로: PC 팝오버 / 모바일 바텀시트. */}
+              <div ref={askRef} className="relative">
+                <button
+                  type="button"
+                  disabled={isPreview}
+                  aria-haspopup="dialog"
+                  aria-expanded={asking}
+                  onClick={() => setAsking((o) => !o)}
+                  className="pressable h-[54px] w-full rounded-2xl bg-section text-[16px] font-semibold text-text-body transition-colors hover:bg-[#EEF1F4] disabled:text-text-faint"
+                >
+                  어려워요
+                </button>
+
+                <AnimatePresence>
+                  {asking && desktop && (
+                    <motion.div
+                      key="ask-popover"
+                      role="dialog"
+                      aria-label="어려운 사정 선택"
+                      initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -4, scale: 0.98 }}
+                      transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 30 }}
+                      style={{ transformOrigin: 'top' }}
+                      className="absolute inset-x-0 top-[calc(100%+6px)] z-40 rounded-2xl bg-white p-1.5 shadow-[0_12px_40px_rgba(25,31,40,0.14),0_2px_8px_rgba(25,31,40,0.06)] ring-1 ring-border/60"
+                    >
+                      <p className="px-3.5 pb-1 pt-2.5 text-[12px] text-text-weak">
+                        {fromGiven}님에게 사유와 함께 전달돼요
+                      </p>
+                      {DIFFICULT_REASONS.map((label) => (
+                        <button
+                          key={label}
+                          type="button"
+                          onClick={() => respond('difficult')}
+                          className="flex h-11 w-full items-center rounded-xl px-3.5 text-left text-[15px] font-medium text-text-strong transition-colors hover:bg-section"
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <MobileSheet
+                  open={asking && !desktop}
+                  onClose={() => setAsking(false)}
+                  title="어떤 사정인지 살짝 알려주시겠어요?"
+                >
+                  <p className="pb-1 text-[13px] text-text-weak">{fromGiven}님에게 사유와 함께 전달돼요</p>
+                  <div className="pb-2">
+                    {DIFFICULT_REASONS.map((label, i) => (
+                      <SheetCascade key={label} index={i}>
+                        <button
+                          type="button"
+                          onClick={() => respond('difficult')}
+                          className="pressable flex min-h-[52px] w-full items-center py-2 text-left text-[16px] font-medium text-text-strong"
+                        >
+                          {label}
+                        </button>
+                      </SheetCascade>
+                    ))}
+                  </div>
+                </MobileSheet>
+              </div>
               {isPreview && (
                 <p className="pt-1 text-center text-[12px] text-text-weak">미리보기예요 — 응답은 받은 사람만 할 수 있어요</p>
               )}

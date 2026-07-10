@@ -629,16 +629,19 @@ export const ROOMS: Room[] = [
 // 최민수 → 나. 받는 사람(나) 관점의 해요체. 내 줄(회원님)이 첫 줄.
 // 코드값은 SlotReason 재사용, 세계 사실과 모순 없게 손으로 쓴다.
 // attendeeCount는 각본 수치(민수가 잡은 회의의 전체 인원) — 초대 카드 헤드라인이 그대로 쓴다.
+// 단일 회차 — 이 제품의 일정 만들기에 반복 개념이 없으니 초대도 반복을 말하지 않는다(2026-07-10).
+// 날짜 = 앵커 이후 첫 목요일: 라이브 앵커가 금요일이면 이번 주 목(과거)을 건너뛴다 —
+// 받은 초대가 지난 날짜로 보이면 세계가 깨진다.
+const INVITE_THU = [W0_THU, W1_THU, W2_THU].find((d) => d >= ANCHOR_DATE) ?? W2_THU;
+
 export const INCOMING_INVITE: {
   fromId: string; title: string; day: string; days: string[]; start: number; end: number;
   room: string; attendeeCount: number; reasonsForMe: SlotReason[];
 } = {
   fromId: 'minsu',
   title: '디자인 시스템 리뷰',
-  // 응답 화면의 대표 날짜 = 앵커 이후 첫 회차 — 라이브 앵커가 금요일이면 이번 주 목(과거)을
-  // 건너뛰고 다음 목으로. 받은 초대가 지난 날짜로 보이면 세계가 깨진다.
-  day: [W0_THU, W1_THU, W2_THU].find((d) => d >= ANCHOR_DATE) ?? W2_THU,
-  days: [W0_THU, W1_THU, W2_THU], // 매주 목 14:00~15:00 반복 초대 — 모든 주에 고스트가 산다
+  day: INVITE_THU,
+  days: [INVITE_THU],
   start: 840,
   end: 900,
   room: '미팅룸 2', // 주최자(민수)가 정한 회의실 — 초대에도 당연히 보인다
