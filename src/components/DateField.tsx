@@ -143,7 +143,7 @@ export default function DateField({
       {/* 모바일 — '날짜 선택하기' 바텀시트, 체크 행(토스 셀렉트 문법). */}
       <MobileSheet open={open && !desktop} onClose={close} title="날짜 선택하기">
         <div className="pb-2">
-          {/* 토스 시트 캐스케이드 — 행이 제자리에서 한 장씩 켜진다(순수 페이드 60ms 스태거 — 이동·물결 없음, 12행까지). */}
+          {/* 토스 시트 캐스케이드 — 행이 제자리에서 한 장씩 켜진다(순수 페이드 40ms 스태거 — 이동·물결 없음, 12행까지). */}
           {selectable.map((day, i) => {
             const isSel = day === value;
             return (
@@ -152,7 +152,7 @@ export default function DateField({
                 type="button"
                 initial={reduced ? false : { opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: Math.min(i, 12) * 0.06, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ delay: Math.min(i, 12) * 0.04, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => pick(day)}
                 aria-pressed={isSel}
                 className="pressable flex min-h-[52px] w-full items-center gap-2 py-2 text-left"
