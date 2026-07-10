@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dotXPct, mondayOf, weekIndexOf, weekLabel, weekMondays } from './MiniLocator';
-import { windowFor } from '../lib/window';
+import { mondayOf, weekIndexOf, weekLabel, weekMondays } from './weeks';
+import { windowFor } from './window';
 
 describe('mondayOf', () => {
   it('주중 어느 날이든 그 주 월요일로 간다', () => {
@@ -44,18 +44,5 @@ describe('weekLabel', () => {
     expect(weekLabel(1)).toBe('다음 주');
     expect(weekLabel(2)).toBe('그다음 주');
     expect(weekLabel(3)).toBe('4주 차');
-  });
-});
-
-describe('dotXPct', () => {
-  it('9시=왼끝(12%), 18시=오른끝(88%), 중간은 비례', () => {
-    expect(dotXPct(540)).toBe(12);
-    expect(dotXPct(1080)).toBe(88);
-    expect(dotXPct(810)).toBe(50); // 13:30 = 프레임 정중앙
-  });
-
-  it('프레임 밖은 클램프', () => {
-    expect(dotXPct(0)).toBe(12);
-    expect(dotXPct(1440)).toBe(88);
   });
 });

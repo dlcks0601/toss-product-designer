@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decisionKey, pickAction } from './DecisionMoment';
+import { decisionKey, pickAction } from './decision';
 import type { RelaxationSuggestion } from '../lib/relaxation';
 
 const suggestion = (over: Partial<RelaxationSuggestion>): RelaxationSuggestion => ({

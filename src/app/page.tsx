@@ -5,8 +5,7 @@ import { useReducedMotion } from 'motion/react';
 import Aurora from '../components/Aurora';
 import ConfirmStep from '../components/ConfirmStep';
 import DoneStep from '../components/DoneStep';
-import FindTimeDesktop from '../components/FindTimeDesktop';
-import FindTimeMobile from '../components/FindTimeMobile';
+import FindTime from '../components/FindTime';
 import FrostedBar from '../components/FrostedBar';
 import HomeCalendar from '../components/HomeCalendar';
 import InviteView from '../components/InviteView';
@@ -20,7 +19,6 @@ import Wordmark from '../components/Wordmark';
 import { playResponseScript, useNotifications } from '../app-state/notifications';
 import { fromUrl, initialState, reducer, toUrl } from '../app-state/reducer';
 import { useCandidates } from '../app-state/useCandidates';
-import { useIsDesktop } from '../app-state/useIsDesktop';
 import useScrollProgress from '../lib/useScrollProgress';
 import type { Action, AppState } from '../app-state/reducer';
 import type { ResponseBadges } from '../components/HomeCalendar';
@@ -276,7 +274,6 @@ function HomeScreen({
 function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<Action> }) {
   const reduced = !!useReducedMotion();
   const candidates = useCandidates(state);
-  const isDesktop = useIsDesktop();
   const [announced, setAnnounced] = useState(false);
 
   useEffect(() => {
@@ -297,10 +294,9 @@ function FindScreen({ state, dispatch }: { state: AppState; dispatch: Dispatch<A
           duration={state.duration}
           onDone={() => dispatch({ type: 'PLAY_SCAN' })}
         />
-      ) : isDesktop ? (
-        <FindTimeDesktop state={state} dispatch={dispatch} candidates={candidates} />
       ) : (
-        <FindTimeMobile state={state} dispatch={dispatch} candidates={candidates} />
+        /* 모바일·PC 단일 구현 — 한 칼럼의 층위를 PC에선 반반으로 펼친다(리디자인 Q1~Q10). */
+        <FindTime state={state} dispatch={dispatch} candidates={candidates} />
       )}
       {/* reduced-motion 공지 — live 영역은 상시 존재해야 삽입 텍스트가 공지된다 */}
       <div aria-live="polite" className="sr-only">
