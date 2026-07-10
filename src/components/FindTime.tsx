@@ -352,7 +352,7 @@ export function withLanes(items: TimelineItem[]): (TimelineItem & { lane: number
 
 const TL_START = 540; // 9:00
 const TL_END = 1080; // 18:00
-const TL_PX_PER_MIN = 0.72;
+const TL_PX_PER_MIN = 0.95;
 
 function OverlapTimeline({
   attendees,
@@ -631,7 +631,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
             </div>
           ) : (
             /* ── 상태 A·B·D — 좌 달력·참석자 / 우 추천·타임라인·CTA ── */
-            <div className="lg:grid lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_1fr] lg:gap-x-14">
+            <div className="lg:grid lg:grid-cols-[0.85fr_1.15fr] lg:grid-rows-[auto_auto_1fr] lg:gap-x-14">
               <Reveal delay={140} className="pt-6 lg:col-start-1 lg:row-start-1">
                 <WeekStrip
                   windowDays={windowDays}
@@ -646,10 +646,6 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
               </Reveal>
 
               <Reveal delay={210} className="pt-7 lg:col-start-1 lg:row-start-2">
-                <AttendeeLine attendees={attendees} />
-              </Reveal>
-
-              <Reveal delay={280} className="pt-7 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:pt-6">
                 <p className="text-[14px] font-semibold text-text-strong">
                   {dayFilter ? `${fmtDayKorean(dayFilter)}의 시간` : allWarning ? '그나마 나은 순이에요' : '추천 순이에요'}
                 </p>
@@ -738,7 +734,14 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
                   </div>
                 )}
 
-                {/* 그날의 팀 캘린더 — PC 상시, 모바일은 접힘(Q8) */}
+              </Reveal>
+
+              <Reveal delay={250} className="pt-8 lg:col-start-1 lg:row-start-3">
+                <AttendeeLine attendees={attendees} />
+              </Reveal>
+
+              <Reveal delay={300} className="pt-7 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-6">
+                {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
                   <div className="mt-5">
                     <button
