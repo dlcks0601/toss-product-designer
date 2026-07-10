@@ -1,7 +1,7 @@
 'use client';
 
 import { Fragment, useMemo, useState, type Dispatch, type ReactNode } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import Aurora from './Aurora';
 import Avatar from './Avatar';
@@ -438,10 +438,15 @@ function OverlapTimeline({
           );
         })}
         {/* 고스트 후보 — 점선으로 앉아 있다가 호버하면 파랗게 차오른다(홈 고스트와 같은 어휘). 탭 = 선택. */}
+        <AnimatePresence initial={false}>
         {ghosts.map((g) => (
-          <button
+          <motion.button
             key={g.id}
             type="button"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.18, ease: 'easeOut' }}
             aria-label={`${fmtTime(g.start)} 후보 선택`}
             onClick={() => onPick(g)}
             className="group/ghost absolute inset-x-0 z-[5] flex flex-col items-start justify-start rounded-[10px] border-[1.5px] border-dashed border-primary/45 bg-primary/[0.04] px-3.5 py-2 text-left transition-all duration-200 hover:z-20 hover:border-transparent hover:bg-primary hover:shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
@@ -454,15 +459,20 @@ function OverlapTimeline({
             <span className="block text-[11px] font-medium text-primary/60 transition-colors group-hover/ghost:text-white/85">
               {fmtTime(g.start)} – {fmtTime(g.end)}
             </span>
-          </button>
+          </motion.button>
         ))}
+        </AnimatePresence>
         {/* 선택된 추천 — 빈틈에 앉은 솔리드 블루. 선택이 바뀌면 스프링으로 이동한다. */}
+        <AnimatePresence initial={false}>
         {slot && (
           <motion.div
-            initial={false}
-            animate={{ top: y(slot.start) + 2, height: Math.max(y(slot.end) - y(slot.start) - 5, 20) }}
-            transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 350, damping: 30 }}
+            key={slot.id}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={reduced ? { duration: 0 } : { duration: 0.22, ease: 'easeOut' }}
             className="absolute inset-x-0 z-10 rounded-[10px] bg-primary px-3.5 py-2 text-white shadow-[0_4px_14px_rgba(49,130,246,0.35)]"
+            style={{ top: y(slot.start) + 2, height: Math.max(y(slot.end) - y(slot.start) - 5, 20) }}
           >
             {/* 홈 카드와 같은 순서 — 제목이 먼저, 시간이 아래(단일 문법). */}
             <p className="truncate text-[14px] font-bold leading-[1.35]">{meetingTitle}</p>
@@ -471,6 +481,7 @@ function OverlapTimeline({
             </p>
           </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </div>
   );
