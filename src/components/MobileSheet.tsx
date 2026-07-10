@@ -3,6 +3,26 @@
 import type { ReactNode } from 'react';
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from 'motion/react';
 
+/**
+ * 시트 리스트 행 캐스케이드 — 토스 60fps 프레임 실측 재현.
+ * 행마다 개별 페이드 없이, 아래 행일수록 큰 초기 오프셋(리스트가 늘어난 상태) +
+ * ~18ms/행 지연 스프링으로 위에서부터 차곡차곡 정착한다("쌓이는" 모션의 실체).
+ * 12행 이후는 오프셋·지연을 캡 — 접힌 화면 밖 행이 굼떠지지 않게.
+ */
+export function SheetCascade({ index, children }: { index: number; children: ReactNode }) {
+  const reduced = !!useReducedMotion();
+  const i = Math.min(index, 12);
+  return (
+    <motion.div
+      initial={reduced ? false : { y: 64 + i * 14 }}
+      animate={{ y: 0 }}
+      transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 320, damping: 32, delay: i * 0.018 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /** 모바일 바텀시트 — 딤 + 그랩바 + 스프링. 아코디언 대신 토스의 시트 문법. */
 export default function MobileSheet({
   open,
@@ -46,15 +66,15 @@ export default function MobileSheet({
               if (info.offset.y > 100 || info.velocity.y > 600) onClose();
             }}
             className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-[24px] bg-white lg:hidden"
-            initial={{ y: '100%', opacity: 0 }}
+            initial={{ y: 240, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{ y: '100%', opacity: 0 }}
+            exit={{ y: 240, opacity: 0 }}
             transition={
               reduced
                 ? { duration: 0 }
                 : {
-                    /* 토스 실측(프레임 분석): 시트 전체가 반투명으로 ~170ms에 떠오르고 살짝 정착.
-                       행별 스태거 없음 — 순차감은 슬라이드 자체가 만든다. */
+                    /* 토스 60fps 실측: 카드는 화면 밖이 아니라 ~230pt 아래에서 반투명으로 떠올라
+                       ~250ms에 정착한다(페이드가 출발점을 가린다). 닫힘은 그 역재생. */
                     y: { type: 'spring', stiffness: 480, damping: 40 },
                     opacity: { duration: 0.18, ease: 'easeOut' },
                   }

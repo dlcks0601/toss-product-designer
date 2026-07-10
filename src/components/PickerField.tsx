@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronDown } from 'lucide-react';
-import MobileSheet from './MobileSheet';
+import MobileSheet, { SheetCascade } from './MobileSheet';
 import { useIsDesktop } from '../app-state/useIsDesktop';
 
 /**
@@ -74,7 +74,14 @@ export default function PickerField({
       if (!scroller) return;
       const scRect = scroller.getBoundingClientRect();
       const selRect = sel.getBoundingClientRect();
-      scroller.scrollTop += selRect.top - scRect.top - scroller.clientHeight / 2 + sel.clientHeight / 2;
+      // 캐스케이드(SheetCascade) 진행 중엔 행이 transform으로 처져 있어 rect가 레이아웃과 어긋난다
+      // — 스크롤러까지의 조상 translateY를 걷어내고 레이아웃 위치로 센터링한다.
+      let shift = 0;
+      for (let n = sel as HTMLElement | null; n && n !== scroller; n = n.parentElement) {
+        const t = getComputedStyle(n).transform;
+        if (t && t !== 'none') shift += new DOMMatrixReadOnly(t).m42;
+      }
+      scroller.scrollTop += selRect.top - shift - scRect.top - scroller.clientHeight / 2 + sel.clientHeight / 2;
     });
   }, [open]);
 
@@ -150,26 +157,26 @@ export default function PickerField({
       {/* 모바일 — '시간 선택하기' 바텀시트, 체크 행(토스 셀렉트 문법). */}
       <MobileSheet open={open && !desktop} onClose={close} title={`${ariaLabel} 선택하기`}>
         <div ref={open && !desktop ? listRef : undefined} className="pb-2">
-          {/* 토스 시트 캐스케이드 — 토스 월 선택 시트 재현 — 행마다 스프링(400/28, 미세 오버슈트)으로 16px 떠오르며 50ms 간격으로 쌓인다. */}
-          {options.map((o) => {
+          {options.map((o, i) => {
             const isSel = o.value === value;
             return (
-              <button
-                key={o.value}
-                type="button"
-                data-selected={isSel}
-                onClick={() => select(o.value)}
-                aria-pressed={isSel}
-                className="pressable flex min-h-[52px] w-full items-center justify-between py-2 text-left"
-              >
-                <span className="text-[16px] font-medium text-text-strong">{o.label}</span>
-                <Check
-                  size={22}
-                  strokeWidth={3}
-                  aria-hidden
-                  className={`shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
-                />
-              </button>
+              <SheetCascade key={o.value} index={i}>
+                <button
+                  type="button"
+                  data-selected={isSel}
+                  onClick={() => select(o.value)}
+                  aria-pressed={isSel}
+                  className="pressable flex min-h-[52px] w-full items-center justify-between py-2 text-left"
+                >
+                  <span className="text-[16px] font-medium text-text-strong">{o.label}</span>
+                  <Check
+                    size={22}
+                    strokeWidth={3}
+                    aria-hidden
+                    className={`shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
+                  />
+                </button>
+              </SheetCascade>
             );
           })}
         </div>

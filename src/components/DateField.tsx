@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronDown } from 'lucide-react';
 import { buildMonthCells } from './HomeCalendar';
-import MobileSheet from './MobileSheet';
+import MobileSheet, { SheetCascade } from './MobileSheet';
 import { useIsDesktop } from '../app-state/useIsDesktop';
 import { fmtDayKorean } from '../lib/time';
 
@@ -143,26 +143,25 @@ export default function DateField({
       {/* 모바일 — '날짜 선택하기' 바텀시트, 체크 행(토스 셀렉트 문법). */}
       <MobileSheet open={open && !desktop} onClose={close} title="날짜 선택하기">
         <div className="pb-2">
-          {/* 토스 시트 캐스케이드 — 토스 월 선택 시트 재현 — 행마다 스프링(400/28, 미세 오버슈트)으로 16px 떠오르며 50ms 간격으로 쌓인다. */}
-          {selectable.map((day) => {
+          {selectable.map((day, i) => {
             const isSel = day === value;
             return (
-              <button
-                key={day}
-                type="button"
-                onClick={() => pick(day)}
-                aria-pressed={isSel}
-                className="pressable flex min-h-[52px] w-full items-center gap-2 py-2 text-left"
-              >
-                <span className="text-[16px] font-medium text-text-strong">{fmtDayKorean(day)}</span>
-                {dotted?.has(day) && <span aria-hidden className="h-1 w-1 rounded-full bg-primary/60" />}
-                <Check
-                  size={22}
-                  strokeWidth={3}
-                  aria-hidden
-                  className={`ml-auto shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
-                />
-              </button>
+              <SheetCascade key={day} index={i}>
+                <button
+                  type="button"
+                  onClick={() => pick(day)}
+                  aria-pressed={isSel}
+                  className="pressable flex min-h-[52px] w-full items-center gap-2 py-2 text-left"
+                >
+                  <span className="text-[16px] font-medium text-text-strong">{fmtDayKorean(day)}</span>
+                  <Check
+                    size={22}
+                    strokeWidth={3}
+                    aria-hidden
+                    className={`ml-auto shrink-0 ${isSel ? 'text-primary' : 'text-[#D6DBE0]'}`}
+                  />
+                </button>
+              </SheetCascade>
             );
           })}
         </div>
