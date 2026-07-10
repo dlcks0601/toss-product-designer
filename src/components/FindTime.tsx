@@ -869,7 +869,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
               <Reveal delay={300} className="lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:pt-6">
                 {/* 그날의 모두의 일정 — PC 상시(우측 전용 무대), 모바일은 접힘(Q8) */}
                 {active && (
-                  <div>
+                  <div className="mt-4 lg:mt-0">
                     {/* 모바일 — 행을 탭하면 바텀시트(아코디언 대신 토스 시트 문법). */}
                     <button
                       type="button"
