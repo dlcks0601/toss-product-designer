@@ -112,7 +112,10 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
         </div>
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[560px] flex-col items-center px-4 pb-16 pt-[10dvh]">
+      {/* 세로 중앙(모바일·PC 공통) — 위 고정이면 아래가 텅 빈다. my-auto라 콘텐츠가
+          화면보다 길어져도(함께 챙긴 것 카드) 위가 잘리지 않고 자연히 스크롤로 전환된다. */}
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[560px] flex-col px-4">
+        <div className="my-auto flex w-full flex-col items-center pb-20 pt-10">
         {/* 체크 팝 — 52px, 제자리 스프링 {500,18} */}
         <motion.div
           initial={reduced ? false : { scale: 0 }}
@@ -159,18 +162,20 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
           </Reveal>
         )}
 
+        {/* 버튼 위계 = 토스 완료 화면 문법: 주 행동은 솔리드(여정의 CTA와 같은 무게),
+            보조는 회색 면(테두리 버튼은 토스 어휘에 없다). */}
         <Reveal delay={330} className="w-full space-y-2 pt-7">
           <button
             type="button"
             onClick={() => dispatch({ type: 'SET_STEP', step: 'home' })}
-            className="pressable h-[54px] w-full rounded-2xl bg-primary-tint text-[16px] font-semibold text-primary transition-colors hover:bg-[#dcecfe]"
+            className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
           >
             내 캘린더에서 보기
           </button>
           <button
             type="button"
             onClick={() => dispatch({ type: 'SET_STEP', step: 'invite' })}
-            className="pressable h-[54px] w-full rounded-2xl bg-white text-[16px] font-semibold text-text-body ring-1 ring-border"
+            className="pressable h-[54px] w-full rounded-2xl bg-section text-[16px] font-semibold text-text-body transition-colors hover:bg-[#EEF1F4]"
           >
             참석자에게는 이렇게 보여요
           </button>
@@ -180,6 +185,7 @@ export default function DoneStep({ state, dispatch }: DoneStepProps) {
         <Reveal delay={400} className="pt-5">
           <p className="text-[12px] text-text-weak">초대를 보냈어요 · 응답이 오면 알려드릴게요</p>
         </Reveal>
+        </div>
       </div>
     </main>
   );
