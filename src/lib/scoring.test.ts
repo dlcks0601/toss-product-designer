@@ -46,7 +46,7 @@ describe('scoreSlot — 필수/선택', () => {
     const un = effects.filter((e) => e.code === 'optional-unavailable');
     expect(un).toHaveLength(1);
     expect(un[0].who).toBe('busy');
-    expect(un[0].delta).toBe(0);
+    expect(un[0].delta).toBe(SCORING.optionalUnavailable); // -4 — 부분(+7)이 항상 위
   });
 });
 
@@ -59,7 +59,7 @@ describe('scoreSlot — 부분 참석 통합(Task 6)', () => {
     });
     const p = effects.find((e) => e.code === 'optional-partial');
     expect(p).toBeDefined();
-    expect(p!.delta).toBe(SCORING.optionalPartial); // +5
+    expect(p!.delta).toBe(SCORING.optionalPartial); // +7 — 불참(-4)과 11점 격차
     expect(p!.who).toBe('o1');
     expect(partials).toEqual([{ attendeeId: 'o1', part: 'front', minutes: 30, conflictTitle: '11시 회의' }]);
   });

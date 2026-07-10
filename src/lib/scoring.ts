@@ -12,7 +12,9 @@ import { HARD_BLOCK_KINDS, partialAvailability } from './partial';
  */
 export const SCORING = {
   optionalOk: 10,
-  optionalPartial: 5,
+  // 부분(+7) > 불참(-4) — "30분이라도 함께"가 "아예 못 옴"을 항상 이기도록 격차 11점(사용자 계약).
+  optionalPartial: 7,
+  optionalUnavailable: -4,
   beforeLunch: 4,
   afterLunch: -12,
   lunchSqueeze: -8,
@@ -117,7 +119,7 @@ function evaluateOptional(
   }
   effects.push(...partialEffects);
   for (const id of unavailableIds) {
-    effects.push({ code: 'optional-unavailable', delta: 0, who: id });
+    effects.push({ code: 'optional-unavailable', delta: SCORING.optionalUnavailable, who: id });
   }
 
   // 참석 인원(participating)에는 완전 가능자만 — 부분 참석자는 +5·PartialInfo로만 반영한다.
