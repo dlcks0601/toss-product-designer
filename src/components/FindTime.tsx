@@ -699,7 +699,7 @@ export default function FindTime({ state, dispatch, candidates }: FindTimeProps)
       onClick={confirm}
       className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white active:bg-primary-pressed"
     >
-      {fmtDayLabel(active.day)} {fmtTime(active.start)}에 잡을게요
+      이 시간으로 잡을게요
     </button>
   );
 

@@ -4,6 +4,7 @@ import type { Dispatch } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'motion/react';
 import { Check, ChevronLeft, Video } from 'lucide-react';
 import Aurora from './Aurora';
+import Avatar from './Avatar';
 import FrostedBar from './FrostedBar';
 import Badge from './Badge';
 import ReasonCard from './ReasonCard';
@@ -164,7 +165,7 @@ function PlaceRow({
       aria-pressed={selected}
       onClick={onSelect}
       className={`pressable flex w-full items-center gap-3 rounded-xl bg-white px-4 py-3 text-left transition-shadow ${
-        selected ? 'ring-[1.5px] ring-primary/60' : 'ring-1 ring-border/70'
+        selected ? 'bg-primary-tint shadow-[inset_0_0_0_1.5px_#9CC5FB]' : 'bg-[#F7F8FA] hover:bg-section'
       }`}
     >
       {remote && <Video size={18} aria-hidden className="shrink-0 text-text-weak" />}
@@ -271,7 +272,7 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
         {/* 타이틀 + 서브 */}
         <Reveal delay={70} className="pt-2 lg:pt-0">
           <h1 className="text-[22px] font-bold leading-[1.35] tracking-[-0.02em] text-text-strong lg:text-[24px]">
-            {fmtDayKorean(slot.day)} {fmtTime(adj.start)}, 이렇게 잡을까요?
+            이렇게 잡을까요?
           </h1>
           <p className="mt-1.5 text-[13px] leading-[1.5] text-text-weak">
             {state.title.trim() || '회의'} · {fmtDuration(adj.end - adj.start)} · {attendees.length}명
@@ -280,7 +281,7 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
 
         {/* 선택 슬롯 요약 — 시간 + 긴장 라인 재노출(확정 직전 정직함) */}
         <Reveal delay={140} className="pt-4">
-          <section className="rounded-card bg-white p-4 shadow-[0_2px_12px_rgba(25,31,40,0.05)] ring-1 ring-border/70">
+          <section className="rounded-card bg-[#F7F8FA] p-4">
             <p className="text-[12px] font-medium text-text-weak">{fmtDayKorean(slot.day)}</p>
             {/* 완화 토글이 시간을 옮기면 이 줄이 그 자리에서 갱신된다 */}
             <AnimatePresence mode="popLayout" initial={false}>
@@ -295,6 +296,29 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
                 {fmtRange(adj.start, adj.end)}
               </motion.p>
             </AnimatePresence>
+            {/* 참석자 — 체크 아바타(✓=필수), 시간 찾기와 같은 어휘 */}
+            <div className="mt-3 flex">
+              {attendees.slice(0, 8).map((a) => (
+                <span key={a.id} className="relative -ml-1.5 first:ml-0">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-white">
+                    <Avatar person={a} size={28} />
+                  </span>
+                  {a.attendanceType === 'required' && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 -right-0.5 z-10 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#12A150] text-[7px] font-black text-white ring-2 ring-white"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </span>
+              ))}
+              {attendees.length > 8 && (
+                <span className="-ml-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[11px] font-semibold text-text-weak ring-2 ring-white">
+                  +{attendees.length - 8}
+                </span>
+              )}
+            </div>
             {tension.length > 0 && (
               <div className="mt-3">
                 <ReasonCard.Reasons reasons={tension} animated={!reduced} />
@@ -307,7 +331,7 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
         {hasMitigationSection && (
           <Reveal delay={210} className="pt-6">
             <p className="text-[14px] font-semibold text-text-strong">모두를 위한 조정</p>
-            <div className="mt-2.5 divide-y divide-border/60 rounded-card bg-white shadow-[0_2px_12px_rgba(25,31,40,0.05)] ring-1 ring-border/70">
+            <div className="mt-2.5 divide-y divide-border/60 rounded-card bg-[#F7F8FA]">
               {opts.delayTen && (
                 <MitigationToggle
                   label="10분 늦춰 시작해 여유를 둘까요?"
@@ -405,7 +429,7 @@ export default function ConfirmStep({ state, dispatch }: ConfirmStepProps) {
             disabled={chosen === null}
             className="pressable h-[54px] w-full rounded-2xl bg-primary text-[16px] font-semibold text-white transition-colors active:bg-primary-pressed disabled:bg-section disabled:text-text-faint"
           >
-            이 시간으로 확정할게요
+            초대 보내기
           </button>
         </div>
       </div>
