@@ -225,18 +225,15 @@ export default function AttendeePicker({ attendeeIds, windowDays, onToggle, onCl
                       </span>
                       <span className="block truncate text-[12px] text-text-weak">{p.role}</span>
                     </span>
-                    <span
+                    {/* 맨 체크 — 앱 공통 선택 어휘(선택 파랑 / 미선택 연회색, 주최자는 옅은 파랑 고정). */}
+                    <Check
+                      size={22}
+                      strokeWidth={3}
                       aria-hidden
-                      className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full transition-colors ${
-                        selected
-                          ? isMe
-                            ? 'bg-primary/35 text-white'
-                            : 'bg-primary text-white'
-                          : 'text-transparent ring-1 ring-border'
+                      className={`shrink-0 transition-colors ${
+                        selected ? (isMe ? 'text-primary/35' : 'text-primary') : 'text-[#D6DBE0]'
                       }`}
-                    >
-                      <Check size={13} strokeWidth={3} />
-                    </span>
+                    />
                   </button>
                   {/* 일정 펼침 — 보이는 어포던스. 아바타 숨은 탭을 대체한다.
                       펼치면 행+피크가 화면에 들어오도록 리스트 스크롤이 따라간다. */}
